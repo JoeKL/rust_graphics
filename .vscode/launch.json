@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": ["build"],
+                "filter": {
+                    "name": "rust_graphics",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Run",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": ["run"],
+                "filter": {
+                    "name": "rust_graphics",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
