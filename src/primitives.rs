@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point2D{
@@ -18,7 +19,6 @@ struct Vec3 {
     y: f32,
     z: f32,
 }
-
 
 
 
