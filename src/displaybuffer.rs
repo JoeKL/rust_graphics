@@ -336,23 +336,23 @@ impl DisplayBuffer {
         }
     }
 
-    pub fn calcTriangleArea(
+    pub fn calc_triangle_area(
         p0: DisplayBufferPoint,
         p1: DisplayBufferPoint,
         p2: DisplayBufferPoint,
     ) {
-        let signedArea = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
-        signedArea / 2;
+        let signed_area = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
+        let _ = signed_area / 2;
     }
 
     // Extract Color components
-    pub fn getR(color: u32) -> u8 {
+    pub fn get_r(color: u32) -> u8 {
         return ((color >> 16) & 0xFF) as u8;
     }
-    pub fn getG(color: u32) -> u8 {
+    pub fn get_g(color: u32) -> u8 {
         return ((color >> 8) & 0xFF) as u8;
     }
-    pub fn getB(color: u32) -> u8 {
+    pub fn get_b(color: u32) -> u8 {
         return (color & 0xFF) as u8;
     }
 
@@ -409,9 +409,6 @@ impl DisplayBuffer {
             x_right = x02;
         }
 
-        // Calculate area once per triangle
-        let abc_area = DisplayBuffer::calcTriangleArea(p0, p1, p2);
-
         // Precompute some constant terms used in barycentric calculation
         let x0: i32 = p0.x;
         let y0: i32 = p0.y;
@@ -450,21 +447,21 @@ impl DisplayBuffer {
                 let beta = (py * v0x - px * v0y) * denom; // Area(pca) * (1/Area(abc))
 
                 // 0x001122
-                let r = ((alpha * DisplayBuffer::getR(c0) as f32
-                    + beta * DisplayBuffer::getR(c1) as f32
-                    + (1.0 - alpha - beta) * DisplayBuffer::getR(c2) as f32)
+                let r = ((alpha * DisplayBuffer::get_r(c0) as f32
+                    + beta * DisplayBuffer::get_r(c1) as f32
+                    + (1.0 - alpha - beta) * DisplayBuffer::get_r(c2) as f32)
                     .round()
                     .clamp(0.0, 255.0)) as u8;
 
-                let g = ((alpha * DisplayBuffer::getG(c0) as f32
-                    + beta * DisplayBuffer::getG(c1) as f32
-                    + (1.0 - alpha - beta) * DisplayBuffer::getG(c2) as f32)
+                let g = ((alpha * DisplayBuffer::get_g(c0) as f32
+                    + beta * DisplayBuffer::get_g(c1) as f32
+                    + (1.0 - alpha - beta) * DisplayBuffer::get_g(c2) as f32)
                     .round()
                     .clamp(0.0, 255.0)) as u8;
 
-                let b = ((alpha * DisplayBuffer::getB(c0) as f32
-                    + beta * DisplayBuffer::getB(c1) as f32
-                    + (1.0 - alpha - beta) * DisplayBuffer::getB(c2) as f32)
+                let b = ((alpha * DisplayBuffer::get_b(c0) as f32
+                    + beta * DisplayBuffer::get_b(c1) as f32
+                    + (1.0 - alpha - beta) * DisplayBuffer::get_b(c2) as f32)
                     .round()
                     .clamp(0.0, 255.0)) as u8;
                 
