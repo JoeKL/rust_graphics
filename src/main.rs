@@ -18,21 +18,18 @@ fn main() {
     
     let mut display_buffer = DisplayBuffer::new(WINDOW_HEIGHT, WINDOW_WIDTH);
 
-    display_buffer.fill(0xFFFFFF);
+    display_buffer.fill(DisplayBuffer::BLACK);
 
     let p0 = DisplayBufferPoint {x: 100, y: WINDOW_HEIGHT as i32 - 100};
     let p1 = DisplayBufferPoint {x: WINDOW_WIDTH as i32/2, y: 100};
     let p2 = DisplayBufferPoint { x: WINDOW_WIDTH as i32 - 100,y: WINDOW_HEIGHT as i32 - 100 };
-    display_buffer.draw_line(p0, p1, 0);
-    display_buffer.draw_line(p1, p2, 0);
-    display_buffer.draw_line(p0, p2, 0);
+
+    display_buffer.draw_line(p0, p1, DisplayBuffer::MAGENTA);
+    display_buffer.draw_line(p1, p2, DisplayBuffer::MAGENTA);
+    display_buffer.draw_line(p0, p2, DisplayBuffer::MAGENTA);
     
-    // for i in 0..WINDOW_WIDTH {
-        
-    //     display_buffer.set_pixel(i, i, 0);
-    // }
-
-
+    display_buffer.draw_triangle(p0, p1, p2, DisplayBuffer::WHITE);
+    
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
         window.update_with_buffer(&display_buffer.buffer, WINDOW_WIDTH, WINDOW_HEIGHT).unwrap();
