@@ -334,9 +334,9 @@ impl DisplayBuffer {
         p0: DisplayBufferPoint,
         p1: DisplayBufferPoint,
         p2: DisplayBufferPoint,
-    ) {
+    ) -> f32 {
         let signed_area = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
-        let _ = signed_area / 2;
+        signed_area as f32 / 2.0
     }
 
     pub fn draw_gradient_triangle(
