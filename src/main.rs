@@ -18,9 +18,7 @@ fn main() {
     
     let mut display_buffer = DisplayBuffer::new(WINDOW_HEIGHT, WINDOW_WIDTH);
 
-    println!("{:?}", display_buffer.get_dimensions());
-
-    display_buffer.set_color(0xFFFFFF);
+    display_buffer.fill(0xFFFFFF);
 
     let p0 = DisplayBufferPoint {x: 100, y: WINDOW_HEIGHT as i32 - 100};
     let p1 = DisplayBufferPoint {x: WINDOW_WIDTH as i32/2, y: 100};
