@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use crate::color::ColorRGB;
 #[derive(Debug, Clone, Copy)]
 pub struct DisplayBufferPoint {
     pub x: i32,
@@ -20,15 +21,6 @@ pub struct DisplayBuffer {
 
 // Implement methods for the struct (similar to class methods)
 impl DisplayBuffer {
-    pub const BLACK: u32 = 0x000000;
-    pub const WHITE: u32 = 0xFFFFFF;
-    pub const RED: u32 = 0xFF0000;
-    pub const GREEN: u32 = 0x00FF00;
-    pub const BLUE: u32 = 0x0000FF;
-    pub const YELLOW: u32 = 0xFFFF00;
-    pub const CYAN: u32 = 0x00FFFF;
-    pub const MAGENTA: u32 = 0xFF00FF;
-
     pub fn new(canvas_height: usize, canvas_width: usize) -> DisplayBuffer {
         let buffer = vec![0; canvas_width * canvas_height];
         DisplayBuffer {
@@ -42,9 +34,9 @@ impl DisplayBuffer {
     ///
     /// # Arguments
     /// * `color` - the color as u32
-    pub fn fill(&mut self, color: u32) {
+    pub fn fill(&mut self, color: ColorRGB) {
         for i in 0..self.buffer.len() {
-            self.buffer[i] = color;
+            self.buffer[i] = color.get_as_u32();
         }
     }
 
@@ -63,7 +55,9 @@ impl DisplayBuffer {
     /// Returns the dimensions of the DisplayBuffer
     ///
     /// # Returns
-    /// dimensions as (usize, usize)
+    /// ```rust
+    /// dimensions: (usize, usize)
+    /// ```
     pub fn get_dimensions(&self) -> (usize, usize) {
         (self.canvas_height, self.canvas_width)
     }
@@ -88,12 +82,12 @@ impl DisplayBuffer {
     /// * `y` - The x coordinate
     /// * `color` - The color
     ///
-    pub fn set_pixel(&mut self, x: i32, y: i32, color: u32) {
+    pub fn set_pixel(&mut self, x: i32, y: i32, color: ColorRGB) {
         if x < 0 || y < 0 || x > self.canvas_width as i32 || y > self.canvas_height as i32 {
             return;
         }
         let index = self.get_index(x as usize, y as usize);
-        self.buffer[index] = color;
+        self.buffer[index] = color.get_as_u32();
     }
 
     /// Checks if the given coordinates are within the display buffer bounds.
@@ -215,7 +209,7 @@ impl DisplayBuffer {
         &mut self,
         mut p0: DisplayBufferPoint,
         mut p1: DisplayBufferPoint,
-        color: u32,
+        color: ColorRGB,
     ) {
         if (p1.x - p0.x).abs() > (p1.y - p0.y).abs() {
             // line is more horizontal then vertical
@@ -277,7 +271,7 @@ impl DisplayBuffer {
         mut p0: DisplayBufferPoint,
         mut p1: DisplayBufferPoint,
         mut p2: DisplayBufferPoint,
-        color: u32,
+        color: ColorRGB,
     ) {
         // sort the y points such that y0 < y1 < y2
         if p1.y < p0.y {
@@ -345,25 +339,14 @@ impl DisplayBuffer {
         let _ = signed_area / 2;
     }
 
-    // Extract Color components
-    pub fn get_r(color: u32) -> u8 {
-        return ((color >> 16) & 0xFF) as u8;
-    }
-    pub fn get_g(color: u32) -> u8 {
-        return ((color >> 8) & 0xFF) as u8;
-    }
-    pub fn get_b(color: u32) -> u8 {
-        return (color & 0xFF) as u8;
-    }
-
     pub fn draw_gradient_triangle(
         &mut self,
         mut p0: DisplayBufferPoint,
         mut p1: DisplayBufferPoint,
         mut p2: DisplayBufferPoint,
-        c0: u32,
-        c1: u32,
-        c2: u32,
+        c0: ColorRGB,
+        c1: ColorRGB,
+        c2: ColorRGB,
     ) {
         // sort the y points such that y0 < y1 < y2
         if p1.y < p0.y {
@@ -447,25 +430,25 @@ impl DisplayBuffer {
                 let beta = (py * v0x - px * v0y) * denom; // Area(pca) * (1/Area(abc))
 
                 // 0x001122
-                let r = ((alpha * DisplayBuffer::get_r(c0) as f32
-                    + beta * DisplayBuffer::get_r(c1) as f32
-                    + (1.0 - alpha - beta) * DisplayBuffer::get_r(c2) as f32)
+                let r = ((alpha * c0.get_r() as f32
+                    + beta * c1.get_r() as f32
+                    + (1.0 - alpha - beta) * c2.get_r() as f32)
                     .round()
                     .clamp(0.0, 255.0)) as u8;
 
-                let g = ((alpha * DisplayBuffer::get_g(c0) as f32
-                    + beta * DisplayBuffer::get_g(c1) as f32
-                    + (1.0 - alpha - beta) * DisplayBuffer::get_g(c2) as f32)
+                let g = ((alpha * c0.get_g() as f32
+                    + beta * c1.get_g() as f32
+                    + (1.0 - alpha - beta) * c2.get_g() as f32)
                     .round()
                     .clamp(0.0, 255.0)) as u8;
 
-                let b = ((alpha * DisplayBuffer::get_b(c0) as f32
-                    + beta * DisplayBuffer::get_b(c1) as f32
-                    + (1.0 - alpha - beta) * DisplayBuffer::get_b(c2) as f32)
+                let b = ((alpha * c0.get_b() as f32
+                    + beta * c1.get_b() as f32
+                    + (1.0 - alpha - beta) * c2.get_b() as f32)
                     .round()
                     .clamp(0.0, 255.0)) as u8;
-                
-                self.set_pixel(x, y, (r as u32) << 16 | (g as u32) << 8 | b as u32);
+
+                self.set_pixel(x, y,  ColorRGB::from_rgb(r,g,b));
             }
         }
     }
