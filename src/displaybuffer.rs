@@ -257,6 +257,21 @@ impl DisplayBuffer {
         }
     }
 
+    /// Draws a triangle in a specified color between three points p0, p1, p2
+    ///
+    /// # Arguments
+    /// * "p0" Point0 as a DisplayBufferPoint
+    /// * "p1" Point0 as a DisplayBufferPoint
+    /// * "p2" Point0 as a DisplayBufferPoint
+    ///
+    /// # Details
+    ///
+    ///
+    /// # Example
+    ///
+    ///
+    ///  # Notes
+    ///
     pub fn draw_triangle(
         &mut self,
         mut p0: DisplayBufferPoint,
@@ -317,6 +332,143 @@ impl DisplayBuffer {
             // Fill pixels for current scanline (excluding edges)
             for x in (x_start + 1)..x_end {
                 self.set_pixel(x, y, color);
+            }
+        }
+    }
+
+    pub fn calcTriangleArea(
+        p0: DisplayBufferPoint,
+        p1: DisplayBufferPoint,
+        p2: DisplayBufferPoint,
+    ) {
+        let signedArea = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
+        signedArea / 2;
+    }
+
+    // Extract Color components
+    pub fn getR(color: u32) -> u8 {
+        return ((color >> 16) & 0xFF) as u8;
+    }
+    pub fn getG(color: u32) -> u8 {
+        return ((color >> 8) & 0xFF) as u8;
+    }
+    pub fn getB(color: u32) -> u8 {
+        return (color & 0xFF) as u8;
+    }
+
+    pub fn draw_gradient_triangle(
+        &mut self,
+        mut p0: DisplayBufferPoint,
+        mut p1: DisplayBufferPoint,
+        mut p2: DisplayBufferPoint,
+        c0: u32,
+        c1: u32,
+        c2: u32,
+    ) {
+        // sort the y points such that y0 < y1 < y2
+        if p1.y < p0.y {
+            let temp: DisplayBufferPoint = p0;
+            p0 = p1;
+            p1 = temp;
+        }
+        if p2.y < p0.y {
+            let temp: DisplayBufferPoint = p0;
+            p0 = p2;
+            p2 = temp;
+        }
+        if p2.y < p1.y {
+            let temp: DisplayBufferPoint = p2;
+            p2 = p1;
+            p1 = temp;
+        }
+
+        // calculate boundaries of the triangle given by p0,p1,p2
+        // we want the x values for each line between two points, thats why the independent value is y. y = i , x = d
+        // naming: x01 -> x values between p0 and p1
+        let mut x01 = DisplayBuffer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
+        let x02 = DisplayBuffer::linear_interpolation(p0.y, p0.x, p2.y, p2.x);
+        let x12 = DisplayBuffer::linear_interpolation(p1.y, p1.x, p2.y, p2.x);
+
+        //pop the last element so that its not counted twice, since its the first in x12
+        x01.pop();
+        let mut x012 = x01.clone(); // Create new vector as copy of x01
+        x012.extend(x12); // append x12 to x01 to create x012
+
+        // create left and right wall as x_left and x_right
+        let x_left: Vec<f32>;
+        let x_right: Vec<f32>;
+
+        // check which wall is left and which is right
+        // only check the middle since x012 is the wall bend
+        let m = x012.len() / 2;
+        if x02[m] < x012[m] {
+            x_left = x02;
+            x_right = x012;
+        } else {
+            x_left = x012;
+            x_right = x02;
+        }
+
+        // Calculate area once per triangle
+        let abc_area = DisplayBuffer::calcTriangleArea(p0, p1, p2);
+
+        // Precompute some constant terms used in barycentric calculation
+        let x0: i32 = p0.x;
+        let y0: i32 = p0.y;
+        let x1: i32 = p1.x;
+        let y1: i32 = p1.y;
+        let x2: i32 = p2.x;
+        let y2: i32 = p2.y;
+
+        // These terms stay constant for the triangle
+        // in naive it this will be called very often:
+        // float signedArea = (P1.x - P0.x) * (P2.y - P0.y) - (P1.y - P0.y) * (P2.x - P0.x);
+        // we can precalculate these steps:
+        let v0x: f32 = x1 as f32 - x0 as f32; // (P1.x - P0.x)
+        let v0y: f32 = y1 as f32 - y0 as f32; // (P1.y - P0.y)
+        let v1x: f32 = x2 as f32 - x0 as f32; // (P2.x - P0.x)
+        let v1y: f32 = y2 as f32 - y0 as f32; // (P2.y - P0.y)
+
+        // and this float signedArea = (P1.x - P0.x) * (P2.y - P0.y) - (P1.y - P0.y) * (P2.x - P0.x);
+        // with new terms but as 1/signedArea
+        // so we only need to do the division once
+        let denom: f32 = 1.0 / (v0x * v1y - v1x * v0y);
+
+        // for every row from the left wall+1 to the right wall -1 set pixel to color
+        for y in (p0.y)..(p2.y) {
+            let current_row = (y - p0.y) as usize;
+            let x_start = x_left[current_row] as i32;
+            let x_end = x_right[current_row] as i32;
+
+            // Fill pixels for current scanline (excluding edges)
+            for x in (x_start + 1)..x_end {
+                // Calculate barycentric coordinates more efficiently
+                let px: f32 = x as f32 - x0 as f32; // x distance from vertex 0 to current pixel
+                let py: f32 = y as f32 - y0 as f32; // y distance from vertex 0 to current pixel
+
+                let alpha = (px * v1y - py * v1x) * denom; // Area(pbc) * (1/Area(abc))
+                let beta = (py * v0x - px * v0y) * denom; // Area(pca) * (1/Area(abc))
+
+                // 0x001122
+                let r = ((alpha * DisplayBuffer::getR(c0) as f32
+                    + beta * DisplayBuffer::getR(c1) as f32
+                    + (1.0 - alpha - beta) * DisplayBuffer::getR(c2) as f32)
+                    .round()
+                    .clamp(0.0, 255.0)) as u8;
+
+                let g = ((alpha * DisplayBuffer::getG(c0) as f32
+                    + beta * DisplayBuffer::getG(c1) as f32
+                    + (1.0 - alpha - beta) * DisplayBuffer::getG(c2) as f32)
+                    .round()
+                    .clamp(0.0, 255.0)) as u8;
+
+                let b = ((alpha * DisplayBuffer::getB(c0) as f32
+                    + beta * DisplayBuffer::getB(c1) as f32
+                    + (1.0 - alpha - beta) * DisplayBuffer::getB(c2) as f32)
+                    .round()
+                    .clamp(0.0, 255.0)) as u8;
+                
+                self.set_pixel(x, y, (r as u32) << 16 | (g as u32) << 8 | b as u32);
             }
         }
     }

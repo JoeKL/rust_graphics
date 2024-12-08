@@ -24,11 +24,11 @@ fn main() {
     let p1 = DisplayBufferPoint {x: WINDOW_WIDTH as i32/2, y: 100};
     let p2 = DisplayBufferPoint { x: WINDOW_WIDTH as i32 - 100,y: WINDOW_HEIGHT as i32 - 100 };
 
-    display_buffer.draw_line(p0, p1, DisplayBuffer::MAGENTA);
-    display_buffer.draw_line(p1, p2, DisplayBuffer::MAGENTA);
-    display_buffer.draw_line(p0, p2, DisplayBuffer::MAGENTA);
+    // display_buffer.draw_line(p0, p1, DisplayBuffer::MAGENTA);
+    // display_buffer.draw_line(p1, p2, DisplayBuffer::MAGENTA);
+    // display_buffer.draw_line(p0, p2, DisplayBuffer::MAGENTA);
     
-    display_buffer.draw_triangle(p0, p1, p2, DisplayBuffer::WHITE);
+    display_buffer.draw_gradient_triangle(p0, p1, p2, DisplayBuffer::RED, DisplayBuffer::BLUE, DisplayBuffer::GREEN);
     
     while window.is_open() && !window.is_key_down(Key::Escape) {
 
