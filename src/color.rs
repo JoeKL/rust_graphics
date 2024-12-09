@@ -14,7 +14,6 @@ impl ColorRGB {
         ColorRGB { as_u32: color, r, g, b }
     }    
     
-
     pub fn from_u32(color: u32) -> ColorRGB {
         let r = ((color >> 16) & 0xFF) as u8;
         let g = ((color >> 8) & 0xFF) as u8;
