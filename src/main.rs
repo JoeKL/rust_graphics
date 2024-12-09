@@ -1490,7 +1490,7 @@ pub fn flat_shade_triangle(
     let mut flat_color = ambient_part
         .add(diffuse_part)
         .add(specular_part)
-        .mulVec(light_color_vec);
+        .mul_vec(light_color_vec);
 
     // Clamp color values between 0 and 1 to prevent overflow
     flat_color.x = f32::min(flat_color.x, 1.0);
@@ -1517,7 +1517,7 @@ pub fn update(display_buffer: &mut DisplayBuffer, mouse_rot_mat: &Mat4x4) {
     let point_g = Point::new(10.0, 10.0, -10.0);
     let point_h = Point::new(10.0, 10.0, 10.0);
 
-    let mut lines: [Line; 12];
+    let lines: [Line; 12];
     lines = [
         Line::new(point_a, point_b),
         Line::new(point_a, point_c),
