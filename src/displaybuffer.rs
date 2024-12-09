@@ -161,9 +161,9 @@ impl DisplayBuffer {
         let mut d: f32 = d0 as f32;
 
         // Reserve space for efficiency
-        result.reserve(steps as usize);
+        result.reserve((steps + 1) as usize);
 
-        for _ in 0..steps {
+        for _ in 0..=steps {
             // save d
             result.push(d);
             // with each iteration add another delta to d
