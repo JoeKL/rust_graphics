@@ -1553,14 +1553,14 @@ pub fn update(display_buffer: &mut DisplayBuffer, mouse_rot_mat: &Mat4x4) {
     let eye_point = mouse_rot_mat.mul_vec(eye);
     eye = Vector::new(eye_point.x, eye_point.y, eye_point.z);
 
-    println!("{:#?}", eye_point);
+    // println!("{:#?}", eye_point);
 
     let far: f32 = 100.0;
     let near: f32 = 1.0;
 
     let look_at = create_look_at_matrix(eye, target, up);
 
-    look_at.print_with_label("lookat");
+    // look_at.print_with_label("lookat");
 
     let projection = create_projection_matrix(
         45.0, // 60 degree FOV
