@@ -220,8 +220,6 @@ fn main() {
                         // Cosine of rotation angle from dot product
                         let cos = v_old.dot(v_new);
 
-                        println!("{:#?}", n);
-
                         // Normalize rotation axis
                         n.normalize();
 
