@@ -59,7 +59,7 @@ impl Vector {
         Vector::new(self.x * s, self.y * s, self.z * s)
     }
 
-    pub fn mulVec(&self, v: Vector) -> Vector {
+    pub fn mul_vec(&self, v: Vector) -> Vector {
         Vector::new(self.x * v.x, self.y * v.y, self.z * v.z)
     }
 
