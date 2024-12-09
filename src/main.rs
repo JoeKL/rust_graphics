@@ -10,15 +10,6 @@ use primitives::*;
 static WINDOW_WIDTH: usize = 1200;
 static WINDOW_HEIGHT: usize = 800;
 
-static mut MOUSE_ROT_MAT: Mat4x4 = Mat4x4 {
-    mat: [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ],
-};
-
 // LookAt matrix calculation
 fn create_look_at_matrix(eye: Vector, target: Vector, up: Vector) -> Mat4x4 {
     // Calculate forward (negative z-axis)
