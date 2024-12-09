@@ -13,6 +13,10 @@ impl ColorRGB {
         let color = (r as u32) << 16 | (g as u32) << 8 | b as u32;
         ColorRGB { as_u32: color, r, g, b }
     }    
+
+    pub fn f32_to_color_component(value: f32) -> u8 {
+        (f32::min(value, 1.0) * 255.0) as u8
+    }
     
     pub fn from_u32(color: u32) -> ColorRGB {
         let r = ((color >> 16) & 0xFF) as u8;
