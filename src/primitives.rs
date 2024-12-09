@@ -15,9 +15,9 @@ impl Point {
     }
 
     pub fn dehomogen(&mut self) {
-        self.x = self.x / self.w as f32;
-        self.y = self.x / self.w as f32;
-        self.z = self.x / self.w as f32;
+        self.x = self.x / -self.z as f32;
+        self.y = self.y / -self.z as f32;
+        self.z = -1.0;
         self.w = 1;
     }
 }
@@ -106,7 +106,7 @@ impl Mat4x4 {
     /// let mat2 = Mat4x4::new(); // Create second matrix
     /// let result = mat1.mulMat(mat2);
     /// ```
-    pub fn mult_mat(&self, m: Mat4x4) -> Mat4x4 {
+    pub fn mul_mat(&self, m: Mat4x4) -> Mat4x4 {
         let mut result_mat = Mat4x4::new_identity();
 
         // First row
@@ -205,12 +205,54 @@ impl Mat4x4 {
         result_point.w = w as u32;
         result_point
     }
+
+    pub fn mul_point(self, v: Point) -> Point {
+        let x = self.mat[0][0] * v.x
+            + self.mat[0][1] * v.y
+            + self.mat[0][2] * v.z
+            + self.mat[0][3] * v.w as f32;
+        let y = self.mat[1][0] * v.x
+            + self.mat[1][1] * v.y
+            + self.mat[1][2] * v.z
+            + self.mat[1][3] * v.w as f32;
+        let z = self.mat[2][0] * v.x
+            + self.mat[2][1] * v.y
+            + self.mat[2][2] * v.z
+            + self.mat[2][3] * v.w as f32;
+        let w = self.mat[3][0] * v.x
+            + self.mat[3][1] * v.y
+            + self.mat[3][2] * v.z
+            + self.mat[3][3] * v.w as f32;
+        let mut result_point = Point::new(x, y, z);
+        result_point.w = w as u32;
+        result_point
+    }
+
+    pub fn print(&self) {
+        println!("Matrix 4x4:");
+        for i in 0..4 {
+            print!("[ ");
+            for j in 0..4 {
+                // Format with 8 characters total, 4 after decimal point
+                print!("{:8.4} ", self.mat[i][j]);
+            }
+            println!("]");
+        }
+        println!(); // Empty line after matrix
+    }
+
+    // Optional: function to print with a label
+    pub fn print_with_label(&self, label: &str) {
+        println!("{}:", label);
+        self.print();
+    }
+
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Line {
-    a: Point,
-    b: Point,
+    pub a: Point,
+    pub b: Point,
 }
 
 impl Line {
@@ -221,9 +263,9 @@ impl Line {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Triangle {
-    a: Point,
-    b: Point,
-    c: Point,
+    pub a: Point,
+    pub b: Point,
+    pub c: Point,
 }
 
 impl Triangle {
