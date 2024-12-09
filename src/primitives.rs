@@ -15,10 +15,21 @@ impl Point {
     }
 
     pub fn dehomogen(&mut self) {
+        if self.z == 0.0 {
+            println!("trying to divide by zero")
+        }
         self.x = self.x / -self.z as f32;
         self.y = self.y / -self.z as f32;
         self.z = -1.0;
         self.w = 1;
+    }
+
+    pub fn sub_v(&self, v: Vector) -> Vector {
+        Vector::new(self.x - v.x, self.y - v.y, self.z - v.z)
+    }
+
+    pub fn sub_p(&self, p: Point) -> Vector {
+        Vector::new(self.x - p.x, self.y - p.y, self.z - p.z)
     }
 }
 
@@ -40,6 +51,18 @@ impl Vector {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
 
+    pub fn add(&self, v: Vector) -> Vector {
+        Vector::new(self.x + v.x, self.y + v.y, self.z + v.z)
+    }
+
+    pub fn mul(&self, s: f32) -> Vector {
+        Vector::new(self.x * s, self.y * s, self.z * s)
+    }
+
+    pub fn mulVec(&self, v: Vector) -> Vector {
+        Vector::new(self.x * v.x, self.y * v.y, self.z * v.z)
+    }
+
     pub fn cross(&self, v: Vector) -> Vector {
         let x = self.y * v.z - self.z * v.y;
         let y = self.z * v.x - self.x * v.z;
@@ -51,15 +74,17 @@ impl Vector {
         (self.dot(*self)).sqrt()
     }
 
-    pub fn normalize(&mut self) {
+    pub fn normalize(&self) -> Vector {
         let n = self.norm();
-        self.x /= n;
-        self.y /= n;
-        self.z /= n;
+        Vector::new(self.x / n, self.y / n, self.z / n)
     }
 
-    pub fn sub(&self, v: Vector) -> Vector {
+    pub fn sub_v(&self, v: Vector) -> Vector {
         Vector::new(self.x - v.x, self.y - v.y, self.z - v.z)
+    }
+
+    pub fn sub_p(&self, p: Point) -> Vector {
+        Vector::new(self.x - p.x, self.y - p.y, self.z - p.z)
     }
 }
 
@@ -246,7 +271,6 @@ impl Mat4x4 {
         println!("{}:", label);
         self.print();
     }
-
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -269,12 +293,13 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub fn new(a: Point, b: Point, c: Point) -> Self{
-        Self{a,b,c}
+    pub fn new(a: Point, b: Point, c: Point) -> Self {
+        Self { a, b, c }
     }
 
-        pub fn calc_triangle_area(self) -> f32 {
-        let signed_area = (self.b.x - self.a.x) * (self.c.y - self.a.y) - (self.b.y - self.a.y) * (self.c.x - self.a.x);
+    pub fn calc_triangle_area(self) -> f32 {
+        let signed_area = (self.b.x - self.a.x) * (self.c.y - self.a.y)
+            - (self.b.y - self.a.y) * (self.c.x - self.a.x);
         signed_area as f32 / 2.0
     }
 }
