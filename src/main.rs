@@ -14,7 +14,7 @@ static LOOK_AT_MAT: Mat4x4 = Mat4x4 {
     mat: [
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, -250.0],
+        [0.0, 0.0, 1.0, 500.0],
         [0.0, 0.0, 0.0, 1.0],
     ],
 };
@@ -49,9 +49,9 @@ static VIEW_PORT_MAT: Mat4x4 = Mat4x4 {
             0.0,
             0.0,
             (-FAR - NEAR) / (FAR - NEAR),
-            (-2.0 * FAR) / (FAR - NEAR),
+            (-2.0 * FAR * NEAR) / (FAR - NEAR),
         ],
-        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 0.0, -1.0, 0.0],
     ],
 };
 
@@ -93,9 +93,14 @@ pub fn update(display_buffer: &mut DisplayBuffer) {
         Line::new(point_h, point_g),
     ];
 
-    // let transform: Mat4x4 = PROJECTION_MAT;
-    // let transform: Mat4x4 = VIEW_PORT_MAT.mul_mat(PROJECTION_MAT).mul_mat(LOOK_AT_MAT);
+    // let p0 = DisplayBufferPoint {x: 75, y: WINDOW_HEIGHT as i32 - 100};
+    // let p1 = DisplayBufferPoint {x: WINDOW_WIDTH as i32/2, y: 100};
+    // let p2 = DisplayBufferPoint { x: WINDOW_WIDTH as i32 - 75,y: WINDOW_HEIGHT as i32 - 100 };
+
+    // display_buffer.draw_gradient_triangle(p0, p1, p2, ColorRGB::RED, ColorRGB::BLUE, ColorRGB::GREEN);
+
     let mut transform = Mat4x4::new_identity();
+    
     transform = unsafe { MOUSE_ROT_MAT.mul_mat(transform) };
     transform = LOOK_AT_MAT.mul_mat(transform);
     transform = PROJECTION_MAT.mul_mat(transform);
@@ -107,9 +112,12 @@ pub fn update(display_buffer: &mut DisplayBuffer) {
 
         start_point = transform.mul_point(start_point);
         end_point = transform.mul_point(end_point);
-
+        
+        //perspective divide
         start_point.dehomogen();
         end_point.dehomogen();
+
+
 
         let screen_point_a = DisplayBufferPoint {
             x: start_point.x as i32,
@@ -119,6 +127,8 @@ pub fn update(display_buffer: &mut DisplayBuffer) {
             x: end_point.x as i32,
             y: end_point.y as i32,
         };
+        
+        println!("{:#?}", start_point);
 
         display_buffer.draw_line(
             screen_point_a,
@@ -126,12 +136,6 @@ pub fn update(display_buffer: &mut DisplayBuffer) {
             ColorRGB::from_rgb(255, 255, 255),
         );
     }
-
-    // let p0 = DisplayBufferPoint {x: 75, y: WINDOW_HEIGHT as i32 - 100};
-    // let p1 = DisplayBufferPoint {x: WINDOW_WIDTH as i32/2, y: 100};
-    // let p2 = DisplayBufferPoint { x: WINDOW_WIDTH as i32 - 75,y: WINDOW_HEIGHT as i32 - 100 };
-
-    // display_buffer.draw_gradient_triangle(p0, p1, p2, ColorRGB::RED, ColorRGB::BLUE, ColorRGB::GREEN);
 }
 
 fn main() {
@@ -211,7 +215,7 @@ fn main() {
                         unsafe { MOUSE_ROT_MAT = new_mouse_rot_mat.mul_mat(MOUSE_ROT_MAT) };
                         // Combine with previous rotation
 
-                        unsafe { MOUSE_ROT_MAT.print_with_label("Mous_rot") };
+                        // unsafe { MOUSE_ROT_MAT.print_with_label("Mous_rot") };
                     }
 
                     // Update display
