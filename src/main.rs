@@ -7,53 +7,8 @@ use displaybuffer::{DisplayBuffer, DisplayBufferPoint};
 use minifb::{Key, Window, WindowOptions};
 use primitives::*;
 
-static WINDOW_WIDTH: usize = 800;
+static WINDOW_WIDTH: usize = 1200;
 static WINDOW_HEIGHT: usize = 800;
-
-static LOOK_AT_MAT: Mat4x4 = Mat4x4 {
-    mat: [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 500.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ],
-};
-
-static FAR: f32 = 100.0;
-static NEAR: f32 = 1.0;
-
-static PROJECTION_MAT: Mat4x4 = Mat4x4 {
-    mat: [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, -1.0, 0.0],
-    ],
-};
-
-static VIEW_PORT_MAT: Mat4x4 = Mat4x4 {
-    mat: [
-        [
-            WINDOW_WIDTH as f32 / 2.0,
-            0.0,
-            0.0,
-            WINDOW_WIDTH as f32 / 2.0,
-        ],
-        [
-            0.0,
-            WINDOW_HEIGHT as f32 / 2.0,
-            0.0,
-            WINDOW_HEIGHT as f32 / 2.0,
-        ],
-        [
-            0.0,
-            0.0,
-            (-FAR - NEAR) / (FAR - NEAR),
-            (-2.0 * FAR * NEAR) / (FAR - NEAR),
-        ],
-        [0.0, 0.0, -1.0, 0.0],
-    ],
-};
 
 static mut MOUSE_ROT_MAT: Mat4x4 = Mat4x4 {
     mat: [
@@ -64,19 +19,73 @@ static mut MOUSE_ROT_MAT: Mat4x4 = Mat4x4 {
     ],
 };
 
-pub fn update(display_buffer: &mut DisplayBuffer) {
+// LookAt matrix calculation
+fn create_look_at_matrix(eye: Vector, target: Vector, up: Vector) -> Mat4x4 {
+    // Calculate forward (negative z-axis)
+    let mut forward = target.sub(eye);
+    forward.normalize();
+
+    // Calculate right vector
+    let mut right = up.cross(forward);
+    right.normalize();
+
+    // Calculate up vector
+    let up = forward.cross(right);
+
+    Mat4x4 {
+        mat: [
+            [right.x, right.y, right.z, -right.dot(eye)],
+            [up.x, up.y, up.z, -up.dot(eye)],
+            [forward.x, forward.y, forward.z, -forward.dot(eye)],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    }
+}
+
+// Perspective projection matrix
+fn create_perspective_matrix(fov_degrees: f32, aspect_ratio: f32, near: f32, far: f32) -> Mat4x4 {
+    let fov_rad = fov_degrees * std::f32::consts::PI / 180.0;
+    let f = 1.0 / (fov_rad / 2.0).tan();
+
+    Mat4x4 {
+        mat: [
+            [f / aspect_ratio, 0.0, 0.0, 0.0],
+            [0.0, f, 0.0, 0.0],
+            [
+                0.0, 0.0,
+                (far + near) / (near - far),
+                (2.0 * far * near) / (near - far),
+            ],
+            [0.0, 0.0, -1.0, 0.0],
+        ],
+    }
+}
+
+// Viewport matrix (just the screen transformation part)
+fn create_viewport_matrix(width: f32, height: f32) -> Mat4x4 {
+    Mat4x4 {
+        mat: [
+            [width / 2.0, 0.0, 0.0, width / 2.0],
+            [0.0, -height / 2.0, 0.0, height / 2.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    }
+}
+
+pub fn update(display_buffer: &mut DisplayBuffer, mouse_rot_mat: &Mat4x4) {
     display_buffer.fill(ColorRGB::BLACK);
 
     let lines: [Line; 12];
 
-    let point_a = Point::new(-100.0, -100.0, -100.0);
-    let point_b = Point::new(-100.0, -100.0, 100.0);
-    let point_c = Point::new(-100.0, 100.0, -100.0);
-    let point_d = Point::new(-100.0, 100.0, 100.0);
-    let point_e = Point::new(100.0, -100.0, -100.0);
-    let point_f = Point::new(100.0, -100.0, 100.0);
-    let point_g = Point::new(100.0, 100.0, -100.0);
-    let point_h = Point::new(100.0, 100.0, 100.0);
+    let point_a = Point::new(-10.0, -10.0, -10.0);
+    let point_b = Point::new(-10.0, -10.0, 10.0);
+    let point_c = Point::new(-10.0, 10.0, -10.0);
+    let point_d = Point::new(-10.0, 10.0, 10.0);
+    let point_e = Point::new(10.0, -10.0, -10.0);
+    let point_f = Point::new(10.0, -10.0, 10.0);
+    let point_g = Point::new(10.0, 10.0, -10.0);
+    let point_h = Point::new(10.0, 10.0, 10.0);
 
     lines = [
         Line::new(point_a, point_b),
@@ -99,36 +108,57 @@ pub fn update(display_buffer: &mut DisplayBuffer) {
 
     // display_buffer.draw_gradient_triangle(p0, p1, p2, ColorRGB::RED, ColorRGB::BLUE, ColorRGB::GREEN);
 
-    let mut transform = Mat4x4::new_identity();
-    
-    transform = unsafe { MOUSE_ROT_MAT.mul_mat(transform) };
-    transform = LOOK_AT_MAT.mul_mat(transform);
-    transform = PROJECTION_MAT.mul_mat(transform);
-    transform = VIEW_PORT_MAT.mul_mat(transform);
+    let eye = Vector::new(0.0, 0.0, 50.0);
+    let target = Vector::new(0.0, 0.0, 0.0);
+    let up = Vector::new(0.0, 1.0, 0.0);
+
+    let far: f32 = 100.0;
+    let near: f32 = 1.0;
+
+    let look_at = create_look_at_matrix(eye, target, up);
+
+    let projection = create_perspective_matrix(
+        60.0, // 60 degree FOV
+        WINDOW_WIDTH as f32 / WINDOW_HEIGHT as f32,
+        near,
+        far,
+    );
+    let viewport = create_viewport_matrix(WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32);
 
     for line in lines {
         let mut start_point = line.a;
         let mut end_point = line.b;
 
-        start_point = transform.mul_point(start_point);
-        end_point = transform.mul_point(end_point);
-        
-        //perspective divide
+        // After model (mouse rotation)
+        start_point = mouse_rot_mat.mul_point(start_point);
+        end_point = mouse_rot_mat.mul_point(end_point);
+
+        // After look_at
+        start_point = look_at.mul_point(start_point);
+        end_point = look_at.mul_point(end_point);
+
+        // After projection
+        start_point = projection.mul_point(start_point);
+        end_point = projection.mul_point(end_point);
+
+        // After perspective divide
         start_point.dehomogen();
         end_point.dehomogen();
 
-
+        // After viewport
+        start_point = viewport.mul_point(start_point);
+        end_point = viewport.mul_point(end_point);
 
         let screen_point_a = DisplayBufferPoint {
-            x: start_point.x as i32,
             y: start_point.y as i32,
+            x: start_point.x as i32,
         };
         let screen_point_b = DisplayBufferPoint {
             x: end_point.x as i32,
             y: end_point.y as i32,
         };
-        
-        println!("{:#?}", start_point);
+
+        // println!("{:#?}", start_point);
 
         display_buffer.draw_line(
             screen_point_a,
@@ -148,38 +178,58 @@ fn main() {
     .unwrap();
 
     let mut display_buffer = DisplayBuffer::new(WINDOW_HEIGHT, WINDOW_WIDTH);
-    let mut x0 = 0.0;
-    let mut y0 = 0.0;
+    let mut x_old = 0.0;
+    let mut y_old = 0.0;
+    let mut is_dragging = false;
+
+    // Move mouse rotation matrix here
+    let mut mouse_rot_mat = Mat4x4 {
+        mat: [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ],
+    };
 
     // Update display
-    update(&mut display_buffer);
+    update(&mut display_buffer, &mouse_rot_mat);
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if let Some((x, y)) = window.get_mouse_pos(minifb::MouseMode::Discard) {
             if window.get_mouse_down(minifb::MouseButton::Left) {
                 // Convert mouse coordinates to center-oriented system
                 // Shifts origin to center and flips Y axis (screen coordinates to mathematical)
-                let x1 = x - WINDOW_WIDTH as f32 / 2.0;
-                let y1 = y - WINDOW_HEIGHT as f32 / 2.0;
+                let x_new = WINDOW_WIDTH as f32 / 2.0 - x;
+                let y_new = WINDOW_HEIGHT as f32 / 2.0 - y;
+
+                if !is_dragging {
+                    // Only update start position when we first click
+                    x_old = x_new;
+                    y_old = y_new;
+                    is_dragging = true;
+                }
 
                 // Only proceed if mouse actually moved
-                if x0 != x1 || y0 != y1 {
+                if x_old != x_new || y_old != y_new {
                     // Create vectors from old and new mouse positions
                     // Adding z=size/2 projects points onto a virtual hemisphere
-                    let mut v0 = Vector::new(x0, y0, WINDOW_WIDTH as f32 / 2.0);
-                    v0.normalize();
-                    let mut v1 = Vector::new(x1, y1, WINDOW_WIDTH as f32 / 2.0);
-                    v1.normalize();
+                    let mut v_old = Vector::new(x_old, y_old, 400 as f32 / 2.0);
+                    v_old.normalize();
+                    let mut v_new = Vector::new(x_new, y_new, 400 as f32 / 2.0);
+                    v_new.normalize();
 
                     // Check if movement is significant enough
-                    if v0.sub(v1).norm() > 0.001 {
+                    if v_old.sub(v_new).norm() > 0.001 {
                         // Calculate rotation axis and angle
                         // Cross product gives rotation axis
-                        let mut n = v0.cross(v1);
+                        let mut n = v_old.cross(v_new);
                         // Sine of rotation angle
                         let sin = n.norm();
                         // Cosine of rotation angle from dot product
-                        let cos = v0.dot(v1);
+                        let cos = v_old.dot(v_new);
+
+                        println!("{:#?}", n);
 
                         // Normalize rotation axis
                         n.normalize();
@@ -212,19 +262,21 @@ fn main() {
                                 [0.0, 0.0, 0.0, 1.0],
                             ],
                         };
-                        unsafe { MOUSE_ROT_MAT = new_mouse_rot_mat.mul_mat(MOUSE_ROT_MAT) };
+                        mouse_rot_mat = new_mouse_rot_mat.mul_mat(mouse_rot_mat);
                         // Combine with previous rotation
-
-                        // unsafe { MOUSE_ROT_MAT.print_with_label("Mous_rot") };
+                        
                     }
 
                     // Update display
-                    update(&mut display_buffer);
+                    update(&mut display_buffer, &mouse_rot_mat);
 
+                    
                     // Store current position for next movement
-                    x0 = x1;
-                    y0 = y1;
+                    x_old = x_new;
+                    y_old = y_new;
                 }
+            } else {
+                is_dragging = false;  
             }
             window
                 .update_with_buffer(&display_buffer.buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
