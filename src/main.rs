@@ -164,7 +164,12 @@ fn main() {
         "Rust Graphics",
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
-        WindowOptions::default(),
+        WindowOptions {
+            borderless: false,  // Remove window borders
+            resize: false,      // Allow window resizing
+            
+            ..WindowOptions::default()
+        },
     )
     .unwrap();
 
