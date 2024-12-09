@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Assignment 9</title>
+    <style>
+        .wrapper {
+            position: relative;
+            float: left;
+            margin-right: 1em;
+            width: 602px;
+            height: 602px;
+        }
+
+        .slider {
+            width: 500px;
+            height: 10px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <canvas id="canvasGL" width="600" height="600"
+            style="border:1px solid #000000; position:absolute; left:0; top:0; z-index:1;">
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
+        <canvas id="canvas2D" width="600" height="600"
+            style="border:1px solid #000000; position:absolute; left:0; top:0; z-index:2;">
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
+    </div>
+    <div>
+        <p>Grad: <span id="nOut"></span></p>
+        <label for="nIn"></label><input type="range" id="nIn" min="1" max="4" class="slider">
+        <p><input type="radio" id="bonusIn0" name="radio0"><label for="bonusIn0"> Bézierkurve</label></p>
+        <div style="text-indent:21px;">
+            <p>t: <span id="tOut"></span></p>
+            <label for="tIn"></label><input type="range" id="tIn" min="0" max="1" step="0.01" class="slider">
+        </div>
+        <p><input type="radio" id="bonusIn1" name="radio0"><label for="bonusIn1"> Bézierfläche (Bonus)</label></p>
+        <div style="text-indent:21px;">
+            <p><input type="radio" id="trackballIn0" name="radio1"><label for="trackballIn0"> Verschiebe Punkte</label>
+            </p>
+            <p><input type="radio" id="trackballIn1" name="radio1"><label for="trackballIn1"> Trackball</label></p>
+        </div>
+        <div style="text-indent:21px;">
+            <p>Anzahl Punkte: <span id="numPointsOut"></span></p>
+            <label for="numPointsIn"></label><input type="range" id="numPointsIn" min="2" max="100" class="slider">
+        </div>
+    </div>
+    <script>
+
+        let bonus = false;
+        let trackball = false;
+        let t = 0.5;
+        let numPoints = 10;
+        let n = 3;
+
+        let nIn = document.getElementById("nIn");
+        let nOut = document.getElementById("nOut");
+        nIn.value = n.toString();
+        nOut.innerHTML = n.toString();
+        nIn.oninput = function () {
+            n = parseFloat(this.value);
+            nOut.innerHTML = n.toString();
+            updateBezierSurface();
+        };
+        let bonusIn0 = document.getElementById("bonusIn0");
+        let bonusIn1 = document.getElementById("bonusIn1");
+        let trackballIn0 = document.getElementById("trackballIn0");
+        let trackballIn1 = document.getElementById("trackballIn1");
+        bonusIn0.checked = !bonus;
+        bonusIn0.onchange = function () {
+            bonus = !this.checked;
+            if (!bonus) {
+                trackball = false;
+                trackballIn0.checked = !trackball;
+                trackballIn1.checked = trackball;
+                trackballIn0.disabled = true;
+                trackballIn1.disabled = true;
+            }
+        };
+        bonusIn1.checked = bonus;
+        bonusIn1.onchange = function () {
+            bonus = this.checked;
+            if (bonus) {
+                trackballIn0.disabled = false;
+                trackballIn1.disabled = false;
+            }
+        };
+        trackballIn0.checked = !trackball;
+        trackballIn0.onchange = function () {
+            trackball = !this.checked;
+        };
+        trackballIn1.checked = trackball;
+        trackballIn1.onchange = function () {
+            trackball = this.checked;
+        };
+        if (!bonus) {
+            trackballIn0.disabled = true;
+            trackballIn1.disabled = true;
+        }
+        let tIn = document.getElementById("tIn");
+        let tOut = document.getElementById("tOut");
+        tIn.value = t.toString();
+        tOut.innerHTML = t.toString();
+        tIn.oninput = function () {
+            t = parseFloat(this.value);
+            tOut.innerHTML = t.toString();
+        };
+        let numPointsIn = document.getElementById("numPointsIn");
+        let numPointsOut = document.getElementById("numPointsOut");
+        numPointsIn.value = numPoints.toString();
+        numPointsOut.innerHTML = numPoints.toString();
+        numPointsIn.oninput = function () {
+            numPoints = parseFloat(this.value);
+            numPointsOut.innerHTML = numPoints.toString();
+        };
+
+        class Vector {
+            constructor(x = 0, y = 0, z = 0, w = 0) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.w = w;
+            }
+
+            dot(v) {
+                return this.x * v.x + this.y * v.y + this.z * v.z;
+            }
+
+            cross(v) {
+                return new Vector(
+                    this.y * v.z - this.z * v.y,
+                    this.z * v.x - this.x * v.z,
+                    this.x * v.y - this.y * v.x
+                );
+            }
+
+            norm() {
+                return Math.sqrt(this.dot(this));
+            }
+
+            normalize() {
+                let n = this.norm();
+                this.x /= n;
+                this.y /= n;
+                this.z /= n;
+                return this;
+            }
+
+            sub(v) {
+                return new Vector(
+                    this.x - v.x,
+                    this.y - v.y,
+                    this.z - v.z
+                );
+            }
+
+            add(v) {
+                return new Vector(
+                    this.x + v.x,
+                    this.y + v.y,
+                    this.z + v.z
+                );
+            }
+
+            mul(s) {
+                return new Vector(
+                    this.x * s,
+                    this.y * s,
+                    this.z * s
+                );
+            }
+        }
+
+        class Matrix {
+            constructor(a00 = 1, a01 = 0, a02 = 0, a03 = 0,
+                a10 = 0, a11 = 1, a12 = 0, a13 = 0,
+                a20 = 0, a21 = 0, a22 = 1, a23 = 0,
+                a30 = 0, a31 = 0, a32 = 0, a33 = 1) {
+                this.a00 = a00;
+                this.a01 = a01;
+                this.a02 = a02;
+                this.a03 = a03;
+                this.a10 = a10;
+                this.a11 = a11;
+                this.a12 = a12;
+                this.a13 = a13;
+                this.a20 = a20;
+                this.a21 = a21;
+                this.a22 = a22;
+                this.a23 = a23;
+                this.a30 = a30;
+                this.a31 = a31;
+                this.a32 = a32;
+                this.a33 = a33;
+            }
+
+            mulMat(m) {
+                return new Matrix(
+                    this.a00 * m.a00 + this.a01 * m.a10 + this.a02 * m.a20 + this.a03 * m.a30,
+                    this.a00 * m.a01 + this.a01 * m.a11 + this.a02 * m.a21 + this.a03 * m.a31,
+                    this.a00 * m.a02 + this.a01 * m.a12 + this.a02 * m.a22 + this.a03 * m.a32,
+                    this.a00 * m.a03 + this.a01 * m.a13 + this.a02 * m.a23 + this.a03 * m.a33,
+                    this.a10 * m.a00 + this.a11 * m.a10 + this.a12 * m.a20 + this.a13 * m.a30,
+                    this.a10 * m.a01 + this.a11 * m.a11 + this.a12 * m.a21 + this.a13 * m.a31,
+                    this.a10 * m.a02 + this.a11 * m.a12 + this.a12 * m.a22 + this.a13 * m.a32,
+                    this.a10 * m.a03 + this.a11 * m.a13 + this.a12 * m.a23 + this.a13 * m.a33,
+                    this.a20 * m.a00 + this.a21 * m.a10 + this.a22 * m.a20 + this.a23 * m.a30,
+                    this.a20 * m.a01 + this.a21 * m.a11 + this.a22 * m.a21 + this.a23 * m.a31,
+                    this.a20 * m.a02 + this.a21 * m.a12 + this.a22 * m.a22 + this.a23 * m.a32,
+                    this.a20 * m.a03 + this.a21 * m.a13 + this.a22 * m.a23 + this.a23 * m.a33,
+                    this.a30 * m.a00 + this.a31 * m.a10 + this.a32 * m.a20 + this.a33 * m.a30,
+                    this.a30 * m.a01 + this.a31 * m.a11 + this.a32 * m.a21 + this.a33 * m.a31,
+                    this.a30 * m.a02 + this.a31 * m.a12 + this.a32 * m.a22 + this.a33 * m.a32,
+                    this.a30 * m.a03 + this.a31 * m.a13 + this.a32 * m.a23 + this.a33 * m.a33
+                );
+            }
+
+            mulVec(v) {
+                return new Point(
+                    this.a00 * v.x + this.a01 * v.y + this.a02 * v.z + this.a03 * v.w,
+                    this.a10 * v.x + this.a11 * v.y + this.a12 * v.z + this.a13 * v.w,
+                    this.a20 * v.x + this.a21 * v.y + this.a22 * v.z + this.a23 * v.w,
+                    this.a30 * v.x + this.a31 * v.y + this.a32 * v.z + this.a33 * v.w
+                );
+            }
+
+            inverse() {
+                // determinants of 2x2 submatrices
+                let dt01 = this.a00 * this.a11 - this.a01 * this.a10;
+                let dt02 = this.a00 * this.a12 - this.a02 * this.a10;
+                let dt03 = this.a00 * this.a13 - this.a03 * this.a10;
+                let dt12 = this.a01 * this.a12 - this.a02 * this.a11;
+                let dt13 = this.a01 * this.a13 - this.a03 * this.a11;
+                let dt23 = this.a02 * this.a13 - this.a03 * this.a12;
+                let db01 = this.a20 * this.a31 - this.a21 * this.a30;
+                let db02 = this.a20 * this.a32 - this.a22 * this.a30;
+                let db03 = this.a20 * this.a33 - this.a23 * this.a30;
+                let db12 = this.a21 * this.a32 - this.a22 * this.a31;
+                let db13 = this.a21 * this.a33 - this.a23 * this.a31;
+                let db23 = this.a22 * this.a33 - this.a23 * this.a32;
+
+                // determinant
+                let d = dt01 * db23 - dt02 * db13 + dt03 * db12 + dt12 * db03 - dt13 * db02 + dt23 * db01;
+                if (!d) {
+                    return null;
+                }
+
+                // M^(-1) = 1 / det(M) * adj(M)
+                d = 1.0 / d;
+                return new Matrix(
+                    d * (this.a11 * db23 - this.a12 * db13 + this.a13 * db12),
+                    d * (this.a02 * db13 - this.a01 * db23 - this.a03 * db12),
+                    d * (this.a31 * dt23 - this.a32 * dt13 + this.a33 * dt12),
+                    d * (this.a22 * dt13 - this.a21 * dt23 - this.a23 * dt12),
+                    d * (this.a12 * db03 - this.a10 * db23 - this.a13 * db02),
+                    d * (this.a00 * db23 - this.a02 * db03 + this.a03 * db02),
+                    d * (this.a32 * dt03 - this.a30 * dt23 - this.a33 * dt02),
+                    d * (this.a20 * dt23 - this.a22 * dt03 + this.a23 * dt02),
+                    d * (this.a10 * db13 - this.a11 * db03 + this.a13 * db01),
+                    d * (this.a01 * db03 - this.a00 * db13 - this.a03 * db01),
+                    d * (this.a30 * dt13 - this.a31 * dt03 + this.a33 * dt01),
+                    d * (this.a21 * dt03 - this.a20 * dt13 - this.a23 * dt01),
+                    d * (this.a11 * db02 - this.a10 * db12 - this.a12 * db01),
+                    d * (this.a00 * db12 - this.a01 * db02 + this.a02 * db01),
+                    d * (this.a31 * dt02 - this.a30 * dt12 - this.a32 * dt01),
+                    d * (this.a20 * dt12 - this.a21 * dt02 + this.a22 * dt01),
+                );
+            }
+
+            transpose() {
+                return new Matrix(
+                    this.a00, this.a10, this.a20, this.a30,
+                    this.a01, this.a11, this.a21, this.a31,
+                    this.a02, this.a12, this.a22, this.a32,
+                    this.a03, this.a13, this.a23, this.a33
+                );
+            }
+
+            toGL() {
+                return [
+                    this.a00, this.a10, this.a20, this.a30,
+                    this.a01, this.a11, this.a21, this.a31,
+                    this.a02, this.a12, this.a22, this.a32,
+                    this.a03, this.a13, this.a23, this.a33
+                ];
+            }
+        }
+
+        class Point {
+            constructor(x = 0, y = 0, z = 0, w = 1) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+                this.w = w;
+            }
+
+            dehomogen() {
+                this.x /= this.w;
+                this.y /= this.w;
+                this.z /= this.w;
+                this.w = 1;
+                return this;
+            }
+
+            add(p) {
+                return new Point(
+                    this.x + p.x,
+                    this.y + p.y,
+                    this.z + p.z,
+                    this.w + p.w
+                );
+            }
+
+            mul(s) {
+                return new Point(
+                    this.x * s,
+                    this.y * s,
+                    this.z * s,
+                    this.w * s
+                );
+            }
+
+            inNDCCube() {
+                return this.x >= -1 && this.x <= 1 && this.y >= -1 && this.y <= 1 && this.z >= -1 && this.z <= 1;
+            }
+        }
+
+        class Line {
+            constructor(a, b) {
+                this.a = a;
+                this.b = b;
+            }
+        }
+
+        // language=GLSL
+        const vsSource = `
+            precision mediump float;
+
+            attribute vec4 aPosition;
+            attribute vec4 aNormal;
+
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uNormalMatrix;
+            uniform mat4 uProjectionMatrix;
+
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+
+            void main(void) {
+                vec4 modelViewPosition = uModelViewMatrix * aPosition;
+                vPosition = modelViewPosition.xyz;
+                vNormal = normalize((uNormalMatrix * aNormal).xyz);
+                gl_Position = uProjectionMatrix * modelViewPosition;
+            }
+        `;
+
+        // language=GLSL
+        const fsSource = `
+            precision mediump float;
+
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uNormalMatrix;
+            uniform mat4 uProjectionMatrix;
+
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+
+            void main(void) {
+                vec3 Ca = 0.3 * vec3(0, 1, 0.8);
+                vec3 Cd = 0.7 * vec3(0, 1, 0.8);
+                vec3 Cs = 0.1 * vec3(1, 1, 1);
+                float s = 10.0;
+                vec3 n = normalize(vNormal);
+                vec3 v = normalize(-vPosition);
+                if (dot(n, v) < 0.0) {
+                    n = -n;
+                }
+                vec3 l = v;
+                vec3 r = 2.0 * n * dot(n, l) - l;
+                vec3 color = (Ca + Cd * max(0.0, dot(l, n)) + Cs * pow(max(0.0, dot(v, r)), s)) * vec3(1, 1, 1);
+                gl_FragColor = vec4(color, 1);
+            }
+        `;
+
+        const canvasGL = document.getElementById('canvasGL');
+        const gl = canvasGL.getContext('webgl');
+        if (!gl) {
+            console.log('Unable to initialize WebGL. Your browser or machine may not support it.');
+        }
+
+        function loadShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.log('An error occurred compiling the shaders:\n' + gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+        const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            console.log('Unable to initialize the shader program:\n' + gl.getProgramInfoLog(shaderProgram));
+        }
+
+        const programInfo = {
+            program: shaderProgram,
+            attribLocations: {
+                position: gl.getAttribLocation(shaderProgram, 'aPosition'),
+                normal: gl.getAttribLocation(shaderProgram, 'aNormal')
+            },
+            uniformLocations: {
+                modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
+                normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
+                projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix')
+            }
+        };
+
+        const canvas2D = document.getElementById('canvas2D');
+        const ctx = canvas2D.getContext('2d');
+
+        let mouseRotMat = new Matrix();
+        const lookAtMat = new Matrix(
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, -50,
+            0, 0, 0, 1
+        );
+        const projectionMat = new Matrix(
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, -101 / 99, -200 / 99,
+            0, 0, -1, 0
+        );
+
+        function drawPoint(p, color = '#000000', radius = 4) {
+            let proj = projectionMat.mulMat(lookAtMat).mulMat(mouseRotMat).mulVec(p).dehomogen();
+            if (proj.inNDCCube()) {
+                ctx.beginPath();
+                ctx.arc(proj.x * 300 + 300, -proj.y * 300 + 300, radius, 0, 2 * Math.PI, false);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+        }
+
+        function drawLine(l, color = '#000000', width = 2) {
+            let mat = projectionMat.mulMat(lookAtMat).mulMat(mouseRotMat);
+            let aProj = mat.mulVec(l.a).dehomogen();
+            let bProj = mat.mulVec(l.b).dehomogen();
+            if (aProj.inNDCCube() && bProj.inNDCCube()) {
+                ctx.beginPath();
+                ctx.moveTo(aProj.x * 300 + 300, -aProj.y * 300 + 300);
+                ctx.lineTo(bProj.x * 300 + 300, -bProj.y * 300 + 300);
+                ctx.lineWidth = width;
+                ctx.strokeStyle = color;
+                ctx.stroke();
+            }
+        }
+
+        class BezierCurve {
+            constructor(points) {
+                this.points = points;
+            }
+
+            drawPoints() {
+                for (let i = 0; i < n + 1; i++) {
+                    drawPoint(this.points[i]);
+                }
+            }
+
+            drawFrame(t) {
+
+                // TODO: Aufgabe a
+
+            }
+
+            drawCurve() {
+
+                // TODO: Aufgabe b
+
+            }
+        }
+
+        class BezierSurface {
+            constructor(curves) {
+                this.curves = curves;
+            }
+
+            drawPoints() {
+                for (let i = 0; i < n + 1; i++) {
+                    for (let j = 0; j < n; j++) {
+                        drawLine(new Line(this.curves[i].points[j], this.curves[i].points[j + 1]));
+                    }
+                    this.curves[i].drawPoints();
+                }
+            }
+
+            drawSurface() {
+                let vertices = [];
+                let faces = [];
+
+                // TODO: Bonusaufgabe
+
+                let positions = [];
+                let normals = [];
+                let indices = [];
+                for (let i = 0; i < faces.length / 3; i++) {
+                    let t = [];
+                    for (let j = 0; j < 3; j++) {
+                        let v = new Vector(
+                            vertices[3 * faces[3 * i + j]],
+                            vertices[3 * faces[3 * i + j] + 1],
+                            vertices[3 * faces[3 * i + j] + 2]
+                        );
+                        t.push(v);
+                        positions.push(v.x, v.y, v.z);
+                        indices.push(3 * i + j);
+                    }
+                    let e1 = t[1].sub(t[0]);
+                    let e2 = t[2].sub(t[0]);
+                    let n = e1.cross(e2).normalize();
+                    for (let j = 0; j < 3; j++) {
+                        normals.push(n.x, n.y, n.z);
+                    }
+                }
+                const vertexCount = indices.length;
+
+                const modelViewMat = lookAtMat.mulMat(mouseRotMat);
+                const normalMat = modelViewMat.inverse().transpose();
+
+                const positionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+                const normalBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+                const indexBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+                gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+                {
+                    const numComponents = 3;
+                    const type = gl.FLOAT;
+                    const normalize = false;
+                    const stride = 0;
+                    const offset = 0;
+                    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                    gl.vertexAttribPointer(
+                        programInfo.attribLocations.position,
+                        numComponents,
+                        type,
+                        normalize,
+                        stride,
+                        offset);
+                    gl.enableVertexAttribArray(programInfo.attribLocations.position);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+                    gl.vertexAttribPointer(
+                        programInfo.attribLocations.normal,
+                        numComponents,
+                        type,
+                        normalize,
+                        stride,
+                        offset);
+                    gl.enableVertexAttribArray(programInfo.attribLocations.normal);
+                }
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+                gl.uniformMatrix4fv(
+                    programInfo.uniformLocations.modelViewMatrix,
+                    false,
+                    modelViewMat.toGL());
+                gl.uniformMatrix4fv(
+                    programInfo.uniformLocations.normalMatrix,
+                    false,
+                    normalMat.toGL());
+                gl.uniformMatrix4fv(
+                    programInfo.uniformLocations.projectionMatrix,
+                    false,
+                    projectionMat.toGL());
+                {
+                    const type = gl.UNSIGNED_SHORT;
+                    const offset = 0;
+                    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+                }
+            }
+        }
+
+        const coordinates = [
+            [
+                [0, -12, 20],
+                [-24, 12, 20],
+                [-12, 24, 20],
+                [0, 12, 20],
+                [-12, 12, 20]
+            ],
+            [
+                [0, -16, 10],
+                [-16, -16, 0],
+                [-16, 16, 0],
+                [0, 16, 10],
+                [0, 24, 10]
+            ],
+            [
+                [0, -20, 0],
+                [20, -20, 10],
+                [20, 20, 10],
+                [0, 20, 0],
+                [0, 30, 0]
+            ],
+            [
+                [0, -24, -10],
+                [48, 24, -10],
+                [24, 48, -10],
+                [0, 24, -10],
+                [24, 24, -10]
+            ],
+            [
+                [0, -24, -20],
+                [0, -12, -20],
+                [0, 0, -20],
+                [0, 12, -20],
+                [0, 24, -20]
+            ]
+        ];
+        let controlPoints = [];
+        for (let i = 0; i < 5; i++) {
+            let controlPointsInner = [];
+            for (let j = 0; j < 5; j++) {
+                controlPointsInner.push(new Point(coordinates[i][j][0], coordinates[i][j][1], coordinates[i][j][2]));
+            }
+            controlPoints.push(controlPointsInner);
+        }
+
+        let surface;
+
+        function updateBezierSurface() {
+            let curves = [];
+            for (let i = 0; i < n + 1; i++) {
+                let points = [];
+                for (let j = 0; j < n + 1; j++) {
+                    points.push(controlPoints[i][j]);
+                }
+                curves.push(new BezierCurve(points));
+            }
+            surface = new BezierSurface(curves);
+        }
+
+        updateBezierSurface();
+
+        function update() {
+            gl.clearColor(1.0, 1.0, 1.0, 1.0);
+            gl.clearDepth(1.0);
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LESS);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.useProgram(programInfo.program);
+            ctx.clearRect(0, 0, 600, 600);
+
+            if (bonus) {
+                surface.drawPoints();
+                surface.drawSurface();
+            } else {
+                surface.curves[0].drawPoints();
+                surface.curves[0].drawFrame(t);
+                surface.curves[0].drawCurve();
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        requestAnimationFrame(update);
+
+        let down = false;
+        let x0;
+        let y0;
+        let mouseRotMatInv = new Matrix();
+        let curveIdx = 0;
+        let pointIdx = 0;
+
+        document.getElementById("canvas2D").addEventListener("mousedown", function (event) {
+            down = true;
+            let rect = canvas2D.getBoundingClientRect();
+            x0 = event.clientX - rect.left - 300;
+            y0 = 300 - event.clientY + rect.top;
+            if (!trackball) {
+
+                function distance(x0, y0, x1, y1) {
+                    return Math.sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+                }
+
+                let mat = projectionMat.mulMat(lookAtMat).mulMat(mouseRotMat);
+                let min = Infinity;
+                for (let i = 0; i < (bonus ? n + 1 : 1); i++) {
+                    for (let j = 0; j < n + 1; j++) {
+                        let proj = mat.mulVec(surface.curves[i].points[j]).dehomogen();
+                        if (proj.inNDCCube()) {
+                            let d = distance(proj.x * 300, proj.y * 300, x0, y0);
+                            if (d < min) {
+                                min = d;
+                                curveIdx = i;
+                                pointIdx = j;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        document.getElementById("canvas2D").addEventListener("mousemove", function (event) {
+            if (down) {
+                let rect = canvas2D.getBoundingClientRect();
+                let x1 = event.clientX - rect.left - 300;
+                let y1 = 300 - event.clientY + rect.top;
+                if (x0 !== x1 || y0 !== y1) {
+                    if (trackball) {
+                        let v0 = new Vector(x0, y0, 300);
+                        v0.normalize();
+                        let v1 = new Vector(x1, y1, 300);
+                        v1.normalize();
+                        if (v0.sub(v1).norm() > 0.001) {
+                            let n = v0.cross(v1);
+                            let sin = n.norm();
+                            let cos = v0.dot(v1);
+                            n.normalize();
+                            mouseRotMat = new Matrix(
+                                (1 - cos) * n.x * n.x + cos, (1 - cos) * n.x * n.y - sin * n.z, (1 - cos) * n.x * n.z + sin * n.y, 0,
+                                (1 - cos) * n.y * n.x + sin * n.z, (1 - cos) * n.y * n.y + cos, (1 - cos) * n.y * n.z - sin * n.x, 0,
+                                (1 - cos) * n.z * n.x - sin * n.y, (1 - cos) * n.z * n.y + sin * n.x, (1 - cos) * n.z * n.z + cos, 0,
+                                0, 0, 0, 1
+                            ).mulMat(mouseRotMat);
+                        }
+                    } else {
+                        let point = surface.curves[curveIdx].points[pointIdx];
+                        let delta = mouseRotMatInv.mulVec(new Point(x1 - x0, y1 - y0, 0)).mul((50 - mouseRotMat.mulVec(point).z) / 300);
+                        point.x += delta.x;
+                        point.y += delta.y;
+                        point.z += delta.z;
+                    }
+                    x0 = x1;
+                    y0 = y1;
+                }
+            }
+        });
+
+        document.getElementById("canvas2D").addEventListener("mouseup", function () {
+            down = false;
+            mouseRotMatInv = mouseRotMat.inverse();
+        });
+
+    </script>
+</body>
+
+</html>

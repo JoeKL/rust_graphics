@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Assignment 10</title>
+    <style>
+        .slider {
+            width: 500px;
+            height: 10px;
+        }
+
+        #canvas {
+            float: left;
+            margin-right: 1em;
+        }
+
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" style="border:1px solid #000000; image-rendering: pixelated; image-rendering: crisp-edges;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div>
+        <p><input type="checkbox" id="shadowsIn"><label for="shadowsIn"> Schatten</label></p>
+    </div>
+    <div>
+        <p>Maximale Rekursionstiefe: <span id="maxDepthOut"></span></p>
+        <label for="maxDepthIn"></label><input type="range" id="maxDepthIn" min="1" max="7" class="slider">
+    </div>
+    <div>
+        <p><input type="checkbox" id="softShadowsIn"><label for="softShadowsIn"> Soft-Schatten</label></p>
+    </div>
+    <div>
+        <p>Super-Sampling Faktor: <span id="ssFactorOut"></span></p>
+        <label for="ssFactorIn"></label><input type="range" id="ssFactorIn" min="1" max="3" class="slider">
+    </div>
+    <script>
+
+        let shadows = false;
+        let maxDepth = 3;
+        let softShadows = false;
+        let ssFactor = 1;
+
+        let shadowsIn = document.getElementById("shadowsIn");
+        let softShadowsIn = document.getElementById("softShadowsIn");
+        shadowsIn.checked = shadows;
+        shadowsIn.onchange = function () {
+            shadows = this.checked;
+            softShadowsIn.disabled = !shadows;
+        };
+        softShadowsIn.checked = softShadows;
+        softShadowsIn.onchange = function () {
+            softShadows = this.checked;
+        };
+        softShadowsIn.disabled = !shadows;
+        let maxDepthIn = document.getElementById("maxDepthIn");
+        let maxDepthOut = document.getElementById("maxDepthOut");
+        maxDepthIn.value = maxDepth;
+        maxDepthOut.innerHTML = maxDepth;
+        maxDepthIn.oninput = function () {
+            maxDepth = this.value;
+            maxDepthOut.innerHTML = maxDepth;
+        };
+        let ssFactorIn = document.getElementById("ssFactorIn");
+        let ssFactorOut = document.getElementById("ssFactorOut");
+        ssFactorIn.value = ssFactor;
+        ssFactorOut.innerHTML = ssFactor;
+        ssFactorIn.oninput = function () {
+            ssFactor = this.value;
+            ssFactorOut.innerHTML = ssFactor;
+        };
+
+        class Vector {
+            constructor(x = 0, y = 0, z = 0) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+
+            dot(v) {
+                return this.x * v.x + this.y * v.y + this.z * v.z;
+            }
+
+            cross(v) {
+                return new Vector(
+                    this.y * v.z - this.z * v.y,
+                    this.z * v.x - this.x * v.z,
+                    this.x * v.y - this.y * v.x
+                );
+            }
+
+            norm() {
+                return Math.sqrt(this.dot(this));
+            }
+
+            normalize() {
+                let n = this.norm();
+                this.x /= n;
+                this.y /= n;
+                this.z /= n;
+                return this;
+            }
+
+            sub(v) {
+                return new Vector(
+                    this.x - v.x,
+                    this.y - v.y,
+                    this.z - v.z
+                );
+            }
+
+            add(v) {
+                return new Vector(
+                    this.x + v.x,
+                    this.y + v.y,
+                    this.z + v.z
+                );
+            }
+
+            mul(s) {
+                return new Vector(
+                    this.x * s,
+                    this.y * s,
+                    this.z * s
+                );
+            }
+
+            mulVec(v) {
+                return new Vector(
+                    this.x * v.x,
+                    this.y * v.y,
+                    this.z * v.z
+                );
+            }
+        }
+
+        class Material {
+            constructor(color, diffuse, specular, shininess, reflectivity) {
+                this.cd = color.mul(diffuse);
+                this.cs = color.mul(specular);
+                this.s = shininess;
+                this.reflectivity = reflectivity;
+            }
+        }
+
+        class Light {
+            constructor(position, color, intensity) {
+                this.pos = position;
+                this.color = color.mul(intensity);
+            }
+        }
+
+        class Sphere {
+            constructor(center, radius, material) {
+                this.c = center;
+                this.r = radius;
+                this.material = material;
+            }
+
+            normal(x) {
+                return x.sub(this.c).normalize();
+            }
+
+            intersect(o, v) {
+                let dist = Infinity;
+                let pos;
+                const oSubC = o.sub(this.c);
+                const vDotOC = v.dot(oSubC);
+                const radicand = vDotOC * vDotOC - oSubC.dot(oSubC) + this.r * this.r;
+                if (radicand >= 0) {
+                    const root = Math.sqrt(radicand);
+                    const minus = -vDotOC - root;
+                    const plus = -vDotOC + root;
+                    if (minus >= 0) {
+                        dist = minus;
+                    } else if (plus >= 0) {
+                        dist = plus;
+                    }
+                }
+                if (dist !== Infinity) {
+                    pos = o.add(v.mul(dist));
+                }
+                return [pos, dist];
+            }
+        }
+
+        class Plane {
+
+            // TODO: Aufgabe b
+
+        }
+
+        const size = 600;
+        const canvas = document.getElementById("canvas");
+        canvas.setAttribute("height", size.toString());
+        canvas.setAttribute("width", size.toString());
+        const ctx = canvas.getContext("2d");
+        let image;
+        const epsilon = 0.001;
+        const backgroundColor = new Vector(0, 0.08, 0.16);
+        let pix = 0;
+
+        let mat0 = new Material(new Vector(1, 1, 1), 0.5, 0.5, 1, 0.5);
+        let mat1 = new Material(new Vector(1, 0.1, 1), 0.5, 0.5, 21, 0.5);
+        let mat2 = new Material(new Vector(1, 1, 1), 0, 0, 100, 1);
+        let mat3 = new Material(new Vector(1, 1, 1), 0.7, 0, 10, 0);
+        let mat4 = new Material(new Vector(0.25, 0.5, 1), 0.3, 0.3, 10, 0.5);
+        let objects = [
+            new Plane(new Vector(0, 0, -120), new Vector(1, 0, -120), new Vector(0, 1, -120), mat0),
+            new Sphere(new Vector(0, 0, -80), 20, mat1),
+            new Sphere(new Vector(0, -40, -40), 25, mat2),
+            new Sphere(new Vector(-60, 40, -100), 20, mat3),
+            new Sphere(new Vector(30, 30, -60), 20, mat4)
+            // TODO: Bonusaufgabe a
+        ];
+        let lights = [
+            new Light(new Vector(0, 100, 100), new Vector(1, 0.5, 0.5), 0.5),
+            new Light(new Vector(-100, -50, 0), new Vector(0.5, 1, 0.5), 1),
+            new Light(new Vector(100, -50, 50), new Vector(0.5, 0.5, 1), 0.9)
+        ];
+
+        function phong(x, n, v, material) {
+            let color = new Vector(0, 0, 0);
+            for (let i = 0; i < lights.length; i++) {
+                let lightPos = lights[i].pos;
+                let lightColor = lights[i].color;
+                let l = lightPos.sub(x).normalize();
+                let r = n.mul(2).mul(n.dot(l)).sub(l);
+                let visibilityFactor = 1;
+                if (shadows) {
+                    if (softShadows) {
+
+                        // TODO: Bonusaufgabe b
+
+                    } else {
+
+                        // TODO: Aufgabe d
+
+                    }
+                }
+                let diffuse = material.cd.mul(Math.max(0, l.dot(n)) * visibilityFactor);
+                let specular = material.cs.mul(Math.pow(Math.max(0, v.dot(r)), material.s) * visibilityFactor);
+                color = color.add(diffuse.add(specular).mulVec(lightColor));
+            }
+            return color;
+        }
+
+        function setPixel(row, col, color = new Vector(0, 0, 0)) {
+            let rgb = [255 * color.x, 255 * color.y, 255 * color.z];
+            if (row >= 0 && row < size && col >= 0 && col < size) {
+                for (let i = 0; i < 3; i++) {
+                    image.data[4 * size * row + 4 * col + i] = rgb[i];
+                }
+            }
+        }
+
+        function trace(o, v, depth = 1) {
+            let min = Infinity;
+            let p;
+            let idx = -1;
+            for (let i = 0; i < objects.length; i++) {
+                let [pos, dist] = objects[i].intersect(o, v);
+                if (epsilon < dist && dist < min) {
+                    min = dist;
+                    p = pos;
+                    idx = i;
+                }
+            }
+            if (idx === -1) {
+                return backgroundColor;
+            }
+            let n = objects[idx].normal(p);
+            let cDirect = phong(p, n, new Vector(0, 0, 0).sub(v), objects[idx].material);
+
+            // TODO: Aufgabe c
+
+            return cDirect;
+        }
+
+        function update() {
+            for (let k = 0; k < 10000; k++) {
+                const i = pix % size;
+                const j = (pix - i) / size;
+
+                // TODO: Aufgabe a und Bonusaufgabe c
+
+                pix = (pix + 7) % (size * size); // Summand may not divide size * size
+            }
+            ctx.putImageData(image, 0, 0);
+            requestAnimationFrame(update);
+        }
+
+        ctx.clearRect(0, 0, size, size);
+        image = ctx.createImageData(size, size);
+        for (let i = 0; i < image.data.length; i++) {
+            image.data[i] = 255;
+        }
+        requestAnimationFrame(update);
+
+        let down = false;
+        let x0;
+        let y0;
+        let idx = 0;
+
+        canvas.addEventListener("mousedown", function (event) {
+
+            function distance(x0, y0, x1, y1) {
+                return Math.sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+            }
+
+            down = true;
+            let rect = canvas.getBoundingClientRect();
+            x0 = event.clientX - rect.left - size / 2;
+            y0 = size / 2 - event.clientY + rect.top;
+            let min = Infinity;
+            for (let i = 0; i < objects.length; i++) {
+                let object = objects[i];
+                if (object instanceof Sphere) {
+                    let center = object.c;
+                    let x = center.x / -center.z;
+                    let y = center.y / -center.z;
+                    let d = distance(x * size / 2, y * size / 2, x0, y0);
+                    if (d < min) {
+                        min = d;
+                        idx = i;
+                    }
+                }
+            }
+            console.log(idx);
+        });
+
+        canvas.addEventListener("mousemove", function (event) {
+            if (down) {
+                let rect = canvas.getBoundingClientRect();
+                let x1 = event.clientX - rect.left - size / 2;
+                let y1 = size / 2 - event.clientY + rect.top;
+                if (x0 !== x1 || y0 !== y1) {
+                    let center = objects[idx].c;
+                    center.x += (x1 - x0) * -center.z / (size / 2);
+                    center.y += (y1 - y0) * -center.z / (size / 2);
+                    x0 = x1;
+                    y0 = y1;
+                }
+            }
+        });
+
+        canvas.addEventListener("mouseup", function () {
+            down = false;
+        });
+
+    </script>
+</body>
+
+</html>

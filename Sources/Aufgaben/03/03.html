@@ -95,12 +95,10 @@
         }
 
         class Matrix {
-            constructor(
-                a00 = 1, a01 = 0, a02 = 0, a03 = 0,
+            constructor(a00 = 1, a01 = 0, a02 = 0, a03 = 0,
                 a10 = 0, a11 = 1, a12 = 0, a13 = 0,
                 a20 = 0, a21 = 0, a22 = 1, a23 = 0,
-                a30 = 0, a31 = 0, a32 = 0, a33 = 1
-            ) {
+                a30 = 0, a31 = 0, a32 = 0, a33 = 1) {
                 this.a00 = a00;
                 this.a01 = a01;
                 this.a02 = a02;
@@ -382,18 +380,13 @@
         let lines = createLines();
 
         function update() {
-            ctx.clearRect(0, 0, size, size); // clear displaybuffer
-
-            //set displaybuffer to white
+            ctx.clearRect(0, 0, size, size);
             image = ctx.createImageData(size, size);
             for (let i = 0; i < image.data.length; i++) {
                 image.data[i] = 255;
             }
-
-            //perform transformation
             let transform = viewPortMat.mulMat(projectionMat).mulMat(lookAtMat).mulMat(mouseRotMat);
 
-            
             if (drawTriangles) {
                 let transformed = [];
                 for (let i = 0; i < triangles.length; i++) {
@@ -411,7 +404,6 @@
                     drawTriangle(transformed[i]);
                 }
             }
-            
             if (drawLines) {
                 for (let i = 0; i < lines.length; i++) {
                     let points = [lines[i].a, lines[i].b];
