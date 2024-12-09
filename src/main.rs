@@ -1390,7 +1390,7 @@ fn create_look_at_matrix(eye: Vector, target: Vector, up: Vector) -> Mat4x4 {
 }
 
 // Perspective projection matrix
-fn create_perspective_matrix(fov_degrees: f32, aspect_ratio: f32, near: f32, far: f32) -> Mat4x4 {
+fn create_projection_matrix(fov_degrees: f32, aspect_ratio: f32, near: f32, far: f32) -> Mat4x4 {
     let fov_rad = fov_degrees * std::f32::consts::PI / 180.0;
     let f = 1.0 / (fov_rad / 2.0).tan();
 
@@ -1456,15 +1456,16 @@ pub fn flat_shade_triangle(
         (a.z + b.z + c.z) / 3.0,
     );
 
-    // Calculate triangle normal from vertices
-    let edge1 = b.sub_p(a); // vector from a to b
-    let edge2 = c.sub_p(a); // vector from a to c
-    let mut n = edge1.cross(edge2).normalize();
+    // // Calculate triangle normal from vertices
+    // let edge1 = b.sub_p(a); // vector from a to b
+    // let edge2 = c.sub_p(a); // vector from a to c
+    // let mut n = edge1.cross(edge2).normalize();
 
-    // Flip normal if it points inward (assuming +Z is outward)
-    if n.dot(Vector::new(0.0, 0.0, 1.0)) < 0.0 {
-        n = n.mul(-1.0);
-    }
+    // // Flip normal if it points inward (assuming +Z is outward)
+    // if n.dot(Vector::new(0.0, 0.0, 1.0)) < 0.0 {
+    //     n = n.mul(-1.0);
+    // }
+    let n = Vector::new(x.x, x.y, x.z + 2.0).normalize(); // z+2 weil sieht am besten aus
 
     // Calculate view vector (from surface point to camera at origin)
     let v: Vector = Vector::new(0.0, 0.0, 50.0).sub_p(x).normalize();
@@ -1515,7 +1516,6 @@ pub fn update(display_buffer: &mut DisplayBuffer, mouse_rot_mat: &Mat4x4) {
     let point_f = Point::new(10.0, -10.0, 10.0);
     let point_g = Point::new(10.0, 10.0, -10.0);
     let point_h = Point::new(10.0, 10.0, 10.0);
-    let point_i = Point::new(0.0, 20.0, 0.0);
 
     let mut lines: [Line; 12];
     lines = [
@@ -1546,70 +1546,55 @@ pub fn update(display_buffer: &mut DisplayBuffer, mouse_rot_mat: &Mat4x4) {
     let light_pos: Point = Point::new(15.0, 15.0, 0.0);
     let light_color: ColorRGB = ColorRGB::WHITE;
 
-    let eye = Vector::new(0.0, 0.0, 50.0);
+    let mut eye = Vector::new(0.0, 0.0, 50.0);
     let target = Vector::new(0.0, 0.0, 0.0);
     let up = Vector::new(0.0, 1.0, 0.0);
+
+    let eye_point = mouse_rot_mat.mul_vec(eye);
+    eye = Vector::new(eye_point.x, eye_point.y, eye_point.z);
+
+    println!("{:#?}", eye_point);
 
     let far: f32 = 100.0;
     let near: f32 = 1.0;
 
     let look_at = create_look_at_matrix(eye, target, up);
 
-    let projection = create_perspective_matrix(
-        60.0, // 60 degree FOV
+    look_at.print_with_label("lookat");
+
+    let projection = create_projection_matrix(
+        45.0, // 60 degree FOV
         WINDOW_WIDTH as f32 / WINDOW_HEIGHT as f32,
         near,
         far,
     );
+
     let viewport = create_viewport_matrix(WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32);
 
-    // for line in lines {
-    //     let mut start_point = line.a;
-    //     let mut end_point = line.b;
-
-    //     // // After model (mouse rotation)
-    //     start_point = mouse_rot_mat.mul_point(start_point);
-    //     end_point = mouse_rot_mat.mul_point(end_point);
-
-    //     // After look_at
-    //     start_point = look_at.mul_point(start_point);
-    //     end_point = look_at.mul_point(end_point);
-
-    //     // After projection
-    //     start_point = projection.mul_point(start_point);
-    //     end_point = projection.mul_point(end_point);
-
-    //     // After perspective divide
-    //     start_point.dehomogen();
-    //     end_point.dehomogen();
-
-    //     // After viewport
-    //     start_point = viewport.mul_point(start_point);
-    //     end_point = viewport.mul_point(end_point);
-
-    //     let screen_point_a = DisplayBufferPoint {
-    //         y: start_point.y as i32,
-    //         x: start_point.x as i32,
-    //     };
-    //     let screen_point_b = DisplayBufferPoint {
-    //         x: end_point.x as i32,
-    //         y: end_point.y as i32,
-    //     };
-
-    //     // println!("{:#?}", start_point);
-
-    //     display_buffer.draw_line(
-    //         screen_point_a,
-    //         screen_point_b,
-    //         ColorRGB::from_rgb(255, 255, 255),
-    //     );
-    // }
-
-    // Sort
+    // Sort based on distance to eye
     triangles.sort_by(|a, b| {
-        (b.a.z + b.b.z + b.c.z)
-            .partial_cmp(&(a.a.z + a.b.z + a.c.z))
-            .unwrap()
+        // Calculate centers
+        let center_a = Point::new(
+            (a.a.x + a.b.x + a.c.x) / 3.0,
+            (a.a.y + a.b.y + a.c.y) / 3.0,
+            (a.a.z + a.b.z + a.c.z) / 3.0,
+        );
+        let center_b = Point::new(
+            (b.a.x + b.b.x + b.c.x) / 3.0,
+            (b.a.y + b.b.y + b.c.y) / 3.0,
+            (b.a.z + b.b.z + b.c.z) / 3.0,
+        );
+
+        // Calculate squared distances to eye
+        let dist_a = (center_a.x - eye.x).powi(2)
+            + (center_a.y - eye.y).powi(2)
+            + (center_a.z - eye.z).powi(2);
+        let dist_b = (center_b.x - eye.x).powi(2)
+            + (center_b.y - eye.y).powi(2)
+            + (center_b.z - eye.z).powi(2);
+
+        // Sort furthest first
+        dist_b.partial_cmp(&dist_a).unwrap()
     });
 
     for triangle in triangles {
@@ -1617,10 +1602,10 @@ pub fn update(display_buffer: &mut DisplayBuffer, mouse_rot_mat: &Mat4x4) {
         let mut point_1: Point = triangle.b;
         let mut point_2: Point = triangle.c;
 
-        // After model (mouse rotation)
-        point_0 = mouse_rot_mat.mul_point(point_0);
-        point_1 = mouse_rot_mat.mul_point(point_1);
-        point_2 = mouse_rot_mat.mul_point(point_2);
+        //  After model (mouse rotation)
+        // point_0 = mouse_rot_mat.mul_point(point_0);
+        // point_1 = mouse_rot_mat.mul_point(point_1);
+        // point_2 = mouse_rot_mat.mul_point(point_2);
 
         // After look_at
         point_0 = look_at.mul_point(point_0);
@@ -1668,36 +1653,77 @@ pub fn update(display_buffer: &mut DisplayBuffer, mouse_rot_mat: &Mat4x4) {
         );
     }
 
-    let origin = Point::new(0.0, 0.0, 0.0);
-    let x_end = Point::new(20.0, 0.0, 0.0);  // X axis in red
-    let y_end = Point::new(0.0, 20.0, 0.0);  // Y axis in green
-    let z_end = Point::new(0.0, 0.0, 20.0);  // Z axis in blue
+    for line in lines {
+        let mut start_point = line.a;
+        let mut end_point = line.b;
 
+        // // // After model (mouse rotation)
+        // start_point = mouse_rot_mat.mul_point(start_point);
+        // end_point = mouse_rot_mat.mul_point(end_point);
+
+        // After look_at
+        start_point = look_at.mul_point(start_point);
+        end_point = look_at.mul_point(end_point);
+
+        // After projection
+        start_point = projection.mul_point(start_point);
+        end_point = projection.mul_point(end_point);
+
+        // After perspective divide
+        start_point.dehomogen();
+        end_point.dehomogen();
+
+        // After viewport
+        start_point = viewport.mul_point(start_point);
+        end_point = viewport.mul_point(end_point);
+
+        let screen_point_a = DisplayBufferPoint {
+            y: start_point.y as i32,
+            x: start_point.x as i32,
+        };
+        let screen_point_b = DisplayBufferPoint {
+            x: end_point.x as i32,
+            y: end_point.y as i32,
+        };
+
+        // println!("{:#?}", start_point);
+
+        display_buffer.draw_line(
+            screen_point_a,
+            screen_point_b,
+            ColorRGB::from_rgb(255, 255, 255),
+        );
+    }
+
+    let origin = Point::new(0.0, 0.0, 0.0);
+    let x_end = Point::new(20.0, 0.0, 0.0); // X axis in red
+    let y_end = Point::new(0.0, 20.0, 0.0); // Y axis in green
+    let z_end = Point::new(0.0, 0.0, 20.0); // Z axis in blue
 
     let axes = [
-        (origin, x_end, ColorRGB::RED),    // X axis - red
-        (origin, y_end, ColorRGB::GREEN),    // Y axis - green
-        (origin, z_end, ColorRGB::BLUE),    // Z axis - blue
-        (origin, light_pos, ColorRGB::YELLOW),    // light source - yellow
+        (origin, x_end, ColorRGB::RED),        // X axis - red
+        (origin, y_end, ColorRGB::GREEN),      // Y axis - green
+        (origin, z_end, ColorRGB::BLUE),       // Z axis - blue
+        (origin, light_pos, ColorRGB::YELLOW), // light source - yellow
     ];
 
     for (start, end, color) in axes {
         let mut start_point = start;
         let mut end_point = end;
 
-        // Apply your transformations
-        start_point = mouse_rot_mat.mul_point(start_point);
-        end_point = mouse_rot_mat.mul_point(end_point);
-        
+        // // Apply your transformations
+        // start_point = mouse_rot_mat.mul_point(start_point);
+        // end_point = mouse_rot_mat.mul_point(end_point);
+
         start_point = look_at.mul_point(start_point);
         end_point = look_at.mul_point(end_point);
-        
+
         start_point = projection.mul_point(start_point);
         end_point = projection.mul_point(end_point);
-        
+
         start_point.dehomogen();
         end_point.dehomogen();
-        
+
         start_point = viewport.mul_point(start_point);
         end_point = viewport.mul_point(end_point);
 
@@ -1751,8 +1777,8 @@ fn main() {
             if window.get_mouse_down(minifb::MouseButton::Left) {
                 // Convert mouse coordinates to center-oriented system
                 // Shifts origin to center and flips Y axis (screen coordinates to mathematical)
-                let x_new = WINDOW_WIDTH as f32 / 2.0 - x;
-                let y_new = WINDOW_HEIGHT as f32 / 2.0 - y;
+                let x_new = x - WINDOW_WIDTH as f32 / 2.0;
+                let y_new = y - WINDOW_HEIGHT as f32 / 2.0;
 
                 if !is_dragging {
                     // Only update start position when we first click
