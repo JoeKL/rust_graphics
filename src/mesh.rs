@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::primitives::*;
 use crate::obj_loader::*;
 
@@ -14,7 +16,7 @@ impl Mesh {
 }
     pub fn new_ball() -> Mesh {
         let vertices = create_vertices();
-        let faces = create_faces(&vertices);
+        let faces = create_faces();
         Mesh {
             vertices,
             faces,

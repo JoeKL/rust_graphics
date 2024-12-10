@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+
 use crate::primitives::*;
 
 pub struct Camera {

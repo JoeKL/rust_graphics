@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::primitives::*;
 
 const BALL_V: [f32; 1203] = [
@@ -1330,7 +1332,8 @@ const BALL_F: [usize; 2394] = [
     304, 39, 324, 54, 219, 197, 124, 125,
 ];
 
-pub fn create_faces(vertices: &[Point]) -> Vec<Face> {
+
+pub fn create_faces() -> Vec<Face> {
     let mut faces: Vec<Face> = Vec::new();
     // F array contains triplets of vertex indices
     for i in (0..BALL_F.len()).step_by(3) {
