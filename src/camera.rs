@@ -19,6 +19,9 @@ pub struct Camera {
     projection_matrix: Mat4x4,
     look_at_projection_matrix: Mat4x4,
 
+    //cache target to recalculate while rotating camera
+    pub current_target: Point,
+
     // flags
     needs_update: bool,
 }
@@ -41,6 +44,7 @@ impl Camera {
             look_at_matrix: Mat4x4::new_identity(),
             projection_matrix: Mat4x4::new_identity(),
             look_at_projection_matrix: Mat4x4::new_identity(),
+            current_target: target,
             needs_update: true,
         };
 
