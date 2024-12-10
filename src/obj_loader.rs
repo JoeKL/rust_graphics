@@ -1331,18 +1331,17 @@ const F: [usize; 2394] = [
     304, 39, 324, 54, 219, 197, 124, 125,
 ];
 
-
-pub fn create_triangles(vertices: &[Point]) -> Vec<Triangle> {
-    let mut triangles = Vec::new();
+pub fn create_faces(vertices: &[Point]) -> Vec<Face> {
+    let mut faces:Vec<Face> = Vec::new();
     // F array contains triplets of vertex indices
     for i in (0..F.len()).step_by(3) {
-        triangles.push(Triangle::new(
-            vertices[F[i]],
-            vertices[F[i + 1]],
-            vertices[F[i + 2]],
+        faces.push(Face::new(
+            F[i],
+            F[i + 1],
+            F[i + 2],
         ));
     }
-    triangles
+    faces
 }
 
 pub fn create_vertices() -> Vec<Point> {
@@ -1350,9 +1349,9 @@ pub fn create_vertices() -> Vec<Point> {
     // V array contains x,y,z triplets
     for i in (0..V.len()).step_by(3) {
         vertices.push(Point::new(
-            V[i] * 10.0, // multiply by 10 to make it visible
-            V[i + 1] * 10.0,
-            V[i + 2] * 10.0,
+            V[i], // multiply by 10 to make it visible
+            V[i + 1],
+            V[i + 2],
         ));
     }
     vertices

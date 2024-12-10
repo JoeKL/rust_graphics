@@ -8,25 +8,29 @@ use crate::primitives::*;
 
 pub struct Mesh {
     pub vertices: Vec<Point>,
-    pub triangles: Vec<Triangle>,
+    pub faces: Vec<Face>,
 }
 impl Mesh {
     pub fn new() -> Mesh {
         let vertices = create_vertices();
-        let triangles = create_triangles(&vertices);
+        let faces = create_faces(&vertices);
         Mesh {
             vertices,
-            triangles,
+            faces,
         }
     }
 
-    pub fn transform_mesh(&mut self, transform: Mat4x4){
-
-        for i in 0..self.triangles.len() {
-            self.triangles[i].a = transform.mul_point(self.triangles[i].a);
-            self.triangles[i].b = transform.mul_point(self.triangles[i].b);
-            self.triangles[i].c = transform.mul_point(self.triangles[i].c);
+    pub fn transform_mesh(&mut self, transform: Mat4x4) {
+        for vertex in &mut self.vertices {
+            *vertex = transform.mul_point(*vertex);
         }
+    }
+
+    // Helper to get triangles for rendering
+    pub fn get_triangles(&self) -> Vec<Triangle> {
+        self.faces.iter()
+            .map(|face| face.to_triangle(&self.vertices))
+            .collect()
     }
 }
 
@@ -42,14 +46,14 @@ impl Scene {
         let root_node = Point::new(0.0, 0.0, 0.0);
 
         // camera
-        let pos = Point::new(0.0, 0.0, 25.0);
+        let pos = Point::new(0.0, 0.0, 10.0);
         let target = Point::new(0.0, 0.0, 0.0);
         let up = Vector::new(0.0, 1.0, 0.0);
 
         let camera: Camera = Camera::new(pos, target, up);
 
         //light sources
-        let light = LightSource::new(Point::new(15.0, 15.0, 15.0), ColorRGB::WHITE);
+        let light = LightSource::new(Point::new(2.0, 2.0, 1.5), ColorRGB::WHITE);
 
         let mut lights: Vec<LightSource> = Vec::new();
         lights.push(light);
