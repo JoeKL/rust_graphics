@@ -1,5 +1,7 @@
+use crate::camera::Camera;
 use crate::color::ColorRGB;
 use crate::light_source::LightSource;
+use crate::mesh::Mesh;
 use crate::primitives::*;
 use crate::scene::Scene;
 use crate::DisplayBuffer;
@@ -23,10 +25,10 @@ pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSour
     );
 
     // Phong lighting coefficients
-    let ambient = 0.3;
-    let diffuse = 0.7;
-    let specular = 0.1;
-    let shininess = 10.0;
+    let ambient = 0.1;
+    let diffuse = 0.5;
+    let specular = 0.5;
+    let shininess = 30.0;
 
     // Calculate triangle center point
     let x: Point = Point::new(
@@ -90,7 +92,7 @@ impl RenderEngine {
         let far: f32 = 75.0;
         let near: f32 = 1.0;
         scene.camera.set_projection_params(
-            15.0, // 60 degree FOV
+            30.0, // 60 degree FOV
             display_buffer.canvas_width as f32 / display_buffer.canvas_height as f32,
             near,
             far,
@@ -104,101 +106,104 @@ impl RenderEngine {
         }
     }
 
-    pub fn render_frame(&mut self) -> Vec<u32> {
-        self.frame += 1;
-        self.display_buffer.fill(ColorRGB::BLACK);
+    fn test(){
 
-        let look_at_projection = self.scene.camera.get_look_at_projection_matrix();
+    }
 
-        let viewport = self.display_buffer.create_viewport_matrix();
+    pub fn z_face_sort(mesh_list: &Vec<Mesh>, camera_position: Point) -> Vec<Triangle> {
+        let mut triangles: Vec<Triangle> = Vec::new();
 
-        // let point_a = Point::new(-10.0, -10.0, -10.0);
-        // let point_b = Point::new(-10.0, -10.0, 10.0);
-        // let point_c = Point::new(-10.0, 10.0, -10.0);
-        // let point_d = Point::new(-10.0, 10.0, 10.0);
-        // let point_e = Point::new(10.0, -10.0, -10.0);
-        // let point_f = Point::new(10.0, -10.0, 10.0);
-        // let point_g = Point::new(10.0, 10.0, -10.0);
-        // let point_h = Point::new(10.0, 10.0, 10.0);
+        for i in 0..mesh_list.len() {
+            for triangle in mesh_list[i].get_triangles() {
+                triangles.push(triangle);
+            }
+        }
 
-        // let lines: [Line; 12];
-        // lines = [
-        //     Line::new(point_a, point_b),
-        //     Line::new(point_a, point_c),
-        //     Line::new(point_a, point_e),
-        //     Line::new(point_b, point_f),
-        //     Line::new(point_b, point_d),
-        //     Line::new(point_d, point_c),
-        //     Line::new(point_e, point_f),
-        //     Line::new(point_g, point_c),
-        //     Line::new(point_g, point_e),
-        //     Line::new(point_h, point_f),
-        //     Line::new(point_h, point_d),
-        //     Line::new(point_h, point_g),
-        // ];
+        // Sort based on distance to eye
+        triangles.sort_by(|a, b| {
+            // Calculate centers
+            let center_a = Point::new(
+                (a.a.x + a.b.x + a.c.x) / 3.0,
+                (a.a.y + a.b.y + a.c.y) / 3.0,
+                (a.a.z + a.b.z + a.c.z) / 3.0,
+            );
+            let center_b = Point::new(
+                (b.a.x + b.b.x + b.c.x) / 3.0,
+                (b.a.y + b.b.y + b.c.y) / 3.0,
+                (b.a.z + b.b.z + b.c.z) / 3.0,
+            );
 
-        // let p0 = DisplayBufferPoint {x: 75, y: display_buffer.canvas_height as i32 - 100};
-        // let p1 = DisplayBufferPoint {x: display_buffer.canvas_width as i32/2, y: 100};
-        // let p2 = DisplayBufferPoint { x: display_buffer.canvas_width as i32 - 75,y: display_buffer.canvas_height as i32 - 100 };
+            // Calculate squared distances to cam.position
+            let dist_a = (center_a.x - camera_position.x).powi(2)
+                + (center_a.y - camera_position.y).powi(2)
+                + (center_a.z - camera_position.z).powi(2);
+            let dist_b = (center_b.x - camera_position.x).powi(2)
+                + (center_b.y - camera_position.y).powi(2)
+                + (center_b.z - camera_position.z).powi(2);
 
-        // display_buffer.draw_gradient_triangle(p0, p1, p2, ColorRGB::RED, ColorRGB::BLUE, ColorRGB::GREEN);
-        // display_buffer.draw_triangle(p0, p1, p2, ColorRGB::BLUE);
+            // Sort furthest first
+            dist_b.partial_cmp(&dist_a).unwrap()
+        });
+        triangles
+    }
 
-        // for line in lines {
-        //     let mut start_point = line.a;
-        //     let mut end_point = line.b;
+    pub fn draw_triangles(&mut self, triangles: &Vec<Triangle>){
 
-        //     // After look_at & projection
-        //     start_point = look_at_projection.mul_point(start_point);
-        //     end_point = look_at_projection.mul_point(end_point);
+        let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
+        let viewport_matrix = self.display_buffer.create_viewport_matrix();
 
-        //     // After perspective divide
-        //     start_point.dehomogen();
-        //     end_point.dehomogen();
+        for triangle in triangles {
+            let mut point_0: Point = triangle.a;
+            let mut point_1: Point = triangle.b;
+            let mut point_2: Point = triangle.c;
 
-        //     // After viewport
-        //     start_point = viewport.mul_point(start_point);
-        //     end_point = viewport.mul_point(end_point);
+            // After look_at_projection
+            point_0 = look_at_projection_matrix.mul_point(point_0);
+            point_1 = look_at_projection_matrix.mul_point(point_1);
+            point_2 = look_at_projection_matrix.mul_point(point_2);
 
-        //     let screen_point_a = DisplayBufferPoint {
-        //         y: start_point.y as i32,
-        //         x: start_point.x as i32,
-        //     };
-        //     let screen_point_b = DisplayBufferPoint {
-        //         x: end_point.x as i32,
-        //         y: end_point.y as i32,
-        //     };
+            // After perspective divide
+            point_0.dehomogen();
+            point_1.dehomogen();
+            point_2.dehomogen();
 
-        //     // println!("{:#?}", start_point);
+            // After viewport
+            point_0 = viewport_matrix.mul_point(point_0);
+            point_1 = viewport_matrix.mul_point(point_1);
+            point_2 = viewport_matrix.mul_point(point_2);
 
-        //     display_buffer.draw_line(
-        //         screen_point_a,
-        //         screen_point_b,
-        //         ColorRGB::from_rgb(255, 255, 255),
-        //     );
-        // }
+            let screen_point_0 = DisplayBufferPoint {
+                y: point_0.y as i32,
+                x: point_0.x as i32,
+            };
+            let screen_point_1 = DisplayBufferPoint {
+                x: point_1.x as i32,
+                y: point_1.y as i32,
+            };
+            let screen_point_2 = DisplayBufferPoint {
+                x: point_2.x as i32,
+                y: point_2.y as i32,
+            };
 
-        // let mut camera_updated_x = self.scene.camera.position.x;
-        // camera_updated_x += 1.0;
+            self.display_buffer.draw_triangle(
+                screen_point_0,
+                screen_point_1,
+                screen_point_2,
+                flat_shade_triangle(
+                    *triangle,
+                    ColorRGB::from_rgb(0, 255, 200),
+                    self.scene.lights[0],
+                ),
+            );
+        }
 
+    }
 
-        // self.scene.camera.set_position(Point::new(
-        //     camera_updated_x,
-        //     self.scene.camera.position.y,
-        //     self.scene.camera.position.z,
-        // ));
+    pub fn draw_axis(&mut self){
 
-        let alpha: f32 = 0.01;
+        let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
+        let viewport_matrix = self.display_buffer.create_viewport_matrix();
 
-        let rot_x_mat = Mat4x4::new([
-            [alpha.cos(), 0.0, alpha.sin(), 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [-alpha.sin(), 0.0, alpha.cos(), 0.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]);
-
-
-        self.scene.mesh_list[0].transform_mesh(rot_x_mat);
 
         let origin = Point::new(0.0, 0.0, 0.0);
         let x_end = Point::new(5.0, 0.0, 0.0); // X axis in red
@@ -220,14 +225,14 @@ impl RenderEngine {
             let mut start_point = start;
             let mut end_point = end;
 
-            start_point = look_at_projection.mul_point(start_point);
-            end_point = look_at_projection.mul_point(end_point);
+            start_point = look_at_projection_matrix.mul_point(start_point);
+            end_point = look_at_projection_matrix.mul_point(end_point);
 
             start_point.dehomogen();
             end_point.dehomogen();
 
-            start_point = viewport.mul_point(start_point);
-            end_point = viewport.mul_point(end_point);
+            start_point = viewport_matrix.mul_point(start_point);
+            end_point = viewport_matrix.mul_point(end_point);
 
             let screen_start = DisplayBufferPoint {
                 x: start_point.x as i32,
@@ -241,79 +246,33 @@ impl RenderEngine {
             self.display_buffer
                 .draw_line(screen_start, screen_end, color);
         }
+        
+    }
 
-        let mut triangles = self.scene.mesh_list[0].get_triangles();
+    pub fn render_frame(&mut self) -> Vec<u32> {
+        self.frame += 1;
+        self.display_buffer.fill(ColorRGB::BLACK);
 
-        // Sort based on distance to eye
-        triangles.sort_by(|a, b| {
-            // Calculate centers
-            let center_a = Point::new(
-                (a.a.x + a.b.x + a.c.x) / 3.0,
-                (a.a.y + a.b.y + a.c.y) / 3.0,
-                (a.a.z + a.b.z + a.c.z) / 3.0,
-            );
-            let center_b = Point::new(
-                (b.a.x + b.b.x + b.c.x) / 3.0,
-                (b.a.y + b.b.y + b.c.y) / 3.0,
-                (b.a.z + b.b.z + b.c.z) / 3.0,
-            );
+        let alpha: f32 = 0.01;
+        let beta: f32 = -0.01;
+    
+        let rot_x_mat = Mat4x4::new([
+            [alpha.cos(), 0.0, alpha.sin(), 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [-alpha.sin(), 0.0, alpha.cos(), 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]);
 
-            // Calculate squared distances to cam.position
-            let dist_a = (center_a.x - self.scene.camera.position.x).powi(2)
-                + (center_a.y - self.scene.camera.position.y).powi(2)
-                + (center_a.z - self.scene.camera.position.z).powi(2);
-            let dist_b = (center_b.x - self.scene.camera.position.x).powi(2)
-                + (center_b.y - self.scene.camera.position.y).powi(2)
-                + (center_b.z - self.scene.camera.position.z).powi(2);
+        self.scene.mesh_list[0].transform_mesh(rot_x_mat);
 
-            // Sort furthest first
-            dist_b.partial_cmp(&dist_a).unwrap()
-        });
+        self.draw_axis();
 
-        for triangle in triangles {
-            let mut point_0: Point = triangle.a;
-            let mut point_1: Point = triangle.b;
-            let mut point_2: Point = triangle.c;            
 
-            // After look_at_projection
-            point_0 = look_at_projection.mul_point(point_0);
-            point_1 = look_at_projection.mul_point(point_1);
-            point_2 = look_at_projection.mul_point(point_2);
+        let triangles = RenderEngine::z_face_sort(&self.scene.mesh_list, self.scene.camera.get_position());
 
-            // After perspective divide
-            point_0.dehomogen();
-            point_1.dehomogen();
-            point_2.dehomogen();
+        self.draw_triangles(&triangles);
 
-            // After viewport
-            point_0 = viewport.mul_point(point_0);
-            point_1 = viewport.mul_point(point_1);
-            point_2 = viewport.mul_point(point_2);
 
-            let screen_point_0 = DisplayBufferPoint {
-                y: point_0.y as i32,
-                x: point_0.x as i32,
-            };
-            let screen_point_1 = DisplayBufferPoint {
-                x: point_1.x as i32,
-                y: point_1.y as i32,
-            };
-            let screen_point_2 = DisplayBufferPoint {
-                x: point_2.x as i32,
-                y: point_2.y as i32,
-            };
-
-            self.display_buffer.draw_triangle(
-                screen_point_0,
-                screen_point_1,
-                screen_point_2,
-                flat_shade_triangle(
-                    triangle,
-                    ColorRGB::from_rgb(0, 255, 200),
-                    self.scene.lights[0],
-                ),
-            );
-        }
         return self.display_buffer.get_buffer().to_vec();
     }
 }
