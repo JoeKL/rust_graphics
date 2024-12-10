@@ -31,6 +31,11 @@ impl Point {
     pub fn sub_p(&self, p: Point) -> Vector {
         Vector::new(self.x - p.x, self.y - p.y, self.z - p.z)
     }
+
+    pub fn to_vector(&self) -> Vector{
+        let w = 0;
+        Vector{ x: self.x, y: self.y, z: self.z, w}
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

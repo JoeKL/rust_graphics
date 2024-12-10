@@ -83,7 +83,7 @@ impl DisplayBuffer {
     /// * `color` - The color
     ///
     pub fn set_pixel(&mut self, x: i32, y: i32, color: ColorRGB) {
-        if x < 0 || y < 0 || x > self.canvas_width as i32 || y > self.canvas_height as i32 {
+        if x < 0 || y < 0 || x >= self.canvas_width as i32 || y >= self.canvas_height as i32 {
             return;
         }
         let index = self.get_index(x as usize, y as usize);
@@ -115,19 +115,19 @@ impl DisplayBuffer {
 
     /// Performs linear interpolation between two points.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `i0` - Starting index/position (e.g., starting x or y coordinate)
     /// * `d0` - Starting value at position i0 (e.g., the corresponding y or x value)
     /// * `i1` - Ending index/position
     /// * `d1` - Ending value at position i1
     ///
-    /// # Returns
+    /// ### Returns
     ///
     /// A vector of interpolated values as f32, with length equal to abs(i1 - i0).
     /// Each element represents the interpolated value at the corresponding position.
     ///
-    /// # Example
+    /// ### Example
     ///
     /// ```
     /// // Interpolate y values for x coordinates 0 to 5, from y=10 to y=20
@@ -135,7 +135,7 @@ impl DisplayBuffer {
     /// // Returns: [10.0, 12.0, 14.0, 16.0, 18.0, 20.0]
     /// ```
     ///
-    /// # Notes
+    /// ### Notes
     ///
     /// * If i0 == i1, returns a vector with single value d0
     /// * The function interpolates in the direction from i0 to i1
