@@ -6,6 +6,7 @@ mod obj_loader;
 mod primitives;
 mod renderer;
 mod scene;
+mod mesh;
 
 use displaybuffer::{DisplayBuffer, DisplayBufferPoint};
 use minifb::{Key, Window, WindowOptions};
