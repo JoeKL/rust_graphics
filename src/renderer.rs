@@ -90,7 +90,7 @@ impl RenderEngine {
         let far: f32 = 75.0;
         let near: f32 = 1.0;
         scene.camera.set_projection_params(
-            45.0, // 60 degree FOV
+            15.0, // 60 degree FOV
             display_buffer.canvas_width as f32 / display_buffer.canvas_height as f32,
             near,
             far,
@@ -201,9 +201,9 @@ impl RenderEngine {
         self.scene.mesh_list[0].transform_mesh(rot_x_mat);
 
         let origin = Point::new(0.0, 0.0, 0.0);
-        let x_end = Point::new(20.0, 0.0, 0.0); // X axis in red
-        let y_end = Point::new(0.0, 20.0, 0.0); // Y axis in green
-        let z_end = Point::new(0.0, 0.0, 20.0); // Z axis in blue
+        let x_end = Point::new(5.0, 0.0, 0.0); // X axis in red
+        let y_end = Point::new(0.0, 5.0, 0.0); // Y axis in green
+        let z_end = Point::new(0.0, 0.0, 5.0); // Z axis in blue
 
         let axes = [
             (origin, x_end, ColorRGB::RED),   // X axis - red
@@ -242,8 +242,10 @@ impl RenderEngine {
                 .draw_line(screen_start, screen_end, color);
         }
 
+        let mut triangles = self.scene.mesh_list[0].get_triangles();
+
         // Sort based on distance to eye
-        self.scene.mesh_list[0].triangles.sort_by(|a, b| {
+        triangles.sort_by(|a, b| {
             // Calculate centers
             let center_a = Point::new(
                 (a.a.x + a.b.x + a.c.x) / 3.0,
@@ -268,7 +270,7 @@ impl RenderEngine {
             dist_b.partial_cmp(&dist_a).unwrap()
         });
 
-        for triangle in &self.scene.mesh_list[0].triangles {
+        for triangle in triangles {
             let mut point_0: Point = triangle.a;
             let mut point_1: Point = triangle.b;
             let mut point_2: Point = triangle.c;            
@@ -306,7 +308,7 @@ impl RenderEngine {
                 screen_point_1,
                 screen_point_2,
                 flat_shade_triangle(
-                    *triangle,
+                    triangle,
                     ColorRGB::from_rgb(0, 255, 200),
                     self.scene.lights[0],
                 ),
