@@ -324,7 +324,7 @@ impl DisplayBuffer {
             let x_end = x_right[current_row] as i32;
 
             // Fill pixels for current scanline (excluding edges)
-            for x in (x_start + 1)..x_end {
+            for x in (x_start + 1)..=x_end {
                 self.set_pixel(x, y, color);
             }
         }
