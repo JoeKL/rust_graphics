@@ -1,7 +1,6 @@
 use crate::primitives::*;
 
-
-const V: [f32; 1203] = [
+const BALL_V: [f32; 1203] = [
     -0.130201,
     0.911892,
     0.385355,
@@ -1207,7 +1206,7 @@ const V: [f32; 1203] = [
     0.929278,
 ];
 
-const F: [usize; 2394] = [
+const BALL_F: [usize; 2394] = [
     186, 116, 211, 95, 251, 390, 171, 248, 92, 359, 58, 312, 148, 9, 233, 340, 220, 381, 327, 34,
     195, 24, 165, 186, 258, 1, 353, 182, 237, 371, 107, 102, 198, 276, 359, 285, 279, 356, 258,
     199, 79, 102, 184, 21, 79, 72, 36, 103, 340, 90, 284, 248, 171, 247, 78, 259, 185, 277, 44,
@@ -1332,14 +1331,10 @@ const F: [usize; 2394] = [
 ];
 
 pub fn create_faces(vertices: &[Point]) -> Vec<Face> {
-    let mut faces:Vec<Face> = Vec::new();
+    let mut faces: Vec<Face> = Vec::new();
     // F array contains triplets of vertex indices
-    for i in (0..F.len()).step_by(3) {
-        faces.push(Face::new(
-            F[i],
-            F[i + 1],
-            F[i + 2],
-        ));
+    for i in (0..BALL_F.len()).step_by(3) {
+        faces.push(Face::new(BALL_F[i], BALL_F[i + 1], BALL_F[i + 2]));
     }
     faces
 }
@@ -1347,11 +1342,11 @@ pub fn create_faces(vertices: &[Point]) -> Vec<Face> {
 pub fn create_vertices() -> Vec<Point> {
     let mut vertices = Vec::new();
     // V array contains x,y,z triplets
-    for i in (0..V.len()).step_by(3) {
+    for i in (0..BALL_V.len()).step_by(3) {
         vertices.push(Point::new(
-            V[i], // multiply by 10 to make it visible
-            V[i + 1],
-            V[i + 2],
+            BALL_V[i],
+            BALL_V[i + 1],
+            BALL_V[i + 2],
         ));
     }
     vertices
