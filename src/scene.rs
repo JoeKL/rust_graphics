@@ -3,36 +3,8 @@
 use crate::camera::Camera;
 use crate::color::ColorRGB;
 use crate::light_source::LightSource;
-use crate::obj_loader::*;
+use crate::mesh::Mesh;
 use crate::primitives::*;
-
-pub struct Mesh {
-    pub vertices: Vec<Point>,
-    pub faces: Vec<Face>,
-}
-impl Mesh {
-    pub fn new() -> Mesh {
-        let vertices = create_vertices();
-        let faces = create_faces(&vertices);
-        Mesh {
-            vertices,
-            faces,
-        }
-    }
-
-    pub fn transform_mesh(&mut self, transform: Mat4x4) {
-        for vertex in &mut self.vertices {
-            *vertex = transform.mul_point(*vertex);
-        }
-    }
-
-    // Helper to get triangles for rendering
-    pub fn get_triangles(&self) -> Vec<Triangle> {
-        self.faces.iter()
-            .map(|face| face.to_triangle(&self.vertices))
-            .collect()
-    }
-}
 
 pub struct Scene {
     pub root_node: Point,
@@ -50,19 +22,21 @@ impl Scene {
         let target = Point::new(0.0, 0.0, 0.0);
         let up = Vector::new(0.0, 1.0, 0.0);
 
-        let camera: Camera = Camera::new(pos, target, up);
+        let mut camera: Camera = Camera::new(pos, target, up);
+
+        camera.set_position(Point::new(0.0, 0.0, 10.0));
+        camera.look_at(Point::new(0.0, 0.0, 0.0));
 
         //light sources
-        let light = LightSource::new(Point::new(2.0, 2.0, 1.5), ColorRGB::WHITE);
+        let light = LightSource::new(Point::new(2.0, 1.0, 5.0), ColorRGB::WHITE);
 
         let mut lights: Vec<LightSource> = Vec::new();
         lights.push(light);
 
-        let mesh = Mesh::new();
-
         let mut mesh_list: Vec<Mesh> = Vec::new();
 
-        mesh_list.push(mesh);
+        let mesh_ball  = Mesh::new_ball();
+        mesh_list.push(mesh_ball);
 
         Scene {
             root_node,
