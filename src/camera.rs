@@ -109,10 +109,11 @@ impl Camera {
         };
 
         let fov_in_radians = self.fov_in_degrees.to_radians();
+        let f = 1.0 / (fov_in_radians / 2.0).tan(); 
         self.projection_matrix = Mat4x4 {
             mat: [
-                [fov_in_radians / self.aspect_ratio, 0.0, 0.0, 0.0],
-                [0.0, fov_in_radians, 0.0, 0.0],
+                [f / self.aspect_ratio, 0.0, 0.0, 0.0],
+                [0.0, f, 0.0, 0.0],
                 [
                     0.0,
                     0.0,
