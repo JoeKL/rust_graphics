@@ -31,7 +31,7 @@ fn main() {
 
     let mut render_engine = RenderEngine::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
 
-    let mut display_buffer = render_engine.render_frame();
+    let mut display_buffer ;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if let Some((_x, _y)) = window.get_mouse_pos(minifb::MouseMode::Discard) {

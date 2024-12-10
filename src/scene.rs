@@ -1,4 +1,4 @@
-#![warn(dead_code)]
+#![allow(dead_code)]
 
 use crate::camera::Camera;
 use crate::color::ColorRGB;
@@ -24,11 +24,11 @@ impl Scene {
 
         let mut camera: Camera = Camera::new(pos, target, up);
 
-        camera.set_position(Point::new(0.0, 0.0, 10.0));
+        camera.set_position(Point::new(0.0, 0.0, -10.0));
         camera.look_at(Point::new(0.0, 0.0, 0.0));
 
         //light sources
-        let light = LightSource::new(Point::new(2.0, 1.0, 5.0), ColorRGB::WHITE);
+        let light = LightSource::new(Point::new(3.0, 3.0, 7.0), ColorRGB::WHITE);
 
         let mut lights: Vec<LightSource> = Vec::new();
         lights.push(light);

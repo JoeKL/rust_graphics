@@ -1,4 +1,3 @@
-use crate::camera::Camera;
 use crate::color::ColorRGB;
 use crate::light_source::LightSource;
 use crate::mesh::Mesh;
@@ -104,10 +103,6 @@ impl RenderEngine {
             scene,
             frame,
         }
-    }
-
-    fn test(){
-
     }
 
     pub fn z_face_sort(mesh_list: &Vec<Mesh>, camera_position: Point) -> Vec<Triangle> {
@@ -254,7 +249,6 @@ impl RenderEngine {
         self.display_buffer.fill(ColorRGB::BLACK);
 
         let alpha: f32 = 0.01;
-        let beta: f32 = -0.01;
     
         let rot_x_mat = Mat4x4::new([
             [alpha.cos(), 0.0, alpha.sin(), 0.0],
