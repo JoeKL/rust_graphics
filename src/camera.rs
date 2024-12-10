@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use crate::primitives::*;
 
-pub struct Camera{
+pub struct Camera {
     // positional parameters
     pub position: Point,
     pub direction: Vector,
@@ -17,16 +17,14 @@ pub struct Camera{
     // Cache matrices to avoid recomputing when nothing changes
     look_at_matrix: Mat4x4,
     projection_matrix: Mat4x4,
-    view_projection_matrix: Mat4x4,
+    look_at_projection_matrix: Mat4x4,
 
     // flags
     needs_update: bool,
 }
 
-impl Camera{
-
-    pub fn new(position: Point, target: Point, up: Vector) -> Camera{
-
+impl Camera {
+    pub fn new(position: Point, target: Point, up: Vector) -> Camera {
         let direction = target.sub_p(position).normalize();
         let right = direction.cross(up).normalize();
         let up = right.cross(direction).normalize();
@@ -42,7 +40,7 @@ impl Camera{
             far: 1000.0,
             look_at_matrix: Mat4x4::new_identity(),
             projection_matrix: Mat4x4::new_identity(),
-            view_projection_matrix: Mat4x4::new_identity(),
+            look_at_projection_matrix: Mat4x4::new_identity(),
             needs_update: true,
         };
 
@@ -55,6 +53,10 @@ impl Camera{
         self.needs_update = true;
     }
 
+    pub fn get_position(&self) -> Point {
+        self.position
+    }
+
     pub fn look_at(&mut self, target: Point) {
         self.direction = target.sub_p(self.position).normalize();
         self.right = self.direction.cross(self.up).normalize();
@@ -62,14 +64,19 @@ impl Camera{
         self.needs_update = true;
     }
 
-    pub fn set_projection_params(&mut self, fov_in_degrees: f32, aspect_ratio: f32, near: f32, far: f32) {
+    pub fn set_projection_params(
+        &mut self,
+        fov_in_degrees: f32,
+        aspect_ratio: f32,
+        near: f32,
+        far: f32,
+    ) {
         self.fov_in_degrees = fov_in_degrees;
         self.aspect_ratio = aspect_ratio;
         self.near = near;
         self.far = far;
         self.needs_update = true;
     }
-
 
     fn update_matrices(&mut self) {
         if !self.needs_update {
@@ -79,16 +86,30 @@ impl Camera{
         // Generate view matrix
         self.look_at_matrix = Mat4x4 {
             mat: [
-                [self.right.x, self.right.y, self.right.z, -self.right.dot(self.position.to_vector())],
-                [self.up.x, self.up.y, self.up.z, -self.up.dot(self.position.to_vector())],
-                [self.direction.x, self.direction.y, self.direction.z, -self.direction.dot(self.position.to_vector())],
+                [
+                    self.right.x,
+                    self.right.y,
+                    self.right.z,
+                    -self.right.dot(self.position.to_vector()),
+                ],
+                [
+                    self.up.x,
+                    self.up.y,
+                    self.up.z,
+                    -self.up.dot(self.position.to_vector()),
+                ],
+                [
+                    self.direction.x,
+                    self.direction.y,
+                    self.direction.z,
+                    -self.direction.dot(self.position.to_vector()),
+                ],
                 [0.0, 0.0, 0.0, 1.0],
             ],
         };
 
         let fov_in_radians = self.fov_in_degrees.to_radians();
-        self.projection_matrix =     
-        Mat4x4 {
+        self.projection_matrix = Mat4x4 {
             mat: [
                 [fov_in_radians / self.aspect_ratio, 0.0, 0.0, 0.0],
                 [0.0, fov_in_radians, 0.0, 0.0],
@@ -103,7 +124,7 @@ impl Camera{
         };
 
         // Combine view and projection matrices
-        self.view_projection_matrix = self.projection_matrix.mul_mat(self.look_at_matrix);
+        self.look_at_projection_matrix = self.projection_matrix.mul_mat(self.look_at_matrix);
         self.needs_update = false;
     }
 
@@ -117,9 +138,8 @@ impl Camera{
         self.projection_matrix
     }
 
-    pub fn get_view_projection_matrix(&mut self) -> Mat4x4 {
+    pub fn get_look_at_projection_matrix(&mut self) -> Mat4x4 {
         self.update_matrices();
-        self.view_projection_matrix
+        self.look_at_projection_matrix
     }
-
 }

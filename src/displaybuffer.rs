@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use crate::primitives::Mat4x4;
+
 use crate::color::ColorRGB;
 #[derive(Debug, Clone, Copy)]
 pub struct DisplayBufferPoint {
@@ -21,13 +23,17 @@ pub struct DisplayBuffer {
 
 // Implement methods for the struct (similar to class methods)
 impl DisplayBuffer {
-    pub fn new(canvas_height: usize, canvas_width: usize) -> DisplayBuffer {
+    pub fn new(canvas_width: usize, canvas_height: usize) -> DisplayBuffer {
         let buffer = vec![0; canvas_width * canvas_height];
         DisplayBuffer {
             buffer,
             canvas_width,
             canvas_height,
         }
+    }
+
+    pub fn get_buffer(&self) -> &[u32] {
+        &self.buffer
     }
 
     /// Ssets the whole background to specified color
@@ -175,13 +181,13 @@ impl DisplayBuffer {
 
     /// Draws a line between two points using linear interpolation.
     ///
-    /// # Arguments
+    /// ### Arguments
     ///
     /// * `p0` - Starting point of the line
     /// * `p1` - Ending point of the line
     /// * `color` - Color value to draw the line with (32-bit RGB/RGBA)
     ///
-    /// # Details
+    /// ### Details
     ///
     /// The algorithm determines whether the line is more horizontal or vertical and chooses
     /// the appropriate axis to iterate over. For each step along the major axis, it calculates
@@ -190,7 +196,7 @@ impl DisplayBuffer {
     /// The points are automatically sorted so that drawing always proceeds from left to right
     /// (for more horizontal lines) or top to bottom (for more vertical lines).
     ///
-    /// # Example
+    /// ### Example
     ///
     /// ```
     /// let mut buffer = DisplayBuffer::new(100, 100);
@@ -199,7 +205,7 @@ impl DisplayBuffer {
     /// buffer.draw_line(start, end, 0xFF0000); // Draws a red line
     /// ```
     ///
-    /// # Notes
+    /// ### Notes
     ///
     /// * The points are taken as mutable because they may be swapped internally
     /// * Uses linear interpolation rather than Bresenham's algorithm
@@ -448,8 +454,20 @@ impl DisplayBuffer {
                     .round()
                     .clamp(0.0, 255.0)) as u8;
 
-                self.set_pixel(x, y,  ColorRGB::from_rgb(r,g,b));
+                self.set_pixel(x, y, ColorRGB::from_rgb(r, g, b));
             }
+        }
+    }
+
+    // Viewport matrix (just the screen transformation part)
+    pub fn create_viewport_matrix(&self) -> Mat4x4 {
+        Mat4x4 {
+            mat: [
+                [self.canvas_width as f32 / 2.0, 0.0, 0.0, self.canvas_width as f32 / 2.0],
+                [0.0, -(self.canvas_height as f32) / 2.0, 0.0, self.canvas_height as f32 / 2.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
         }
     }
 }
