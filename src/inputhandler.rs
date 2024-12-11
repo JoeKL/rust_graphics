@@ -67,7 +67,7 @@ impl InputHandler {
 
     // For instant checks (single frame)
     pub fn is_mouse_button_pressed(&self, button_number: usize) -> bool {
-        self.current_mouse_button_states[button_number.clamp(0, 2)]
+        self.current_mouse_button_states[button_number.clamp(0, 2)]&& !self.previous_mouse_button_states[button_number.clamp(0, 2)]
         // Returns true only on the frame the key is first pressed
     }
 
@@ -97,7 +97,7 @@ impl InputHandler {
 
     // For instant checks (single frame)
     pub fn is_key_pressed(&self, key: Key) -> bool {
-        self.current_keys.contains(&key)
+        self.current_keys.contains(&key) && !self.previous_keys.contains(&key)
         // Returns true only on the frame the key is first pressed
     }
 
