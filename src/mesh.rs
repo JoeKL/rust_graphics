@@ -4,11 +4,11 @@ use crate::primitives::*;
 use crate::obj_loader::*;
 
 pub struct Mesh {
-    pub vertices: Vec<Point>,
+    pub vertices: Vec<Point3D>,
     pub faces: Vec<Face>,
 }
 impl Mesh {    
-    pub fn new(vertices: Vec<Point>, faces: Vec<Face>) -> Mesh {
+    pub fn new(vertices: Vec<Point3D>, faces: Vec<Face>) -> Mesh {
     Mesh {
         vertices,
         faces,
