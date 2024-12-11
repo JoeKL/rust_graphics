@@ -28,10 +28,12 @@ impl Scene {
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
         //light sources
-        let light = LightSource::new(Point3D::new(3.0, 3.0, 7.0), ColorRGB::WHITE);
+        let light = LightSource::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE);
+        let light2 = LightSource::new(Point3D::new(-10.0, 10.0, 0.0), ColorRGB::WHITE);
 
         let mut lights: Vec<LightSource> = Vec::new();
         lights.push(light);
+        lights.push(light2);
 
         let mut mesh_list: Vec<Mesh> = Vec::new();
 

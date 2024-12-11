@@ -5,30 +5,24 @@ use crate::mesh::Mesh;
 use crate::primitives::*;
 use crate::scene::Scene;
 use crate::DisplayBuffer;
-use crate::DisplayBufferPoint;
+use crate::ScreenPoint;
 
-pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSource) -> ColorRGB {
+pub fn phong_blinn_flat_shade_triangle(
+    triangle: Triangle,
+    camera_position: Point3D,
+    color: ColorRGB,
+    light_sources: &Vec<LightSource>,
+) -> ColorRGB {
     let a = triangle.a;
     let b = triangle.b;
     let c = triangle.c;
 
     // Convert colors to floating point vectors (0-255 -> 0.0-1.0)
-    let tri_color: Vector3D = Vector3D::new(
+    let triangle_color: Vector3D = Vector3D::new(
         color.get_r() as f32 / 255.0, // Convert 0-255 to 0-1 range
         color.get_g() as f32 / 255.0,
         color.get_b() as f32 / 255.0,
     );
-    let light_color_vec: Vector3D = Vector3D::new(
-        light.get_color().get_r() as f32 / 255.0, // Convert 0-255 to 0-1 range
-        light.get_color().get_g() as f32 / 255.0,
-        light.get_color().get_b() as f32 / 255.0,
-    );
-
-    // Phong lighting coefficients
-    let ambient = 0.1;
-    let diffuse = 0.5;
-    let specular = 0.5;
-    let shininess = 30.0;
 
     // Calculate triangle center point
     let x: Point3D = Point3D::new(
@@ -37,32 +31,62 @@ pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSour
         (a.z + b.z + c.z) / 3.0,
     );
 
-    let n = Vector3D::new(x.x, x.y, x.z + 2.0).normalize();
-
     // Calculate view vector (from surface point to camera at origin)
-    let v: Vector3D = Vector3D::new(0.0, 0.0, 50.0).sub_p(x).normalize();
+    let v: Vector3D = camera_position.sub_p(x).normalize();
 
-    // Calculate light vector (from surface point to light source)
-    let l: Vector3D = light.get_position().sub_p(x).normalize();
+    // normal in the middle of the triangle
+    let edge1 = b.sub_p(a);
+    let edge2 = c.sub_p(a);
+    let n = edge1.cross(edge2).normalize();
 
-    // Calculate halfway vector for specular reflection
-    let h: Vector3D = v.add(l).normalize();
 
-    // Calculate color components
-    let ca = tri_color.mul(ambient); // Ambient color = surface color * ambient coefficient
-    let cd = tri_color.mul(diffuse); // Diffuse color = surface color * diffuse coefficient
-    let cs = Vector3D::new(1.0, 1.0, 1.0).mul(specular); // Specular color (white) * specular coefficient
+    fn flat_shade(
+        v: Vector3D,
+        l: Vector3D,
+        n: Vector3D,
+        triangle_color: Vector3D,
+        light_color: Vector3D,
+    ) -> Vector3D {
+        // Phong lighting coefficients
+        let ambient = 0.1;
+        let diffuse = 0.5;
+        let specular = 0.5;
+        let shininess = 50.0;
 
-    // Calculate Phong lighting components
-    let ambient_part = ca;
-    let diffuse_part = cd.mul(f32::max(l.dot(n), 0.0)); // Diffuse = cd * max(0, l·n)
-    let specular_part = cs.mul(f32::max(h.dot(n), 0.0).powf(shininess)); // Specular = cs * max(0, h·n)^shininess
+        // Calculate halfway vector for specular reflection
+        let h: Vector3D = v.add(l).normalize();
 
-    // Combine components and multiply by light color
-    let mut flat_color = ambient_part
-        .add(diffuse_part)
-        .add(specular_part)
-        .mul_vec(light_color_vec);
+        // Calculate color components
+        let ca = triangle_color.mul(ambient); // Ambient color = surface color * ambient coefficient
+        let cd = triangle_color.mul(diffuse); // Diffuse color = surface color * diffuse coefficient
+        let cs = Vector3D::new(1.0, 1.0, 1.0).mul(specular); // Specular color (white) * specular coefficient
+
+        // Calculate Phong lighting components
+        let ambient_part = ca;
+        let diffuse_part = cd.mul(f32::max(l.dot(n), 0.0)); // Diffuse = cd * max(0, l·n)
+        let specular_part = cs.mul(f32::max(h.dot(n), 0.0).powf(shininess)); // Specular = cs * max(0, h·n)^shininess
+
+        // Combine components and multiply by light color
+        ambient_part
+            .add(diffuse_part)
+            .add(specular_part)
+            .mul_vec(light_color)
+    }
+
+    let light_count = light_sources.len();
+
+    let mut flat_color: Vector3D = Vector3D::new(0.0, 0.0, 0.0);
+
+    for light in light_sources {
+
+        // Calculate light vector (from surface point to light source)
+        let l: Vector3D = light.get_position().sub_p(x).normalize();
+
+        flat_color = flat_color.add(
+            flat_shade(v, l, n, triangle_color, light.get_color_as_vector())
+                .mul(1.0 / light_count as f32),
+        );
+    }
 
     // Clamp color values between 0 and 1 to prevent overflow
     flat_color.x = f32::min(flat_color.x, 1.0);
@@ -77,7 +101,7 @@ pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSour
     )
 }
 
-pub struct RenderEngine {
+pub struct Engine {
     window_width: u32,
     window_height: u32,
     display_buffer: DisplayBuffer,
@@ -87,8 +111,8 @@ pub struct RenderEngine {
     draw_lights: bool,
 }
 
-impl RenderEngine {
-    pub fn new(window_width: u32, window_height: u32) -> RenderEngine {
+impl Engine {
+    pub fn new(window_width: u32, window_height: u32) -> Engine {
         let display_buffer = DisplayBuffer::new(window_width as usize, window_height as usize);
 
         let mut scene = Scene::new();
@@ -106,7 +130,7 @@ impl RenderEngine {
         let draw_axis = false;
         let draw_lights = false;
 
-        RenderEngine {
+        Engine {
             window_width,
             window_height,
             display_buffer,
@@ -178,15 +202,15 @@ impl RenderEngine {
             point_1 = viewport_matrix.mul_point(point_1);
             point_2 = viewport_matrix.mul_point(point_2);
 
-            let screen_point_0 = DisplayBufferPoint {
+            let screen_point_0 = ScreenPoint {
                 y: point_0.y as i32,
                 x: point_0.x as i32,
             };
-            let screen_point_1 = DisplayBufferPoint {
+            let screen_point_1 = ScreenPoint {
                 x: point_1.x as i32,
                 y: point_1.y as i32,
             };
-            let screen_point_2 = DisplayBufferPoint {
+            let screen_point_2 = ScreenPoint {
                 x: point_2.x as i32,
                 y: point_2.y as i32,
             };
@@ -195,10 +219,11 @@ impl RenderEngine {
                 screen_point_0,
                 screen_point_1,
                 screen_point_2,
-                flat_shade_triangle(
+                phong_blinn_flat_shade_triangle(
                     *triangle,
+                    self.scene.camera.get_position(),
                     ColorRGB::from_rgb(0, 255, 200),
-                    self.scene.lights[0],
+                    &self.scene.lights,
                 ),
             );
         }
@@ -232,11 +257,11 @@ impl RenderEngine {
             start_point = viewport_matrix.mul_point(start_point);
             end_point = viewport_matrix.mul_point(end_point);
 
-            let screen_start = DisplayBufferPoint {
+            let screen_start = ScreenPoint {
                 x: start_point.x as i32,
                 y: start_point.y as i32,
             };
-            let screen_end = DisplayBufferPoint {
+            let screen_end = ScreenPoint {
                 x: end_point.x as i32,
                 y: end_point.y as i32,
             };
@@ -295,8 +320,8 @@ impl RenderEngine {
             self.scene.mesh_list[0].transform_mesh(rot_y_mat);
 
             let dp_point_start =
-                DisplayBufferPoint::new(screen_center.x as i32, screen_center.y as i32);
-            let dp_point_end = DisplayBufferPoint::new(
+                ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
+            let dp_point_end = ScreenPoint::new(
                 mouse_center_dist_vec.x as i32,
                 mouse_center_dist_vec.y as i32,
             );
@@ -327,17 +352,17 @@ impl RenderEngine {
         let y_rot_delta = 0.1;
 
         if input_handler.is_key_down(minifb::Key::Up) {
-            x_rot -= x_rot_delta;
+            x_rot += x_rot_delta;
         }
         if input_handler.is_key_down(minifb::Key::Down) {
-            x_rot += x_rot_delta;
+            x_rot -= x_rot_delta;
         }
 
         if input_handler.is_key_down(minifb::Key::Left) {
-            y_rot += y_rot_delta;
+            y_rot -= y_rot_delta;
         }
         if input_handler.is_key_down(minifb::Key::Right) {
-            y_rot -= y_rot_delta;
+            y_rot += y_rot_delta;
         }
 
         if x_rot != 0.0 || y_rot != 0.0 {
@@ -383,11 +408,11 @@ impl RenderEngine {
             start_point = viewport_matrix.mul_point(start_point);
             end_point = viewport_matrix.mul_point(end_point);
 
-            let screen_start = DisplayBufferPoint {
+            let screen_start = ScreenPoint {
                 x: start_point.x as i32,
                 y: start_point.y as i32,
             };
-            let screen_end = DisplayBufferPoint {
+            let screen_end = ScreenPoint {
                 x: end_point.x as i32,
                 y: end_point.y as i32,
             };
@@ -427,7 +452,7 @@ impl RenderEngine {
         }
 
         let triangles =
-            RenderEngine::z_face_sort(&self.scene.mesh_list, self.scene.camera.get_position());
+            Engine::z_face_sort(&self.scene.mesh_list, self.scene.camera.get_position());
 
         self.draw_triangles(&triangles);
 

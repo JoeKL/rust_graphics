@@ -29,4 +29,12 @@ impl LightSource {
     pub fn get_color(&self) -> ColorRGB{
         self.color
     }
+
+    pub fn get_color_as_vector(&self) -> Vector3D{
+        Vector3D::new(
+            self.get_color().get_r() as f32 / 255.0, // Convert 0-255 to 0-1 range
+            self.get_color().get_g() as f32 / 255.0,
+            self.get_color().get_b() as f32 / 255.0,
+        )
+    }
 }
