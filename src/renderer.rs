@@ -78,7 +78,7 @@ pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSour
 }
 
 pub struct RenderEngine {
-    window_width: u32, 
+    window_width: u32,
     window_height: u32,
     display_buffer: DisplayBuffer,
     scene: Scene,
@@ -154,8 +154,7 @@ impl RenderEngine {
         triangles
     }
 
-    pub fn draw_triangles(&mut self, triangles: &Vec<Triangle>){
-
+    pub fn draw_triangles(&mut self, triangles: &Vec<Triangle>) {
         let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
         let viewport_matrix = self.display_buffer.create_viewport_matrix();
 
@@ -203,14 +202,11 @@ impl RenderEngine {
                 ),
             );
         }
-
     }
 
-    pub fn draw_axis(&mut self){
-
+    pub fn draw_axis(&mut self) {
         let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
         let viewport_matrix = self.display_buffer.create_viewport_matrix();
-
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
         let x_end = Point3D::new(5.0, 0.0, 0.0); // X axis in red
@@ -248,144 +244,135 @@ impl RenderEngine {
             self.display_buffer
                 .draw_line(screen_start, screen_end, color);
         }
-        
     }
 
-    fn rotate_ball_with_mouse(& mut self, input_handler: &InputHandler){
-
-
+    fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
         if input_handler.is_mouse_button_down(0) {
-
             let mut x_rot: f32 = 0.00;
             let mut y_rot: f32 = 0.00;
-            
+
             let dist_center_threshhold = 50.0;
-    
-            let screen_center = Point2D::new((self.window_width / 2) as f32,(self.window_height / 2) as f32);
+
+            let screen_center = Point2D::new(
+                (self.window_width / 2) as f32,
+                (self.window_height / 2) as f32,
+            );
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
             mouse_pos_relative_center.x -= (self.window_width / 2) as f32;
             mouse_pos_relative_center.y -= (self.window_height / 2) as f32;
             let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
-    
+
             if mouse_pos_relative_center.x > dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x/5000.0;
-            }         
+                y_rot += mouse_pos_relative_center.x / 5000.0;
+            }
             if mouse_pos_relative_center.x < -dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x/5000.0;
-            }         
-    
+                y_rot += mouse_pos_relative_center.x / 5000.0;
+            }
+
             if mouse_pos_relative_center.y > dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y/5000.0;
-            }         
-    
+                x_rot -= mouse_pos_relative_center.y / 5000.0;
+            }
+
             if mouse_pos_relative_center.y < -dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y/5000.0;
-            }         
-            
+                x_rot -= mouse_pos_relative_center.y / 5000.0;
+            }
+
             let rot_x_mat = Mat4x4::new([
                 [1.0, 0.0, 0.0, 0.0],
                 [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
                 [0.0, x_rot.sin(), x_rot.cos(), 0.0],
                 [0.0, 0.0, 0.0, 1.0],
             ]);
-        
+
             let rot_y_mat = Mat4x4::new([
                 [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
                 [0.0, 1.0, 0.0, 0.0],
                 [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
                 [0.0, 0.0, 0.0, 1.0],
             ]);
-    
+
             self.scene.mesh_list[0].transform_mesh(rot_x_mat);
             self.scene.mesh_list[0].transform_mesh(rot_y_mat);
 
-            let dp_point_start = DisplayBufferPoint::new(screen_center.x as i32, screen_center.y as i32);
-            let dp_point_end = DisplayBufferPoint::new(mouse_center_dist_vec.x as i32, mouse_center_dist_vec.y as i32);
-    
-            self.display_buffer.draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
+            let dp_point_start =
+                DisplayBufferPoint::new(screen_center.x as i32, screen_center.y as i32);
+            let dp_point_end = DisplayBufferPoint::new(
+                mouse_center_dist_vec.x as i32,
+                mouse_center_dist_vec.y as i32,
+            );
 
+            self.display_buffer
+                .draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
         }
-
     }
 
-    fn move_camera(&mut self, input_handler: &InputHandler){
-
+    fn move_camera(&mut self, input_handler: &InputHandler) {
         if input_handler.is_key_down(minifb::Key::O) {
             let mut current_fov = self.scene.camera.get_fov_in_degrees();
             current_fov += 0.5;
             self.scene.camera.set_fov_in_degrees(current_fov);
-
         }
         if input_handler.is_key_down(minifb::Key::P) {
             let mut current_fov = self.scene.camera.get_fov_in_degrees();
             current_fov -= 0.5;
             self.scene.camera.set_fov_in_degrees(current_fov);
         }
-
     }
 
+    fn rotate_lightsources(&mut self, input_handler: &InputHandler) {
+        let mut x_rot: f32 = 0.00;
+        let mut y_rot: f32 = 0.00;
 
-    fn rotate_lightsources(& mut self, input_handler: &InputHandler){
+        let x_rot_delta = 0.1;
+        let y_rot_delta = 0.1;
 
-            let mut x_rot: f32 = 0.00;
-            let mut y_rot: f32 = 0.00;
+        if input_handler.is_key_down(minifb::Key::Up) {
+            x_rot -= x_rot_delta;
+        }
+        if input_handler.is_key_down(minifb::Key::Down) {
+            x_rot += x_rot_delta;
+        }
 
-            let x_rot_delta = 0.1;
-            let y_rot_delta = 0.1;
-            
-    
-            if input_handler.is_key_down(minifb::Key::Up) {
-                x_rot -= x_rot_delta;
-            }         
-            if input_handler.is_key_down(minifb::Key::Down)  {
-                x_rot += x_rot_delta;
-            }         
-    
-            if input_handler.is_key_down(minifb::Key::Left) {
-                y_rot += y_rot_delta;
-            }         
-            if input_handler.is_key_down(minifb::Key::Right)  {
-                y_rot -= y_rot_delta;
-            }         
-    
-            
+        if input_handler.is_key_down(minifb::Key::Left) {
+            y_rot += y_rot_delta;
+        }
+        if input_handler.is_key_down(minifb::Key::Right) {
+            y_rot -= y_rot_delta;
+        }
+
+        if x_rot != 0.0 || y_rot != 0.0 {
             let rot_x_mat = Mat4x4::new([
                 [1.0, 0.0, 0.0, 0.0],
                 [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
                 [0.0, x_rot.sin(), x_rot.cos(), 0.0],
                 [0.0, 0.0, 0.0, 1.0],
             ]);
-        
+
             let rot_y_mat = Mat4x4::new([
                 [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
                 [0.0, 1.0, 0.0, 0.0],
                 [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
                 [0.0, 0.0, 0.0, 1.0],
             ]);
-                
-            for light in &mut self.scene.lights{
+
+            for light in &mut self.scene.lights {
                 println!("{:#?}", light.get_position());
                 let current_light_pos = light.get_position();
                 let mut new_light_pos = rot_x_mat.mul_point(current_light_pos);
                 new_light_pos = rot_y_mat.mul_point(new_light_pos);
                 light.set_position(new_light_pos);
                 println!("{:#?}", light.get_position());
-
-
+            }
         }
-
     }
 
-
-    pub fn draw_light_vectors(&mut self){
-
+    pub fn draw_light_vectors(&mut self) {
         let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
         let viewport_matrix = self.display_buffer.create_viewport_matrix();
 
-
         let origin = Point3D::new(0.0, 0.0, 0.0);
 
-        for lights in  &self.scene.lights {
+        for lights in &self.scene.lights {
             let mut start_point = lights.get_position();
             let mut end_point = origin;
 
@@ -410,26 +397,23 @@ impl RenderEngine {
             self.display_buffer
                 .draw_line(screen_start, screen_end, ColorRGB::YELLOW);
         }
-        
     }
 
     pub fn render_frame(&mut self, input_handler: &InputHandler) -> Vec<u32> {
         self.frame += 1;
         self.display_buffer.fill(ColorRGB::BLACK);
 
-        if input_handler.is_key_pressed(minifb::Key::Space){    
+        if input_handler.is_key_pressed(minifb::Key::Space) {
             if self.draw_axis {
                 self.draw_axis = false
-
             } else {
                 self.draw_axis = true
             }
         }
 
-        if input_handler.is_key_pressed(minifb::Key::L){    
+        if input_handler.is_key_pressed(minifb::Key::L) {
             if self.draw_lights {
                 self.draw_lights = false
-
             } else {
                 self.draw_lights = true
             }
@@ -441,21 +425,17 @@ impl RenderEngine {
         self.rotate_lightsources(input_handler);
 
         if self.draw_axis {
-
             self.draw_axis();
         }
 
-
-        let triangles = RenderEngine::z_face_sort(&self.scene.mesh_list, self.scene.camera.get_position());
+        let triangles =
+            RenderEngine::z_face_sort(&self.scene.mesh_list, self.scene.camera.get_position());
 
         self.draw_triangles(&triangles);
 
         if self.draw_lights {
-
             self.draw_light_vectors();
         }
-
-
 
         return self.display_buffer.get_buffer().to_vec();
     }
