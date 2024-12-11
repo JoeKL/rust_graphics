@@ -5,8 +5,9 @@ mod displaybuffer;
 mod utils;
 mod engine;
 mod input;
+mod renderer;
 
-use displaybuffer::{DisplayBuffer, ScreenPoint};
+use displaybuffer::DisplayBuffer;
 use minifb::{Key, Window, WindowOptions};
 use engine::Engine;
 use input::InputHandler;

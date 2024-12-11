@@ -2,19 +2,10 @@
 
 use crate::types::math::Mat4x4;
 
-
 use crate::types::color::ColorRGB;
-#[derive(Debug, Clone, Copy)]
-pub struct ScreenPoint {
-    pub x: i32,
-    pub y: i32,
-}
 
-impl ScreenPoint {
-    pub fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
-}
+use crate::types::display::ScreenPoint;
+
 
 pub struct DisplayBuffer {
     pub buffer: Vec<u32>,
@@ -337,11 +328,7 @@ impl DisplayBuffer {
         }
     }
 
-    pub fn calc_triangle_area(
-        p0: ScreenPoint,
-        p1: ScreenPoint,
-        p2: ScreenPoint,
-    ) -> f32 {
+    pub fn calc_triangle_area(p0: ScreenPoint, p1: ScreenPoint, p2: ScreenPoint) -> f32 {
         let signed_area = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
         signed_area as f32 / 2.0
     }
@@ -459,7 +446,6 @@ impl DisplayBuffer {
             }
         }
     }
-
     // Viewport matrix (just the screen transformation part)
     pub fn create_viewport_matrix(&self) -> Mat4x4 {
         Mat4x4 {

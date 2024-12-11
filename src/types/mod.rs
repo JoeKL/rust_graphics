@@ -7,3 +7,4 @@ pub mod math;
 pub mod light;
 pub mod color;
 pub mod primitives;
+pub mod display;
