@@ -1,4 +1,5 @@
 use crate::color::ColorRGB;
+use crate::inputhandler::InputHandler;
 use crate::light_source::LightSource;
 use crate::mesh::Mesh;
 use crate::primitives::*;
@@ -12,12 +13,12 @@ pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSour
     let c = triangle.c;
 
     // Convert colors to floating point vectors (0-255 -> 0.0-1.0)
-    let tri_color: Vector = Vector::new(
+    let tri_color: Vector3D = Vector3D::new(
         color.get_r() as f32 / 255.0, // Convert 0-255 to 0-1 range
         color.get_g() as f32 / 255.0,
         color.get_b() as f32 / 255.0,
     );
-    let light_color_vec: Vector = Vector::new(
+    let light_color_vec: Vector3D = Vector3D::new(
         light.get_color().get_r() as f32 / 255.0, // Convert 0-255 to 0-1 range
         light.get_color().get_g() as f32 / 255.0,
         light.get_color().get_b() as f32 / 255.0,
@@ -30,27 +31,27 @@ pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSour
     let shininess = 30.0;
 
     // Calculate triangle center point
-    let x: Point = Point::new(
+    let x: Point3D = Point3D::new(
         (a.x + b.x + c.x) / 3.0,
         (a.y + b.y + c.y) / 3.0,
         (a.z + b.z + c.z) / 3.0,
     );
 
-    let n = Vector::new(x.x, x.y, x.z + 2.0).normalize();
+    let n = Vector3D::new(x.x, x.y, x.z + 2.0).normalize();
 
     // Calculate view vector (from surface point to camera at origin)
-    let v: Vector = Vector::new(0.0, 0.0, 50.0).sub_p(x).normalize();
+    let v: Vector3D = Vector3D::new(0.0, 0.0, 50.0).sub_p(x).normalize();
 
     // Calculate light vector (from surface point to light source)
-    let l: Vector = light.get_position().sub_p(x).normalize();
+    let l: Vector3D = light.get_position().sub_p(x).normalize();
 
     // Calculate halfway vector for specular reflection
-    let h: Vector = v.add(l).normalize();
+    let h: Vector3D = v.add(l).normalize();
 
     // Calculate color components
     let ca = tri_color.mul(ambient); // Ambient color = surface color * ambient coefficient
     let cd = tri_color.mul(diffuse); // Diffuse color = surface color * diffuse coefficient
-    let cs = Vector::new(1.0, 1.0, 1.0).mul(specular); // Specular color (white) * specular coefficient
+    let cs = Vector3D::new(1.0, 1.0, 1.0).mul(specular); // Specular color (white) * specular coefficient
 
     // Calculate Phong lighting components
     let ambient_part = ca;
@@ -105,7 +106,7 @@ impl RenderEngine {
         }
     }
 
-    pub fn z_face_sort(mesh_list: &Vec<Mesh>, camera_position: Point) -> Vec<Triangle> {
+    pub fn z_face_sort(mesh_list: &Vec<Mesh>, camera_position: Point3D) -> Vec<Triangle> {
         let mut triangles: Vec<Triangle> = Vec::new();
 
         for i in 0..mesh_list.len() {
@@ -117,12 +118,12 @@ impl RenderEngine {
         // Sort based on distance to eye
         triangles.sort_by(|a, b| {
             // Calculate centers
-            let center_a = Point::new(
+            let center_a = Point3D::new(
                 (a.a.x + a.b.x + a.c.x) / 3.0,
                 (a.a.y + a.b.y + a.c.y) / 3.0,
                 (a.a.z + a.b.z + a.c.z) / 3.0,
             );
-            let center_b = Point::new(
+            let center_b = Point3D::new(
                 (b.a.x + b.b.x + b.c.x) / 3.0,
                 (b.a.y + b.b.y + b.c.y) / 3.0,
                 (b.a.z + b.b.z + b.c.z) / 3.0,
@@ -148,9 +149,9 @@ impl RenderEngine {
         let viewport_matrix = self.display_buffer.create_viewport_matrix();
 
         for triangle in triangles {
-            let mut point_0: Point = triangle.a;
-            let mut point_1: Point = triangle.b;
-            let mut point_2: Point = triangle.c;
+            let mut point_0: Point3D = triangle.a;
+            let mut point_1: Point3D = triangle.b;
+            let mut point_2: Point3D = triangle.c;
 
             // After look_at_projection
             point_0 = look_at_projection_matrix.mul_point(point_0);
@@ -200,10 +201,10 @@ impl RenderEngine {
         let viewport_matrix = self.display_buffer.create_viewport_matrix();
 
 
-        let origin = Point::new(0.0, 0.0, 0.0);
-        let x_end = Point::new(5.0, 0.0, 0.0); // X axis in red
-        let y_end = Point::new(0.0, 5.0, 0.0); // Y axis in green
-        let z_end = Point::new(0.0, 0.0, 5.0); // Z axis in blue
+        let origin = Point3D::new(0.0, 0.0, 0.0);
+        let x_end = Point3D::new(5.0, 0.0, 0.0); // X axis in red
+        let y_end = Point3D::new(0.0, 5.0, 0.0); // Y axis in green
+        let z_end = Point3D::new(0.0, 0.0, 5.0); // Z axis in blue
 
         let axes = [
             (origin, x_end, ColorRGB::RED),   // X axis - red
@@ -244,11 +245,20 @@ impl RenderEngine {
         
     }
 
-    pub fn render_frame(&mut self) -> Vec<u32> {
+    pub fn render_frame(&mut self, input_handler: &InputHandler) -> Vec<u32> {
         self.frame += 1;
         self.display_buffer.fill(ColorRGB::BLACK);
 
-        let alpha: f32 = 0.01;
+        let mut alpha: f32 = 0.00;
+
+        if(input_handler.is_key_pressed(minifb::Key::A)){
+            alpha -= 0.01;
+        }
+
+        if(input_handler.is_key_pressed(minifb::Key::D)){
+            alpha += 0.01;
+        }
+
     
         let rot_x_mat = Mat4x4::new([
             [alpha.cos(), 0.0, alpha.sin(), 0.0],

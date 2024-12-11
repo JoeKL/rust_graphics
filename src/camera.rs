@@ -4,10 +4,10 @@ use crate::primitives::*;
 
 pub struct Camera {
     // positional parameters
-    pub position: Point,
-    pub direction: Vector,
-    pub up: Vector,
-    pub right: Vector,
+    pub position: Point3D,
+    pub direction: Vector3D,
+    pub up: Vector3D,
+    pub right: Vector3D,
 
     // projection parameters
     pub fov_in_degrees: f32,
@@ -21,14 +21,14 @@ pub struct Camera {
     look_at_projection_matrix: Mat4x4,
 
     //cache target to recalculate while rotating camera
-    pub current_target: Point,
+    pub current_target: Point3D,
 
     // flags
     needs_update: bool,
 }
 
 impl Camera {
-    pub fn new(position: Point, target: Point, up: Vector) -> Camera {
+    pub fn new(position: Point3D, target: Point3D, up: Vector3D) -> Camera {
         let direction = target.sub_p(position).normalize();
         let right = direction.cross(up).normalize();
         let up = right.cross(direction).normalize();
@@ -53,16 +53,16 @@ impl Camera {
         camera
     }
 
-    pub fn set_position(&mut self, position: Point) {
+    pub fn set_position(&mut self, position: Point3D) {
         self.position = position;
         self.needs_update = true;
     }
 
-    pub fn get_position(&self) -> Point {
+    pub fn get_position(&self) -> Point3D {
         self.position
     }
 
-    pub fn look_at(&mut self, target: Point) {
+    pub fn look_at(&mut self, target: Point3D) {
         self.direction = target.sub_p(self.position).normalize();
         self.right = self.direction.cross(self.up).normalize();
         self.up = self.right.cross(self.direction).normalize();

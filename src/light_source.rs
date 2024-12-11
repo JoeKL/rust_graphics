@@ -5,20 +5,20 @@ use crate::color::ColorRGB;
 
 #[derive(Debug, Clone, Copy)]
 pub struct LightSource{
-    position: Point,
+    position: Point3D,
     color: ColorRGB
 }
 
 impl LightSource {
-    pub fn new(position: Point, color: ColorRGB)-> LightSource{
+    pub fn new(position: Point3D, color: ColorRGB)-> LightSource{
         LightSource{position, color}
     }
 
-    pub fn set_position(&mut self, position: Point){
+    pub fn set_position(&mut self, position: Point3D){
         self.position = position
     }
 
-    pub fn get_position(&self)-> Point{
+    pub fn get_position(&self)-> Point3D{
         self.position
     }
 

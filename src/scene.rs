@@ -7,7 +7,7 @@ use crate::mesh::Mesh;
 use crate::primitives::*;
 
 pub struct Scene {
-    pub root_node: Point,
+    pub root_node: Point3D,
     pub camera: Camera,
     pub lights: Vec<LightSource>,
     pub mesh_list: Vec<Mesh>,
@@ -15,20 +15,20 @@ pub struct Scene {
 
 impl Scene {
     pub fn new() -> Scene {
-        let root_node = Point::new(0.0, 0.0, 0.0);
+        let root_node = Point3D::new(0.0, 0.0, 0.0);
 
         // camera
-        let pos = Point::new(0.0, 0.0, 10.0);
-        let target = Point::new(0.0, 0.0, 0.0);
-        let up = Vector::new(0.0, 1.0, 0.0);
+        let pos = Point3D::new(0.0, 0.0, 10.0);
+        let target = Point3D::new(0.0, 0.0, 0.0);
+        let up = Vector3D::new(0.0, 1.0, 0.0);
 
         let mut camera: Camera = Camera::new(pos, target, up);
 
-        camera.set_position(Point::new(0.0, 0.0, -10.0));
-        camera.look_at(Point::new(0.0, 0.0, 0.0));
+        camera.set_position(Point3D::new(0.0, 0.0, -10.0));
+        camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
         //light sources
-        let light = LightSource::new(Point::new(3.0, 3.0, 7.0), ColorRGB::WHITE);
+        let light = LightSource::new(Point3D::new(3.0, 3.0, 7.0), ColorRGB::WHITE);
 
         let mut lights: Vec<LightSource> = Vec::new();
         lights.push(light);

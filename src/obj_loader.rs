@@ -1342,11 +1342,11 @@ pub fn create_faces() -> Vec<Face> {
     faces
 }
 
-pub fn create_vertices() -> Vec<Point> {
+pub fn create_vertices() -> Vec<Point3D> {
     let mut vertices = Vec::new();
     // V array contains x,y,z triplets
     for i in (0..BALL_V.len()).step_by(3) {
-        vertices.push(Point::new(
+        vertices.push(Point3D::new(
             BALL_V[i],
             BALL_V[i + 1],
             BALL_V[i + 2],
