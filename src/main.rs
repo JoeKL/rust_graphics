@@ -9,7 +9,7 @@ mod scene;
 mod mesh;
 mod inputhandler;
 
-use displaybuffer::{DisplayBuffer, DisplayBufferPoint};
+use displaybuffer::{DisplayBuffer, ScreenPoint};
 use minifb::{Key, Window, WindowOptions};
 use engine::Engine;
 use inputhandler::InputHandler;

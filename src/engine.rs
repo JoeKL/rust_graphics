@@ -5,7 +5,7 @@ use crate::mesh::Mesh;
 use crate::primitives::*;
 use crate::scene::Scene;
 use crate::DisplayBuffer;
-use crate::DisplayBufferPoint;
+use crate::ScreenPoint;
 
 pub fn phong_blinn_flat_shade_triangle(
     triangle: Triangle,
@@ -202,15 +202,15 @@ impl Engine {
             point_1 = viewport_matrix.mul_point(point_1);
             point_2 = viewport_matrix.mul_point(point_2);
 
-            let screen_point_0 = DisplayBufferPoint {
+            let screen_point_0 = ScreenPoint {
                 y: point_0.y as i32,
                 x: point_0.x as i32,
             };
-            let screen_point_1 = DisplayBufferPoint {
+            let screen_point_1 = ScreenPoint {
                 x: point_1.x as i32,
                 y: point_1.y as i32,
             };
-            let screen_point_2 = DisplayBufferPoint {
+            let screen_point_2 = ScreenPoint {
                 x: point_2.x as i32,
                 y: point_2.y as i32,
             };
@@ -257,11 +257,11 @@ impl Engine {
             start_point = viewport_matrix.mul_point(start_point);
             end_point = viewport_matrix.mul_point(end_point);
 
-            let screen_start = DisplayBufferPoint {
+            let screen_start = ScreenPoint {
                 x: start_point.x as i32,
                 y: start_point.y as i32,
             };
-            let screen_end = DisplayBufferPoint {
+            let screen_end = ScreenPoint {
                 x: end_point.x as i32,
                 y: end_point.y as i32,
             };
@@ -320,8 +320,8 @@ impl Engine {
             self.scene.mesh_list[0].transform_mesh(rot_y_mat);
 
             let dp_point_start =
-                DisplayBufferPoint::new(screen_center.x as i32, screen_center.y as i32);
-            let dp_point_end = DisplayBufferPoint::new(
+                ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
+            let dp_point_end = ScreenPoint::new(
                 mouse_center_dist_vec.x as i32,
                 mouse_center_dist_vec.y as i32,
             );
@@ -408,11 +408,11 @@ impl Engine {
             start_point = viewport_matrix.mul_point(start_point);
             end_point = viewport_matrix.mul_point(end_point);
 
-            let screen_start = DisplayBufferPoint {
+            let screen_start = ScreenPoint {
                 x: start_point.x as i32,
                 y: start_point.y as i32,
             };
-            let screen_end = DisplayBufferPoint {
+            let screen_end = ScreenPoint {
                 x: end_point.x as i32,
                 y: end_point.y as i32,
             };
