@@ -1,9 +1,11 @@
-use crate::color::ColorRGB;
-use crate::inputhandler::InputHandler;
-use crate::light_source::LightSource;
-use crate::mesh::Mesh;
-use crate::primitives::*;
+use crate::input::InputHandler;
 use crate::scene::Scene;
+use crate::types::color::ColorRGB;
+use crate::types::light::PointLight;
+use crate::types::math::{Mat4x4, Point2D, Point3D, Vector3D};
+use crate::types::mesh::Mesh;
+use crate::types::primitives::Triangle;
+
 use crate::DisplayBuffer;
 use crate::ScreenPoint;
 
@@ -11,7 +13,7 @@ pub fn phong_blinn_flat_shade_triangle(
     triangle: Triangle,
     camera_position: Point3D,
     color: ColorRGB,
-    light_sources: &Vec<LightSource>,
+    light_sources: &Vec<PointLight>,
 ) -> ColorRGB {
     let a = triangle.a;
     let b = triangle.b;
@@ -38,7 +40,6 @@ pub fn phong_blinn_flat_shade_triangle(
     let edge1 = b.sub_p(a);
     let edge2 = c.sub_p(a);
     let n = edge1.cross(edge2).normalize();
-
 
     fn flat_shade(
         v: Vector3D,
@@ -78,7 +79,6 @@ pub fn phong_blinn_flat_shade_triangle(
     let mut flat_color: Vector3D = Vector3D::new(0.0, 0.0, 0.0);
 
     for light in light_sources {
-
         // Calculate light vector (from surface point to light source)
         let l: Vector3D = light.get_position().sub_p(x).normalize();
 
@@ -319,8 +319,7 @@ impl Engine {
             self.scene.mesh_list[0].transform_mesh(rot_x_mat);
             self.scene.mesh_list[0].transform_mesh(rot_y_mat);
 
-            let dp_point_start =
-                ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
+            let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
             let dp_point_end = ScreenPoint::new(
                 mouse_center_dist_vec.x as i32,
                 mouse_center_dist_vec.y as i32,

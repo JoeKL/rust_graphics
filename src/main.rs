@@ -1,18 +1,15 @@
-mod camera;
-mod color;
-mod displaybuffer;
-mod light_source;
-mod obj_loader;
-mod primitives;
-mod engine;
+
+mod types;
 mod scene;
-mod mesh;
-mod inputhandler;
+mod displaybuffer;
+mod utils;
+mod engine;
+mod input;
 
 use displaybuffer::{DisplayBuffer, ScreenPoint};
 use minifb::{Key, Window, WindowOptions};
 use engine::Engine;
-use inputhandler::InputHandler;
+use input::InputHandler;
 
 static WINDOW_WIDTH: usize = 1280;
 static WINDOW_HEIGHT: usize = 720;

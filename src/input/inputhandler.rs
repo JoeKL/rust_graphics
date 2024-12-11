@@ -1,8 +1,6 @@
-#![allow(dead_code)]
-
-use crate::primitives::{Point2D, Vector2D};
 use minifb::{Key, Window};
 use std::collections::HashSet;
+use crate::types::math::{Point2D, Vector2D};
 
 #[derive(Debug)]
 
