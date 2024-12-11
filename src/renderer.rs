@@ -254,7 +254,7 @@ impl RenderEngine {
         self.display_buffer.fill(ColorRGB::BLACK);
 
 
-        if(input_handler.is_mouse_button_down(0)){
+        if input_handler.is_mouse_button_down(0) {
 
             let mut x_rot: f32 = 0.00;
             let mut y_rot: f32 = 0.00;
