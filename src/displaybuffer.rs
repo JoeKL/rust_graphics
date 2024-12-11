@@ -4,12 +4,12 @@ use crate::primitives::Mat4x4;
 
 use crate::color::ColorRGB;
 #[derive(Debug, Clone, Copy)]
-pub struct DisplayBufferPoint {
+pub struct ScreenPoint {
     pub x: i32,
     pub y: i32,
 }
 
-impl DisplayBufferPoint {
+impl ScreenPoint {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
@@ -213,8 +213,8 @@ impl DisplayBuffer {
     pub fn draw_line(
         // TODO Bresenham
         &mut self,
-        mut p0: DisplayBufferPoint,
-        mut p1: DisplayBufferPoint,
+        mut p0: ScreenPoint,
+        mut p1: ScreenPoint,
         color: ColorRGB,
     ) {
         if (p1.x - p0.x).abs() > (p1.y - p0.y).abs() {
@@ -222,7 +222,7 @@ impl DisplayBuffer {
             // -> this must be true: x0 < x1
 
             if p0.x > p1.x {
-                let temp: DisplayBufferPoint = p0;
+                let temp: ScreenPoint = p0;
                 p0 = p1;
                 p1 = temp;
             }
@@ -240,7 +240,7 @@ impl DisplayBuffer {
             // line is more vertical than horizontal
             // -> this must be true: y0 < y1
             if p0.y > p1.y {
-                let temp: DisplayBufferPoint = p0;
+                let temp: ScreenPoint = p0;
                 p0 = p1;
                 p1 = temp;
             }
@@ -274,24 +274,24 @@ impl DisplayBuffer {
     ///
     pub fn draw_triangle(
         &mut self,
-        mut p0: DisplayBufferPoint,
-        mut p1: DisplayBufferPoint,
-        mut p2: DisplayBufferPoint,
+        mut p0: ScreenPoint,
+        mut p1: ScreenPoint,
+        mut p2: ScreenPoint,
         color: ColorRGB,
     ) {
         // sort the y points such that y0 < y1 < y2
         if p1.y < p0.y {
-            let temp: DisplayBufferPoint = p0;
+            let temp: ScreenPoint = p0;
             p0 = p1;
             p1 = temp;
         }
         if p2.y < p0.y {
-            let temp: DisplayBufferPoint = p0;
+            let temp: ScreenPoint = p0;
             p0 = p2;
             p2 = temp;
         }
         if p2.y < p1.y {
-            let temp: DisplayBufferPoint = p2;
+            let temp: ScreenPoint = p2;
             p2 = p1;
             p1 = temp;
         }
@@ -337,9 +337,9 @@ impl DisplayBuffer {
     }
 
     pub fn calc_triangle_area(
-        p0: DisplayBufferPoint,
-        p1: DisplayBufferPoint,
-        p2: DisplayBufferPoint,
+        p0: ScreenPoint,
+        p1: ScreenPoint,
+        p2: ScreenPoint,
     ) -> f32 {
         let signed_area = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
         signed_area as f32 / 2.0
@@ -347,26 +347,26 @@ impl DisplayBuffer {
 
     pub fn draw_gradient_triangle(
         &mut self,
-        mut p0: DisplayBufferPoint,
-        mut p1: DisplayBufferPoint,
-        mut p2: DisplayBufferPoint,
+        mut p0: ScreenPoint,
+        mut p1: ScreenPoint,
+        mut p2: ScreenPoint,
         c0: ColorRGB,
         c1: ColorRGB,
         c2: ColorRGB,
     ) {
         // sort the y points such that y0 < y1 < y2
         if p1.y < p0.y {
-            let temp: DisplayBufferPoint = p0;
+            let temp: ScreenPoint = p0;
             p0 = p1;
             p1 = temp;
         }
         if p2.y < p0.y {
-            let temp: DisplayBufferPoint = p0;
+            let temp: ScreenPoint = p0;
             p0 = p2;
             p2 = temp;
         }
         if p2.y < p1.y {
-            let temp: DisplayBufferPoint = p2;
+            let temp: ScreenPoint = p2;
             p2 = p1;
             p1 = temp;
         }

@@ -4,14 +4,14 @@ mod displaybuffer;
 mod light_source;
 mod obj_loader;
 mod primitives;
-mod renderer;
+mod engine;
 mod scene;
 mod mesh;
 mod inputhandler;
 
-use displaybuffer::{DisplayBuffer, DisplayBufferPoint};
+use displaybuffer::{DisplayBuffer, ScreenPoint};
 use minifb::{Key, Window, WindowOptions};
-use renderer::RenderEngine;
+use engine::Engine;
 use inputhandler::InputHandler;
 
 static WINDOW_WIDTH: usize = 1280;
@@ -35,7 +35,7 @@ fn main() {
 
     let mut input_handler = InputHandler::new();
 
-    let mut render_engine = RenderEngine::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
+    let mut render_engine = Engine::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
 
     let mut display_buffer ;
 
