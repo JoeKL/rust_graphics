@@ -83,6 +83,8 @@ pub struct RenderEngine {
     display_buffer: DisplayBuffer,
     scene: Scene,
     frame: u32,
+    draw_axis: bool,
+    draw_lights: bool,
 }
 
 impl RenderEngine {
@@ -101,12 +103,17 @@ impl RenderEngine {
         );
         let frame = 0;
 
+        let draw_axis = false;
+        let draw_lights = false;
+
         RenderEngine {
             window_width,
             window_height,
             display_buffer,
             scene,
             frame,
+            draw_axis,
+            draw_lights,
         }
     }
 
@@ -214,11 +221,6 @@ impl RenderEngine {
             (origin, x_end, ColorRGB::RED),   // X axis - red
             (origin, y_end, ColorRGB::GREEN), // Y axis - green
             (origin, z_end, ColorRGB::BLUE),  // Z axis - blue
-            (
-                origin,
-                self.scene.lights[0].get_position(),
-                ColorRGB::YELLOW,
-            ), // light source - yellow
         ];
 
         for (start, end, color) in axes {
@@ -249,9 +251,64 @@ impl RenderEngine {
         
     }
 
+
+    pub fn draw_light_vectors(&mut self){
+
+        let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
+        let viewport_matrix = self.display_buffer.create_viewport_matrix();
+
+
+        let origin = Point3D::new(0.0, 0.0, 0.0);
+
+        for lights in  &self.scene.lights {
+            let mut start_point = lights.get_position();
+            let mut end_point = origin;
+
+            start_point = look_at_projection_matrix.mul_point(start_point);
+            end_point = look_at_projection_matrix.mul_point(end_point);
+
+            start_point.dehomogen();
+            end_point.dehomogen();
+
+            start_point = viewport_matrix.mul_point(start_point);
+            end_point = viewport_matrix.mul_point(end_point);
+
+            let screen_start = DisplayBufferPoint {
+                x: start_point.x as i32,
+                y: start_point.y as i32,
+            };
+            let screen_end = DisplayBufferPoint {
+                x: end_point.x as i32,
+                y: end_point.y as i32,
+            };
+
+            self.display_buffer
+                .draw_line(screen_start, screen_end, ColorRGB::YELLOW);
+        }
+        
+    }
+
     pub fn render_frame(&mut self, input_handler: &InputHandler) -> Vec<u32> {
         self.frame += 1;
         self.display_buffer.fill(ColorRGB::BLACK);
+
+        if input_handler.is_key_pressed(minifb::Key::Space){    
+            if self.draw_axis {
+                self.draw_axis = false
+
+            } else {
+                self.draw_axis = true
+            }
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::L){    
+            if self.draw_lights {
+                self.draw_lights = false
+
+            } else {
+                self.draw_lights = true
+            }
+        }
 
 
         if input_handler.is_mouse_button_down(0) {
@@ -306,12 +363,21 @@ impl RenderEngine {
 
         }
 
-        self.draw_axis();
+        if self.draw_axis {
+
+            self.draw_axis();
+        }
 
 
         let triangles = RenderEngine::z_face_sort(&self.scene.mesh_list, self.scene.camera.get_position());
 
         self.draw_triangles(&triangles);
+
+        if self.draw_lights {
+
+            self.draw_light_vectors();
+        }
+
 
 
         return self.display_buffer.get_buffer().to_vec();
