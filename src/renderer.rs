@@ -310,13 +310,13 @@ impl RenderEngine {
 
     fn move_camera(&mut self, input_handler: &InputHandler){
 
-        if(input_handler.is_key_down(minifb::Key::O)){
+        if input_handler.is_key_down(minifb::Key::O) {
             let mut current_fov = self.scene.camera.get_fov_in_degrees();
             current_fov += 0.5;
             self.scene.camera.set_fov_in_degrees(current_fov);
 
         }
-        if(input_handler.is_key_down(minifb::Key::P)){
+        if input_handler.is_key_down(minifb::Key::P) {
             let mut current_fov = self.scene.camera.get_fov_in_degrees();
             current_fov -= 0.5;
             self.scene.camera.set_fov_in_degrees(current_fov);
