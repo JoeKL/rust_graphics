@@ -21,6 +21,15 @@ impl Point2D {
         Vector2D::new(self.x - p.x, self.y - p.y)
     }
 
+    pub fn add_v(&self, v: Vector2D) -> Vector2D {
+        Vector2D::new(self.x + v.x, self.y + v.y)
+    }
+
+    pub fn add_p(&self, p: Point2D) -> Vector2D {
+        Vector2D::new(self.x + p.x, self.y + p.y)
+    }
+
+
     pub fn to_vector(&self) -> Vector2D {
         let w = 0;
         Vector2D {
