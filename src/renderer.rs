@@ -78,6 +78,8 @@ pub fn flat_shade_triangle(triangle: Triangle, color: ColorRGB, light: LightSour
 }
 
 pub struct RenderEngine {
+    window_width: u32, 
+    window_height: u32,
     display_buffer: DisplayBuffer,
     scene: Scene,
     frame: u32,
@@ -100,6 +102,8 @@ impl RenderEngine {
         let frame = 0;
 
         RenderEngine {
+            window_width,
+            window_height,
             display_buffer,
             scene,
             frame,
@@ -249,25 +253,58 @@ impl RenderEngine {
         self.frame += 1;
         self.display_buffer.fill(ColorRGB::BLACK);
 
-        let mut alpha: f32 = 0.00;
 
-        if input_handler.is_key_pressed(minifb::Key::A) {
-            alpha -= 0.01;
-        }
+        if(input_handler.is_mouse_button_down(0)){
 
-        if input_handler.is_key_pressed(minifb::Key::D) {
-            alpha += 0.01;
-        }
-
+            let mut x_rot: f32 = 0.00;
+            let mut y_rot: f32 = 0.00;
+            
+            let dist_center_threshhold = 50.0;
     
-        let rot_x_mat = Mat4x4::new([
-            [alpha.cos(), 0.0, alpha.sin(), 0.0],
-            [0.0, 1.0, 0.0, 0.0],
-            [-alpha.sin(), 0.0, alpha.cos(), 0.0],
-            [0.0, 0.0, 0.0, 1.0],
-        ]);
+            let screen_center = Point2D::new((self.window_width / 2) as f32,(self.window_height / 2) as f32);
+            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
+            mouse_pos_relative_center.x -= (self.window_width / 2) as f32;
+            mouse_pos_relative_center.y -= (self.window_height / 2) as f32;
+            let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
+    
+            if mouse_pos_relative_center.x > dist_center_threshhold {
+                y_rot += mouse_pos_relative_center.x/5000.0;
+            }         
+            if mouse_pos_relative_center.x < -dist_center_threshhold {
+                y_rot += mouse_pos_relative_center.x/5000.0;
+            }         
+    
+            if mouse_pos_relative_center.y > dist_center_threshhold {
+                x_rot -= mouse_pos_relative_center.y/5000.0;
+            }         
+    
+            if mouse_pos_relative_center.y < -dist_center_threshhold {
+                x_rot -= mouse_pos_relative_center.y/5000.0;
+            }         
+            
+            let rot_x_mat = Mat4x4::new([
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
+                [0.0, x_rot.sin(), x_rot.cos(), 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+        
+            let rot_y_mat = Mat4x4::new([
+                [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+    
+            self.scene.mesh_list[0].transform_mesh(rot_x_mat);
+            self.scene.mesh_list[0].transform_mesh(rot_y_mat);
 
-        self.scene.mesh_list[0].transform_mesh(rot_x_mat);
+            let dp_point_start = DisplayBufferPoint::new(screen_center.x as i32, screen_center.y as i32);
+            let dp_point_end = DisplayBufferPoint::new(mouse_center_dist_vec.x as i32, mouse_center_dist_vec.y as i32);
+    
+            self.display_buffer.draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
+
+        }
 
         self.draw_axis();
 
