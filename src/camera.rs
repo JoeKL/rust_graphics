@@ -134,6 +134,15 @@ impl Camera {
         self.needs_update = false;
     }
 
+    pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f32){
+        self.fov_in_degrees = fov_in_degrees;
+        self.needs_update = true;
+    }
+
+    pub fn get_fov_in_degrees(&self) -> f32{
+        self.fov_in_degrees
+    }
+
     pub fn get_look_at_matrix(&mut self) -> Mat4x4 {
         self.update_matrices();
         self.look_at_matrix
