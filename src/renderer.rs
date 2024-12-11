@@ -356,12 +356,10 @@ impl RenderEngine {
             ]);
 
             for light in &mut self.scene.lights {
-                println!("{:#?}", light.get_position());
                 let current_light_pos = light.get_position();
                 let mut new_light_pos = rot_x_mat.mul_point(current_light_pos);
                 new_light_pos = rot_y_mat.mul_point(new_light_pos);
                 light.set_position(new_light_pos);
-                println!("{:#?}", light.get_position());
             }
         }
     }
