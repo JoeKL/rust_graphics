@@ -251,11 +251,11 @@ impl RenderEngine {
 
         let mut alpha: f32 = 0.00;
 
-        if(input_handler.is_key_pressed(minifb::Key::A)){
+        if input_handler.is_key_pressed(minifb::Key::A) {
             alpha -= 0.01;
         }
 
-        if(input_handler.is_key_pressed(minifb::Key::D)){
+        if input_handler.is_key_pressed(minifb::Key::D) {
             alpha += 0.01;
         }
 
