@@ -5,9 +5,10 @@ use crate::types::light::PointLight;
 use crate::types::math::{Mat4x4, Point2D, Point3D, Vector3D};
 use crate::types::mesh::Mesh;
 use crate::types::primitives::Triangle;
+use crate::types::display::ScreenPoint;
+
 
 use crate::DisplayBuffer;
-use crate::ScreenPoint;
 
 pub fn phong_blinn_flat_shade_triangle(
     triangle: Triangle,
