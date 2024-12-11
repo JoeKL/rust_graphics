@@ -1,17 +1,15 @@
-#![allow(dead_code)]
-
-use crate::primitives::*;
-use crate::color::ColorRGB;
+use crate::types::math::{Point3D, Vector3D};
+use crate::types::color::ColorRGB;
 
 #[derive(Debug, Clone, Copy)]
-pub struct LightSource{
+pub struct PointLight{
     position: Point3D,
     color: ColorRGB
 }
 
-impl LightSource {
-    pub fn new(position: Point3D, color: ColorRGB)-> LightSource{
-        LightSource{position, color}
+impl PointLight {
+    pub fn new(position: Point3D, color: ColorRGB)-> PointLight{
+        PointLight{position, color}
     }
 
     pub fn set_position(&mut self, position: Point3D){

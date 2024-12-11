@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
-use crate::primitives::Mat4x4;
+use crate::types::math::Mat4x4;
 
-use crate::color::ColorRGB;
+
+use crate::types::color::ColorRGB;
 #[derive(Debug, Clone, Copy)]
 pub struct ScreenPoint {
     pub x: i32,
