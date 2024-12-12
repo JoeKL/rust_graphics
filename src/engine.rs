@@ -57,7 +57,7 @@ impl Engine {
             }
         }
 
-        self.move_camera(input_handler);
+        self.change_camera_fov(input_handler);
         self.rotate_ball_with_mouse(input_handler);
         self.rotate_lightsources(input_handler);
     }
@@ -122,7 +122,7 @@ impl Engine {
         }
     }
 
-    fn move_camera(&mut self, input_handler: &InputHandler) {
+    fn change_camera_fov(&mut self, input_handler: &InputHandler) {
         if input_handler.is_key_down(minifb::Key::O) {
             let mut current_fov = self.scene.camera.get_fov_in_degrees();
             current_fov += 0.5;
@@ -183,11 +183,13 @@ impl Engine {
     pub fn run(&mut self, input_handler: &InputHandler) -> Vec<u32> {
         self.frame += 1;
 
-        // Handle input
-        self.process_input(input_handler);
+        //#TODO: handle input should be done before render_scene
 
         // Render
         self.renderer.render_scene(&mut self.scene);
+
+        // Handle input
+        self.process_input(input_handler);
 
         // Debug renders
         if self.draw_axis {
