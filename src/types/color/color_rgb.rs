@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 #[derive(Debug, Clone, Copy)]
 pub struct ColorRGB {
     as_u32: u32,

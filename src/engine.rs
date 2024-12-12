@@ -1,17 +1,19 @@
-use crate::color::ColorRGB;
-use crate::inputhandler::InputHandler;
-use crate::light_source::LightSource;
-use crate::mesh::Mesh;
-use crate::primitives::*;
+use crate::input::InputHandler;
 use crate::scene::Scene;
-use crate::DisplayBuffer;
-use crate::ScreenPoint;
+use crate::types::color::ColorRGB;
+use crate::types::light::PointLight;
+use crate::types::math::{Mat4x4, Point2D, Point3D, Vector3D};
+use crate::types::mesh::Mesh;
+use crate::types::primitives::Triangle;
+use crate::types::display::ScreenPoint;
+use crate::renderer::Rasterizer;
+
 
 pub fn phong_blinn_flat_shade_triangle(
     triangle: Triangle,
     camera_position: Point3D,
     color: ColorRGB,
-    light_sources: &Vec<LightSource>,
+    light_sources: &Vec<PointLight>,
 ) -> ColorRGB {
     let a = triangle.a;
     let b = triangle.b;
@@ -38,7 +40,6 @@ pub fn phong_blinn_flat_shade_triangle(
     let edge1 = b.sub_p(a);
     let edge2 = c.sub_p(a);
     let n = edge1.cross(edge2).normalize();
-
 
     fn flat_shade(
         v: Vector3D,
@@ -78,7 +79,6 @@ pub fn phong_blinn_flat_shade_triangle(
     let mut flat_color: Vector3D = Vector3D::new(0.0, 0.0, 0.0);
 
     for light in light_sources {
-
         // Calculate light vector (from surface point to light source)
         let l: Vector3D = light.get_position().sub_p(x).normalize();
 
@@ -104,7 +104,7 @@ pub fn phong_blinn_flat_shade_triangle(
 pub struct Engine {
     window_width: u32,
     window_height: u32,
-    display_buffer: DisplayBuffer,
+    rasterizer: Rasterizer,
     scene: Scene,
     frame: u32,
     draw_axis: bool,
@@ -113,7 +113,7 @@ pub struct Engine {
 
 impl Engine {
     pub fn new(window_width: u32, window_height: u32) -> Engine {
-        let display_buffer = DisplayBuffer::new(window_width as usize, window_height as usize);
+        let rasterizer = Rasterizer::new(window_width as usize, window_height as usize);
 
         let mut scene = Scene::new();
 
@@ -121,7 +121,7 @@ impl Engine {
         let near: f32 = 1.0;
         scene.camera.set_projection_params(
             30.0, // 60 degree FOV
-            display_buffer.canvas_width as f32 / display_buffer.canvas_height as f32,
+            rasterizer.framebuffer.get_width() as f32 / rasterizer.framebuffer.get_height() as f32,
             near,
             far,
         );
@@ -133,7 +133,7 @@ impl Engine {
         Engine {
             window_width,
             window_height,
-            display_buffer,
+            rasterizer,
             scene,
             frame,
             draw_axis,
@@ -180,7 +180,7 @@ impl Engine {
 
     pub fn draw_triangles(&mut self, triangles: &Vec<Triangle>) {
         let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
-        let viewport_matrix = self.display_buffer.create_viewport_matrix();
+        let viewport_matrix = self.rasterizer.viewport.get_matrix();
 
         for triangle in triangles {
             let mut point_0: Point3D = triangle.a;
@@ -215,7 +215,7 @@ impl Engine {
                 y: point_2.y as i32,
             };
 
-            self.display_buffer.draw_triangle(
+            self.rasterizer.draw_triangle(
                 screen_point_0,
                 screen_point_1,
                 screen_point_2,
@@ -231,7 +231,8 @@ impl Engine {
 
     pub fn draw_axis(&mut self) {
         let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
-        let viewport_matrix = self.display_buffer.create_viewport_matrix();
+        let viewport_matrix = self.rasterizer.viewport.get_matrix();
+
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
         let x_end = Point3D::new(5.0, 0.0, 0.0); // X axis in red
@@ -266,7 +267,7 @@ impl Engine {
                 y: end_point.y as i32,
             };
 
-            self.display_buffer
+            self.rasterizer
                 .draw_line(screen_start, screen_end, color);
         }
     }
@@ -319,14 +320,13 @@ impl Engine {
             self.scene.mesh_list[0].transform_mesh(rot_x_mat);
             self.scene.mesh_list[0].transform_mesh(rot_y_mat);
 
-            let dp_point_start =
-                ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
+            let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
             let dp_point_end = ScreenPoint::new(
                 mouse_center_dist_vec.x as i32,
                 mouse_center_dist_vec.y as i32,
             );
 
-            self.display_buffer
+            self.rasterizer
                 .draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
         }
     }
@@ -391,7 +391,8 @@ impl Engine {
 
     pub fn draw_light_vectors(&mut self) {
         let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
-        let viewport_matrix = self.display_buffer.create_viewport_matrix();
+        let viewport_matrix = self.rasterizer.viewport.get_matrix();
+
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
 
@@ -417,14 +418,14 @@ impl Engine {
                 y: end_point.y as i32,
             };
 
-            self.display_buffer
+            self.rasterizer
                 .draw_line(screen_start, screen_end, ColorRGB::YELLOW);
         }
     }
 
-    pub fn render_frame(&mut self, input_handler: &InputHandler) -> Vec<u32> {
+    pub fn run(&mut self, input_handler: &InputHandler) -> Vec<u32> {
         self.frame += 1;
-        self.display_buffer.fill(ColorRGB::BLACK);
+        self.rasterizer.framebuffer.fill(ColorRGB::BLACK);
 
         if input_handler.is_key_pressed(minifb::Key::Space) {
             if self.draw_axis {
@@ -460,6 +461,6 @@ impl Engine {
             self.draw_light_vectors();
         }
 
-        return self.display_buffer.get_buffer().to_vec();
+        return self.rasterizer.framebuffer.get_buffer().to_vec();
     }
 }

@@ -1,6 +1,6 @@
-#![allow(dead_code)]
+use crate::types::math::Point3D;
+use crate::types::mesh::Face;
 
-use crate::primitives::*;
 
 const BALL_V: [f32; 1203] = [
     -0.130201,

@@ -1,18 +1,14 @@
-mod camera;
-mod color;
-mod displaybuffer;
-mod light_source;
-mod obj_loader;
-mod primitives;
-mod engine;
-mod scene;
-mod mesh;
-mod inputhandler;
 
-use displaybuffer::{DisplayBuffer, ScreenPoint};
+mod types;
+mod scene;
+mod utils;
+mod engine;
+mod input;
+mod renderer;
+
 use minifb::{Key, Window, WindowOptions};
 use engine::Engine;
-use inputhandler::InputHandler;
+use input::InputHandler;
 
 static WINDOW_WIDTH: usize = 1280;
 static WINDOW_HEIGHT: usize = 720;
@@ -44,7 +40,7 @@ fn main() {
 
         input_handler.update(&window);
         
-        display_buffer = render_engine.render_frame(&input_handler);
+        display_buffer = render_engine.run(&input_handler);
 
         window
             .update_with_buffer(&display_buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
