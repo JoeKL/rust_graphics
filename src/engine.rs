@@ -72,14 +72,9 @@ impl Engine {
 
             let dist_center_threshhold = 50.0;
 
-            let screen_center = Point2D::new(
-                (self.renderer.get_window_width() / 2) as f32,
-                (self.renderer.get_window_height() / 2) as f32,
-            );
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
             mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
             mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
-            let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
 
             if mouse_pos_relative_center.x > dist_center_threshhold {
                 y_rot += mouse_pos_relative_center.x / 5000.0;
