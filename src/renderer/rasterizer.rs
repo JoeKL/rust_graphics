@@ -1,114 +1,18 @@
-#![allow(dead_code)]
-
-use crate::types::math::Mat4x4;
-
+use crate::renderer::{FrameBuffer, Viewport};
 use crate::types::color::ColorRGB;
-
 use crate::types::display::ScreenPoint;
 
-
-pub struct DisplayBuffer {
-    pub buffer: Vec<u32>,
-    pub canvas_height: usize,
-    pub canvas_width: usize,
+pub struct Rasterizer {
+    pub framebuffer: FrameBuffer,
+    pub viewport: Viewport,
 }
 
-// Implement methods for the struct (similar to class methods)
-impl DisplayBuffer {
-    pub fn new(canvas_width: usize, canvas_height: usize) -> DisplayBuffer {
-        let buffer = vec![0; canvas_width * canvas_height];
-        DisplayBuffer {
-            buffer,
-            canvas_width,
-            canvas_height,
+impl Rasterizer {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            framebuffer: FrameBuffer::new(width, height),
+            viewport: Viewport::new(width, height),
         }
-    }
-
-    pub fn get_buffer(&self) -> &[u32] {
-        &self.buffer
-    }
-
-    /// Ssets the whole background to specified color
-    ///
-    /// # Arguments
-    /// * `color` - the color as u32
-    pub fn fill(&mut self, color: ColorRGB) {
-        for i in 0..self.buffer.len() {
-            self.buffer[i] = color.get_as_u32();
-        }
-    }
-
-    /// Converts 2D coordinates (x, y) to a buffer index
-    ///
-    /// # Arguments
-    /// * `x` - The x coordinate
-    /// * `y` - The y coordinate
-    ///
-    /// # Returns
-    /// The corresponding buffer index
-    pub fn get_index(&self, x: usize, y: usize) -> usize {
-        y * self.canvas_width + x
-    }
-
-    /// Returns the dimensions of the DisplayBuffer
-    ///
-    /// # Returns
-    /// ```rust
-    /// dimensions: (usize, usize)
-    /// ```
-    pub fn get_dimensions(&self) -> (usize, usize) {
-        (self.canvas_height, self.canvas_width)
-    }
-
-    /// get coordiantes from index as usize
-    ///
-    /// # Arguments
-    /// * index as usize
-    ///
-    /// # Returns
-    /// coordinates as (usize, usize)
-    pub fn get_coordinates(&self, index: usize) -> (usize, usize) {
-        let x = index % self.canvas_width;
-        let y = index / self.canvas_width;
-        (x, y)
-    }
-
-    /// Sets a Pixel to a specified color
-    ///
-    /// # Arguments
-    /// * `x` - The x coordinate
-    /// * `y` - The x coordinate
-    /// * `color` - The color
-    ///
-    pub fn set_pixel(&mut self, x: i32, y: i32, color: ColorRGB) {
-        if x < 0 || y < 0 || x >= self.canvas_width as i32 || y >= self.canvas_height as i32 {
-            return;
-        }
-        let index = self.get_index(x as usize, y as usize);
-        self.buffer[index] = color.get_as_u32();
-    }
-
-    /// Checks if the given coordinates are within the display buffer bounds.
-    ///
-    /// # Arguments
-    ///
-    /// * `x` - The x coordinate to check
-    /// * `y` - The y coordinate to check
-    ///
-    /// # Returns
-    ///
-    /// `true` if the coordinates are within bounds, `false` otherwise
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let buffer = DisplayBuffer::new(100, 100);
-    /// assert!(buffer.is_in_bounds(50, 50));  // Inside bounds
-    /// assert!(!buffer.is_in_bounds(-1, 50)); // Outside bounds (negative)
-    /// assert!(!buffer.is_in_bounds(100, 50)); // Outside bounds (too large)
-    /// ```
-    pub fn is_in_bounds(&self, x: i32, y: i32) -> bool {
-        x >= 0 && y >= 0 && x < self.canvas_width as i32 && y < self.canvas_height as i32
     }
 
     /// Performs linear interpolation between two points.
@@ -138,7 +42,7 @@ impl DisplayBuffer {
     /// * If i0 == i1, returns a vector with single value d0
     /// * The function interpolates in the direction from i0 to i1
     /// * Useful for line rasterization where you need to find all points between two endpoints
-    fn linear_interpolation(i0: i32, d0: i32, i1: i32, d1: i32) -> Vec<f32> {
+    pub fn linear_interpolation(i0: i32, d0: i32, i1: i32, d1: i32) -> Vec<f32> {
         let mut result: Vec<f32> = Vec::new();
 
         // Special case: if points are the same, return array of size 1
@@ -220,12 +124,12 @@ impl DisplayBuffer {
             }
 
             // calculate the corrosponding y for each x
-            let result = DisplayBuffer::linear_interpolation(p0.x, p0.y, p1.x, p1.y);
+            let result = Rasterizer::linear_interpolation(p0.x, p0.y, p1.x, p1.y);
 
             // draw line by iterating through the results
             let mut i = 0;
             for x in p0.x..p1.x {
-                self.set_pixel(x, result[i] as i32, color);
+                self.framebuffer.set_pixel(x, result[i] as i32, color);
                 i += 1;
             }
         } else {
@@ -238,12 +142,12 @@ impl DisplayBuffer {
             }
 
             // calculate the corrosponding x for each y
-            let result = DisplayBuffer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
+            let result = Rasterizer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
 
             // draw line by iterating through the results
             let mut i = 0;
             for y in p0.y..p1.y {
-                self.set_pixel(result[i] as i32, y, color);
+                self.framebuffer.set_pixel(result[i] as i32, y, color);
                 i += 1;
             }
         }
@@ -291,9 +195,9 @@ impl DisplayBuffer {
         // calculate boundaries of the triangle given by p0,p1,p2
         // we want the x values for each line between two points, thats why the independent value is y. y = i , x = d
         // naming: x01 -> x values between p0 and p1
-        let mut x01 = DisplayBuffer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
-        let x02 = DisplayBuffer::linear_interpolation(p0.y, p0.x, p2.y, p2.x);
-        let x12 = DisplayBuffer::linear_interpolation(p1.y, p1.x, p2.y, p2.x);
+        let mut x01 = Rasterizer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
+        let x02 = Rasterizer::linear_interpolation(p0.y, p0.x, p2.y, p2.x);
+        let x12 = Rasterizer::linear_interpolation(p1.y, p1.x, p2.y, p2.x);
 
         //pop the last element so that its not counted twice, since its the first in x12
         x01.pop();
@@ -323,14 +227,9 @@ impl DisplayBuffer {
 
             // Fill pixels for current scanline (excluding edges)
             for x in (x_start + 1)..=x_end {
-                self.set_pixel(x, y, color);
+                self.framebuffer.set_pixel(x, y, color);
             }
         }
-    }
-
-    pub fn calc_triangle_area(p0: ScreenPoint, p1: ScreenPoint, p2: ScreenPoint) -> f32 {
-        let signed_area = (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
-        signed_area as f32 / 2.0
     }
 
     pub fn draw_gradient_triangle(
@@ -362,9 +261,9 @@ impl DisplayBuffer {
         // calculate boundaries of the triangle given by p0,p1,p2
         // we want the x values for each line between two points, thats why the independent value is y. y = i , x = d
         // naming: x01 -> x values between p0 and p1
-        let mut x01 = DisplayBuffer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
-        let x02 = DisplayBuffer::linear_interpolation(p0.y, p0.x, p2.y, p2.x);
-        let x12 = DisplayBuffer::linear_interpolation(p1.y, p1.x, p2.y, p2.x);
+        let mut x01 = Rasterizer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
+        let x02 = Rasterizer::linear_interpolation(p0.y, p0.x, p2.y, p2.x);
+        let x12 = Rasterizer::linear_interpolation(p1.y, p1.x, p2.y, p2.x);
 
         //pop the last element so that its not counted twice, since its the first in x12
         x01.pop();
@@ -442,19 +341,8 @@ impl DisplayBuffer {
                     .round()
                     .clamp(0.0, 255.0)) as u8;
 
-                self.set_pixel(x, y, ColorRGB::from_rgb(r, g, b));
+                self.framebuffer.set_pixel(x, y, ColorRGB::from_rgb(r, g, b));
             }
-        }
-    }
-    // Viewport matrix (just the screen transformation part)
-    pub fn create_viewport_matrix(&self) -> Mat4x4 {
-        Mat4x4 {
-            mat: [
-                [self.canvas_width as f32 / 2.0, 0.0, 0.0, self.canvas_width as f32 / 2.0],
-                [0.0, -(self.canvas_height as f32) / 2.0, 0.0, self.canvas_height as f32 / 2.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ],
         }
     }
 }
