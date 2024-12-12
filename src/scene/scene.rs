@@ -1,8 +1,8 @@
 use crate::types::camera::Camera;
-use crate::types::light::PointLight;
 use crate::types::color::ColorRGB;
-use crate::types::mesh::Mesh;
+use crate::types::light::PointLight;
 use crate::types::math::{Point3D, Vector3D};
+use crate::types::mesh::Mesh;
 
 pub struct Scene {
     #[allow(dead_code)]
@@ -27,8 +27,8 @@ impl Scene {
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
         //light sources
-        let light = PointLight::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE);
-        let light2 = PointLight::new(Point3D::new(-10.0, 10.0, 0.0), ColorRGB::WHITE);
+        let light = PointLight::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE, 1.0);
+        let light2 = PointLight::new(Point3D::new(-10.0, 10.0, 0.0), ColorRGB::WHITE, 0.5);
 
         let mut lights: Vec<PointLight> = Vec::new();
         lights.push(light);
@@ -36,7 +36,7 @@ impl Scene {
 
         let mut mesh_list: Vec<Mesh> = Vec::new();
 
-        let mesh_ball  = Mesh::new_ball();
+        let mesh_ball = Mesh::new_ball();
         mesh_list.push(mesh_ball);
 
         Scene {

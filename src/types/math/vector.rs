@@ -104,4 +104,13 @@ impl Vector3D {
     pub fn sub_p(&self, p: Point3D) -> Vector3D {
         Vector3D::new(self.x - p.x, self.y - p.y, self.z - p.z)
     }
+
+    pub fn clamp(&self, min: f32, max: f32) -> Vector3D {
+        Vector3D {
+            x: self.x.clamp(min, max),
+            y: self.y.clamp(min, max),
+            z: self.z.clamp(min, max),
+            w: self.w
+        }
+    }
 }
