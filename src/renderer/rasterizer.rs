@@ -79,7 +79,7 @@ impl Rasterizer {
         return result;
     }
 
-    /// Draws a line between two points using linear interpolation.
+    /// Draws a line between two points using bresenham.
     ///
     /// ### Arguments
     ///
@@ -87,15 +87,7 @@ impl Rasterizer {
     /// * `p1` - Ending point of the line
     /// * `color` - Color value to draw the line with (32-bit RGB/RGBA)
     ///
-    /// ### Details
-    ///
-    /// The algorithm determines whether the line is more horizontal or vertical and chooses
-    /// the appropriate axis to iterate over. For each step along the major axis, it calculates
-    /// the corresponding coordinate on the minor axis using linear interpolation.
-    ///
-    /// The points are automatically sorted so that drawing always proceeds from left to right
-    /// (for more horizontal lines) or top to bottom (for more vertical lines).
-    ///
+    /// 
     /// ### Example
     ///
     /// ```
@@ -108,51 +100,73 @@ impl Rasterizer {
     /// ### Notes
     ///
     /// * The points are taken as mutable because they may be swapped internally
-    /// * Uses linear interpolation rather than Bresenham's algorithm
     /// * Works with both shallow and steep line angles
     pub fn draw_line(
-        // TODO Bresenham
         &mut self,
         mut p0: ScreenPoint,
         mut p1: ScreenPoint,
         color: ColorRGB,
     ) {
-        if (p1.x - p0.x).abs() > (p1.y - p0.y).abs() {
-            // line is more horizontal then vertical
-            // -> this must be true: x0 < x1
-
-            if p0.x > p1.x {
-                let temp: ScreenPoint = p0;
-                p0 = p1;
-                p1 = temp;
+        // Handle vertical lines specially
+        if p1.x == p0.x {
+            let (start_y, end_y) = if p0.y > p1.y {
+                //when p0 is further down then p1
+                (p1.y, p0.y)
+            } else {
+                //when p1 is further down then p0
+                (p0.y, p1.y)
+            };
+            //draw frambuffer up down
+            for y in start_y..=end_y {
+                self.framebuffer.set_pixel(p0.x, y, color);
             }
+            return;
+        }
 
-            // calculate the corrosponding y for each x
-            let result = Rasterizer::linear_interpolation(p0.x, p0.y, p1.x, p1.y);
-
-            // draw line by iterating through the results
-            let mut i = 0;
-            for x in p0.x..p1.x {
-                self.framebuffer.set_pixel(x, result[i] as i32, color);
-                i += 1;
+        // Handle horizontal lines specially
+        if p1.y == p0.y {
+            let (start_x, end_x) = if p0.x > p1.x {
+                //when p0 is further right then p1
+                (p1.x, p0.x)
+            } else {
+                //when p1 is further right then p0
+                (p0.x, p1.x)
+            };
+            //draw frambuffer up down
+            for x in start_x..=end_x {
+                self.framebuffer.set_pixel(x, p0.y, color);
             }
-        } else {
-            // line is more vertical than horizontal
-            // -> this must be true: y0 < y1
-            if p0.y > p1.y {
-                let temp: ScreenPoint = p0;
-                p0 = p1;
-                p1 = temp;
-            }
+            return;
+        }
 
-            // calculate the corrosponding x for each y
-            let result = Rasterizer::linear_interpolation(p0.y, p0.x, p1.y, p1.x);
+        // Ensure we're always drawing left to right
+        if p1.x < p0.x {
+            std::mem::swap(&mut p0, &mut p1);
+        }
 
-            // draw line by iterating through the results
-            let mut i = 0;
-            for y in p0.y..p1.y {
-                self.framebuffer.set_pixel(result[i] as i32, y, color);
-                i += 1;
+        let slope_m = (p1.y - p0.y) as f32 / (p1.x - p0.x) as f32;
+        let steep = slope_m.abs() > 1.0;
+        
+        if steep {
+            // Swap x and y coordinates if slope is steep
+            std::mem::swap(&mut p0.x, &mut p0.y);
+            std::mem::swap(&mut p1.x, &mut p1.y);
+        }
+
+        // Ensure left-to-right again after possible x/y swap
+        if p1.x < p0.x {
+            std::mem::swap(&mut p0, &mut p1);
+        }
+
+        let slope_m = (p1.y - p0.y) as f32 / (p1.x - p0.x) as f32;
+        let t = p0.y as f32 - (slope_m * p0.x as f32);
+
+        for x in p0.x..=p1.x {
+            let pixel_y = (slope_m * x as f32 + t).round() as i32;
+            if steep {
+                self.framebuffer.set_pixel(pixel_y, x, color);
+            } else {
+                self.framebuffer.set_pixel(x, pixel_y, color);
             }
         }
     }
