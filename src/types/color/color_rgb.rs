@@ -1,3 +1,5 @@
+use crate::types::math::Vector3D;
+
 #[derive(Debug, Clone, Copy)]
 pub struct ColorRGB {
     as_u32: u32,
@@ -56,6 +58,22 @@ impl ColorRGB {
     pub fn get_r(&self) -> u8 {self.r}
     pub fn get_g(&self) -> u8 {self.g}
     pub fn get_b(&self) -> u8 {self.b}
+
+    pub fn to_vector(&self) -> Vector3D {
+        Vector3D::new(
+            self.get_r() as f32 / 255.0,
+            self.get_g() as f32 / 255.0,
+            self.get_b() as f32 / 255.0,
+        )
+    }
+
+    pub fn from_vector(vec: &Vector3D) -> Self {
+        ColorRGB::from_rgb(
+            Self::f32_to_color_component(vec.x),
+            Self::f32_to_color_component(vec.y),
+            Self::f32_to_color_component(vec.z)
+        )
+    }
 
     pub const BLACK: ColorRGB = ColorRGB { 
         as_u32: 0x000000, 

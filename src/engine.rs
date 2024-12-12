@@ -1,105 +1,12 @@
 use crate::input::InputHandler;
 use crate::scene::Scene;
 use crate::types::color::ColorRGB;
-use crate::types::light::PointLight;
-use crate::types::math::{Mat4x4, Point2D, Point3D, Vector3D};
+use crate::types::math::{Mat4x4, Point2D, Point3D};
 use crate::types::mesh::Mesh;
 use crate::types::primitives::Triangle;
 use crate::types::display::ScreenPoint;
 use crate::renderer::Rasterizer;
-
-
-pub fn phong_blinn_flat_shade_triangle(
-    triangle: Triangle,
-    camera_position: Point3D,
-    color: ColorRGB,
-    light_sources: &Vec<PointLight>,
-) -> ColorRGB {
-    let a = triangle.a;
-    let b = triangle.b;
-    let c = triangle.c;
-
-    // Convert colors to floating point vectors (0-255 -> 0.0-1.0)
-    let triangle_color: Vector3D = Vector3D::new(
-        color.get_r() as f32 / 255.0, // Convert 0-255 to 0-1 range
-        color.get_g() as f32 / 255.0,
-        color.get_b() as f32 / 255.0,
-    );
-
-    // Calculate triangle center point
-    let x: Point3D = Point3D::new(
-        (a.x + b.x + c.x) / 3.0,
-        (a.y + b.y + c.y) / 3.0,
-        (a.z + b.z + c.z) / 3.0,
-    );
-
-    // Calculate view vector (from surface point to camera at origin)
-    let v: Vector3D = camera_position.sub_p(x).normalize();
-
-    // normal in the middle of the triangle
-    let edge1 = b.sub_p(a);
-    let edge2 = c.sub_p(a);
-    let n = edge1.cross(edge2).normalize();
-
-    fn flat_shade(
-        v: Vector3D,
-        l: Vector3D,
-        n: Vector3D,
-        triangle_color: Vector3D,
-        light_color: Vector3D,
-    ) -> Vector3D {
-        // Phong lighting coefficients
-        let ambient = 0.1;
-        let diffuse = 0.5;
-        let specular = 0.5;
-        let shininess = 50.0;
-
-        // Calculate halfway vector for specular reflection
-        let h: Vector3D = v.add(l).normalize();
-
-        // Calculate color components
-        let ca = triangle_color.mul(ambient); // Ambient color = surface color * ambient coefficient
-        let cd = triangle_color.mul(diffuse); // Diffuse color = surface color * diffuse coefficient
-        let cs = Vector3D::new(1.0, 1.0, 1.0).mul(specular); // Specular color (white) * specular coefficient
-
-        // Calculate Phong lighting components
-        let ambient_part = ca;
-        let diffuse_part = cd.mul(f32::max(l.dot(n), 0.0)); // Diffuse = cd * max(0, l·n)
-        let specular_part = cs.mul(f32::max(h.dot(n), 0.0).powf(shininess)); // Specular = cs * max(0, h·n)^shininess
-
-        // Combine components and multiply by light color
-        ambient_part
-            .add(diffuse_part)
-            .add(specular_part)
-            .mul_vec(light_color)
-    }
-
-    let light_count = light_sources.len();
-
-    let mut flat_color: Vector3D = Vector3D::new(0.0, 0.0, 0.0);
-
-    for light in light_sources {
-        // Calculate light vector (from surface point to light source)
-        let l: Vector3D = light.get_position().sub_p(x).normalize();
-
-        flat_color = flat_color.add(
-            flat_shade(v, l, n, triangle_color, light.get_color_as_vector())
-                .mul(1.0 / light_count as f32),
-        );
-    }
-
-    // Clamp color values between 0 and 1 to prevent overflow
-    flat_color.x = f32::min(flat_color.x, 1.0);
-    flat_color.y = f32::min(flat_color.y, 1.0);
-    flat_color.z = f32::min(flat_color.z, 1.0);
-
-    // Convert back to RGB color (0.0-1.0 -> 0-255)
-    ColorRGB::from_rgb(
-        ColorRGB::f32_to_color_component(flat_color.x),
-        ColorRGB::f32_to_color_component(flat_color.y),
-        ColorRGB::f32_to_color_component(flat_color.z),
-    )
-}
+use crate::types::shader::{FlatShader, Material};
 
 pub struct Engine {
     window_width: u32,
@@ -178,9 +85,17 @@ impl Engine {
         triangles
     }
 
-    pub fn draw_triangles(&mut self, triangles: &Vec<Triangle>) {
+    pub fn draw_flat_triangles(&mut self, triangles: &Vec<Triangle>) {
         let look_at_projection_matrix = self.scene.camera.get_look_at_projection_matrix();
         let viewport_matrix = self.rasterizer.viewport.get_matrix();
+        
+        let ambient = 0.1;
+        let diffuse = 0.5;
+        let specular = 0.5;
+        let shininess = 50.0;
+        
+        let material= Material::new(ColorRGB::from_rgb(0, 255, 200), ambient, diffuse, specular, shininess);
+        let shader = FlatShader;
 
         for triangle in triangles {
             let mut point_0: Point3D = triangle.a;
@@ -219,12 +134,8 @@ impl Engine {
                 screen_point_0,
                 screen_point_1,
                 screen_point_2,
-                phong_blinn_flat_shade_triangle(
-                    *triangle,
-                    self.scene.camera.get_position(),
-                    ColorRGB::from_rgb(0, 255, 200),
-                    &self.scene.lights,
-                ),
+                Rasterizer::shade_triangle(triangle, &self.scene.camera.get_position(), &material, &self.scene.lights, &shader)
+  
             );
         }
     }
@@ -455,7 +366,7 @@ impl Engine {
         let triangles =
             Engine::z_face_sort(&self.scene.mesh_list, self.scene.camera.get_position());
 
-        self.draw_triangles(&triangles);
+        self.draw_flat_triangles(&triangles);
 
         if self.draw_lights {
             self.draw_light_vectors();

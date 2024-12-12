@@ -52,7 +52,6 @@ fn main() {
             //reset time since last update
             time_since_title_update = Instant::now();
         }
-        
 
         input_handler.update(&window);
         
@@ -61,6 +60,5 @@ fn main() {
         window
             .update_with_buffer(&display_buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
             .unwrap();
-
     }
 }

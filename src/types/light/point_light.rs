@@ -4,12 +4,13 @@ use crate::types::color::ColorRGB;
 #[derive(Debug, Clone, Copy)]
 pub struct PointLight{
     position: Point3D,
-    color: ColorRGB
+    color: ColorRGB,
+    intensity: f32,
 }
 
 impl PointLight {
-    pub fn new(position: Point3D, color: ColorRGB)-> PointLight{
-        PointLight{position, color}
+    pub fn new(position: Point3D, color: ColorRGB, intensity: f32)-> PointLight{
+        PointLight{position, color, intensity}
     }
 
     pub fn set_position(&mut self, position: Point3D){
@@ -26,6 +27,18 @@ impl PointLight {
 
     pub fn get_color(&self) -> ColorRGB{
         self.color
+    }
+
+    pub fn set_intensity(&mut self, intensity: f32){
+        self.intensity = intensity
+    }
+
+    pub fn get_intensity(&self) -> f32{
+        self.intensity
+    }
+
+    pub fn get_direction(&self, surface_point: &Point3D) -> Vector3D {
+        self.position.sub_p(*surface_point).normalize()
     }
 
     pub fn get_color_as_vector(&self) -> Vector3D{

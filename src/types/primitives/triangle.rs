@@ -1,4 +1,4 @@
-use crate::types::math::Point3D;
+use crate::types::math::{Point3D, Vector3D};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Triangle {
@@ -16,5 +16,19 @@ impl Triangle {
         let signed_area = (self.b.x - self.a.x) * (self.c.y - self.a.y)
             - (self.b.y - self.a.y) * (self.c.x - self.a.x);
         signed_area as f32 / 2.0
+    }
+
+    pub fn calc_normal(&self) -> Vector3D {
+        let edge_1 = self.b.sub_p(self.a);
+        let edge_2 = self.c.sub_p(self.a);
+        edge_1.cross(edge_2).normalize()
+    }
+
+    pub fn calc_center(&self) -> Point3D {
+        Point3D::new(
+            (self.a.x + self.b.x + self.c.x) / 3.0,
+            (self.a.y + self.b.y + self.c.y) / 3.0,
+            (self.a.z + self.b.z + self.c.z) / 3.0,
+        )
     }
 }

@@ -1,6 +1,10 @@
 use crate::renderer::{FrameBuffer, Viewport};
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
+use crate::types::light::PointLight;
+use crate::types::math::Point3D;
+use crate::types::primitives::Triangle;
+use crate::types::shader::{Material, ShadingModel};
 
 pub struct Rasterizer {
     pub framebuffer: FrameBuffer,
@@ -345,4 +349,20 @@ impl Rasterizer {
             }
         }
     }
+
+    pub fn shade_triangle(
+        triangle: &Triangle,
+        camera_position: &Point3D,
+        material: &Material,
+        lights: &Vec<PointLight>,
+        shader: &impl ShadingModel,
+    ) -> ColorRGB {
+        // Calculate triangle center and normal
+        let center = triangle.calc_center();
+        let normal = triangle.calc_normal();
+        let view_vector = camera_position.sub_p(center).normalize();
+                
+        shader.calc_color(&center, &normal, &view_vector, material, lights)
+    }
+
 }
