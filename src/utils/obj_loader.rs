@@ -1,6 +1,7 @@
-use crate::types::math::Point3D;
+use crate::types::color::ColorRGB;
+use crate::types::math::{Point3D, Vector3D};
 use crate::types::mesh::Face;
-
+use crate::types::primitives::Vertex;
 
 const BALL_V: [f32; 1203] = [
     -0.130201,
@@ -1332,7 +1333,6 @@ const BALL_F: [usize; 2394] = [
     304, 39, 324, 54, 219, 197, 124, 125,
 ];
 
-
 pub fn create_faces() -> Vec<Face> {
     let mut faces: Vec<Face> = Vec::new();
     // F array contains triplets of vertex indices
@@ -1342,14 +1342,14 @@ pub fn create_faces() -> Vec<Face> {
     faces
 }
 
-pub fn create_vertices() -> Vec<Point3D> {
+pub fn create_vertices() -> Vec<Vertex> {
     let mut vertices = Vec::new();
     // V array contains x,y,z triplets
     for i in (0..BALL_V.len()).step_by(3) {
-        vertices.push(Point3D::new(
-            BALL_V[i],
-            BALL_V[i + 1],
-            BALL_V[i + 2],
+        vertices.push(Vertex::new(
+            Point3D::new(BALL_V[i], BALL_V[i + 1], BALL_V[i + 2]),
+            Vector3D::new(0.0, 0.0, 0.0),
+            ColorRGB::WHITE,
         ));
     }
     vertices
