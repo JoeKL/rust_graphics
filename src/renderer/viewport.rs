@@ -1,8 +1,8 @@
 use crate::types::math::Mat4x4;
 
 pub struct Viewport {
-    screen_width: usize,
-    screen_height: usize,
+    width: usize,
+    height: usize,
     transform: Mat4x4,
 }
 
@@ -18,9 +18,13 @@ impl Viewport{
         };
 
         Self {
-            screen_width,
-            screen_height,
+            width: screen_width,
+            height: screen_height,
             transform,
         }
+    }
+    
+    pub fn get_matrix(&self) -> Mat4x4 {
+        self.transform
     }
 }

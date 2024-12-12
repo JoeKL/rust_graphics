@@ -1,13 +1,11 @@
 
 mod types;
 mod scene;
-mod displaybuffer;
 mod utils;
 mod engine;
 mod input;
 mod renderer;
 
-use displaybuffer::DisplayBuffer;
 use minifb::{Key, Window, WindowOptions};
 use engine::Engine;
 use input::InputHandler;
@@ -42,7 +40,7 @@ fn main() {
 
         input_handler.update(&window);
         
-        display_buffer = render_engine.render_frame(&input_handler);
+        display_buffer = render_engine.run(&input_handler);
 
         window
             .update_with_buffer(&display_buffer, WINDOW_WIDTH, WINDOW_HEIGHT)

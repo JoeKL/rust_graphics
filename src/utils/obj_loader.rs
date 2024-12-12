@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::types::math::Point3D;
 use crate::types::mesh::Face;
 
