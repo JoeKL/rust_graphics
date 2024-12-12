@@ -1,7 +1,9 @@
-#![allow(dead_code)]
+use crate::types::math::{Point3D, Mat4x4};
+use crate::types::mesh::Face;
+use crate::types::primitives::Triangle;
 
-use crate::primitives::*;
-use crate::obj_loader::*;
+
+use crate::utils::*;
 
 pub struct Mesh {
     pub vertices: Vec<Point3D>,

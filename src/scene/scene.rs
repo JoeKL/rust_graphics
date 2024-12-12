@@ -1,15 +1,14 @@
-#![allow(dead_code)]
-
-use crate::camera::Camera;
-use crate::color::ColorRGB;
-use crate::light_source::LightSource;
-use crate::mesh::Mesh;
-use crate::primitives::*;
+use crate::types::camera::Camera;
+use crate::types::light::PointLight;
+use crate::types::color::ColorRGB;
+use crate::types::mesh::Mesh;
+use crate::types::math::{Point3D, Vector3D};
 
 pub struct Scene {
+    #[allow(dead_code)]
     pub root_node: Point3D,
     pub camera: Camera,
-    pub lights: Vec<LightSource>,
+    pub lights: Vec<PointLight>,
     pub mesh_list: Vec<Mesh>,
 }
 
@@ -28,10 +27,10 @@ impl Scene {
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
         //light sources
-        let light = LightSource::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE);
-        let light2 = LightSource::new(Point3D::new(-10.0, 10.0, 0.0), ColorRGB::WHITE);
+        let light = PointLight::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE);
+        let light2 = PointLight::new(Point3D::new(-10.0, 10.0, 0.0), ColorRGB::WHITE);
 
-        let mut lights: Vec<LightSource> = Vec::new();
+        let mut lights: Vec<PointLight> = Vec::new();
         lights.push(light);
         lights.push(light2);
 

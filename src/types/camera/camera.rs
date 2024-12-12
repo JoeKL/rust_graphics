@@ -1,6 +1,4 @@
-#![allow(dead_code)]
-
-use crate::primitives::*;
+use crate::types::math::{Point3D, Vector3D,Mat4x4};
 
 pub struct Camera {
     // positional parameters
