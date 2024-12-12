@@ -1,3 +1,5 @@
+use std::mem::swap;
+
 use crate::renderer::{FrameBuffer, Viewport};
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
@@ -195,19 +197,13 @@ impl Rasterizer {
     ) {
         // sort the y points such that y0 < y1 < y2
         if p1.y < p0.y {
-            let temp: ScreenPoint = p0;
-            p0 = p1;
-            p1 = temp;
+            swap(&mut p0, &mut p1);
         }
         if p2.y < p0.y {
-            let temp: ScreenPoint = p0;
-            p0 = p2;
-            p2 = temp;
+            swap(&mut p0, &mut p2);
         }
         if p2.y < p1.y {
-            let temp: ScreenPoint = p2;
-            p2 = p1;
-            p1 = temp;
+            swap(&mut p1, &mut p2);
         }
 
         // calculate boundaries of the triangle given by p0,p1,p2
@@ -217,10 +213,15 @@ impl Rasterizer {
         let x02 = Rasterizer::linear_interpolation(p0.y, p0.x, p2.y, p2.x);
         let x12 = Rasterizer::linear_interpolation(p1.y, p1.x, p2.y, p2.x);
 
-        //pop the last element so that its not counted twice, since its the first in x12
-        x01.pop();
-        let mut x012 = x01.clone(); // Create new vector as copy of x01
-        x012.extend(x12); // append x12 to x01 to create x012
+        // Remove last point to avoid double counting
+        if !x01.is_empty() {
+            x01.pop();
+        }
+
+        // Combine edges to create complete boundary
+        let mut x012 = x01;
+        x012.extend(x12);
+
 
         // create left and right wall as x_left and x_right
         let x_left: Vec<f32>;
