@@ -94,17 +94,15 @@ impl Renderer {
             let mut point_1: Point3D = triangle.b;
             let mut point_2: Point3D = triangle.c;
 
-            // After look_at_projection
             point_0 = look_at_projection_matrix.mul_point(point_0);
             point_1 = look_at_projection_matrix.mul_point(point_1);
             point_2 = look_at_projection_matrix.mul_point(point_2);
 
-            // After perspective divide
+            // perspective divide
             point_0.dehomogen();
             point_1.dehomogen();
             point_2.dehomogen();
 
-            // After viewport
             point_0 = viewport_matrix.mul_point(point_0);
             point_1 = viewport_matrix.mul_point(point_1);
             point_2 = viewport_matrix.mul_point(point_2);
