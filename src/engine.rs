@@ -11,6 +11,7 @@ pub struct Engine {
     frame: u32,
     draw_axis: bool,
     draw_lights: bool,
+    draw_ball_line: bool
 }
 
 impl Engine {
@@ -30,6 +31,7 @@ impl Engine {
 
         let draw_axis = false;
         let draw_lights = false;
+        let draw_ball_line = false;
 
         Engine {
             renderer,
@@ -37,6 +39,7 @@ impl Engine {
             frame,
             draw_axis,
             draw_lights,
+            draw_ball_line
         }
     }
 
@@ -110,15 +113,9 @@ impl Engine {
             self.scene.mesh_list[0].transform_mesh(rot_x_mat);
             self.scene.mesh_list[0].transform_mesh(rot_y_mat);
 
-            let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
-            let dp_point_end = ScreenPoint::new(
-                mouse_center_dist_vec.x as i32,
-                mouse_center_dist_vec.y as i32,
-            );
-
-            self.renderer
-                .rasterizer
-                .draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
+            self.draw_ball_line = true;
+        } else{
+            self.draw_ball_line = false
         }
     }
 
@@ -183,13 +180,11 @@ impl Engine {
     pub fn run(&mut self, input_handler: &InputHandler) -> Vec<u32> {
         self.frame += 1;
 
-        //#TODO: handle input should be done before render_scene
+        // Handle input
+        self.process_input(input_handler);
 
         // Render
         self.renderer.render_scene(&mut self.scene);
-
-        // Handle input
-        self.process_input(input_handler);
 
         // Debug renders
         if self.draw_axis {
@@ -197,6 +192,27 @@ impl Engine {
         }
         if self.draw_lights {
             self.renderer.render_light_vectors(&mut self.scene);
+        }
+        if self.draw_ball_line {
+
+            let screen_center = Point2D::new(
+                (self.renderer.get_window_width() / 2) as f32,
+                (self.renderer.get_window_height() / 2) as f32,
+            );
+            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
+            mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
+            mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
+            let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
+
+            let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
+            let dp_point_end = ScreenPoint::new(
+                mouse_center_dist_vec.x as i32,
+                mouse_center_dist_vec.y as i32,
+            );
+
+            self.renderer
+                .rasterizer
+                .draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
         }
 
         self.renderer.get_buffer()
