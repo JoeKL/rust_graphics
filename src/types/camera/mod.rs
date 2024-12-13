@@ -1,3 +1,3 @@
-mod camera;
+mod camera_impl;
 
-pub use camera::Camera;
+pub use camera_impl::Camera;

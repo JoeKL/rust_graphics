@@ -45,19 +45,13 @@ impl Engine {
 
     fn process_input(&mut self, input_handler: &InputHandler) {
         if input_handler.is_key_pressed(minifb::Key::Space) {
-            if self.draw_axis {
-                self.draw_axis = false
-            } else {
-                self.draw_axis = true
-            }
+            // toggles draw_axis
+            self.draw_axis = !self.draw_axis;
         }
 
         if input_handler.is_key_pressed(minifb::Key::L) {
-            if self.draw_lights {
-                self.draw_lights = false
-            } else {
-                self.draw_lights = true
-            }
+            //toggle draw_lights
+            self.draw_lights = !self.draw_lights;
         }
 
         self.change_camera_fov(input_handler);

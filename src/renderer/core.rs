@@ -1,4 +1,4 @@
-use crate::{scene::Scene, types::{color::ColorRGB, display::ScreenPoint, math::{Mat4x4, Point3D}, mesh::Mesh, primitives::Triangle, shader::{FlatShader, Material}}};
+use crate::{scene::Scene, types::{color::ColorRGB, display::ScreenPoint, math::{Mat4x4, Point3D}, geometry::Mesh, primitives::Triangle, shader::{FlatShader, Material}}};
 use super::Rasterizer;
 
 pub struct Renderer {
@@ -37,7 +37,7 @@ impl Renderer {
         let triangles = Renderer::z_face_sort(&scene.mesh_list, &scene.camera.get_position());
 
         // Render them
-        self.render_triangles(&triangles, &look_at_projection, &viewport, &scene);
+        self.render_triangles(&triangles, look_at_projection, &viewport, scene);
 
     }
 
@@ -45,8 +45,8 @@ impl Renderer {
     pub fn z_face_sort(mesh_list: &Vec<Mesh>, camera_position: &Point3D) -> Vec<Triangle> {
         let mut triangles: Vec<Triangle> = Vec::new();
 
-        for i in 0..mesh_list.len() {
-            for triangle in mesh_list[i].get_triangles() {
+        for mesh in mesh_list {
+            for triangle in mesh.get_triangles() {
                 triangles.push(triangle);
             }
         }

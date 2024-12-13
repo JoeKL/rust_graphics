@@ -2,7 +2,7 @@
 
 pub mod camera;
 pub mod texture;
-pub mod mesh;
+pub mod geometry;
 pub mod math;
 pub mod light;
 pub mod color;
