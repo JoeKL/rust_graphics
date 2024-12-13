@@ -1,3 +1,3 @@
-mod scene;
+mod scene_impl;
 
-pub use scene::Scene;
+pub use scene_impl::Scene;

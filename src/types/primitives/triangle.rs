@@ -17,7 +17,7 @@ impl Triangle {
     pub fn calc_triangle_area(self) -> f32 {
         let signed_area = (self.b.position.x - self.a.position.x) * (self.c.position.y - self.a.position.y)
             - (self.b.position.y - self.a.position.y) * (self.c.position.x - self.a.position.x);
-        signed_area as f32 / 2.0
+        signed_area / 2.0
     }
 
     pub fn calc_normal(&self) -> Vector3D {

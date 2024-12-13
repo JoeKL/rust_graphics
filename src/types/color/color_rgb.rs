@@ -59,7 +59,7 @@ impl ColorRGB {
     pub fn get_g(&self) -> u8 {self.g}
     pub fn get_b(&self) -> u8 {self.b}
 
-    pub fn to_vector(&self) -> Vector3D {
+    pub fn to_vector(self) -> Vector3D {
         Vector3D::new(
             self.get_r() as f32 / 255.0,
             self.get_g() as f32 / 255.0,

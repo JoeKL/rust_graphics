@@ -31,7 +31,7 @@ impl Point2D {
     }
 
 
-    pub fn to_vector(&self) -> Vector2D {
+    pub fn to_vector(self) -> Vector2D {
         let w = 0;
         Vector2D {
             x: self.x,
@@ -59,8 +59,8 @@ impl Point3D {
         if self.z == 0.0 {
             println!("trying to divide by zero")
         }
-        self.x = self.x / -self.z as f32;
-        self.y = self.y / -self.z as f32;
+        self.x /= -self.z;
+        self.y /= -self.z;
         self.z = -1.0;
         self.w = 1;
     }
@@ -73,7 +73,7 @@ impl Point3D {
         Vector3D::new(self.x - p.x, self.y - p.y, self.z - p.z)
     }
 
-    pub fn to_vector(&self) -> Vector3D {
+    pub fn to_vector(self) -> Vector3D {
         let w = 0;
         Vector3D {
             x: self.x,

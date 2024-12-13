@@ -12,7 +12,7 @@ pub trait ShadingModel {
         normal: &Vector3D,
         view_vector: &Vector3D,
         material: &Material,
-        lights: &Vec<PointLight>,
+        lights: &[PointLight],
     ) -> ColorRGB;
 }
 
@@ -26,7 +26,7 @@ impl ShadingModel for FlatShader {
         normal: &Vector3D,
         view_vector: &Vector3D,
         material: &Material,
-        lights: &Vec<PointLight>,
+        lights: &[PointLight],
     ) -> ColorRGB {
         let material_color = material.color.to_vector();
         let mut final_color = Vector3D::new(0.0, 0.0, 0.0);

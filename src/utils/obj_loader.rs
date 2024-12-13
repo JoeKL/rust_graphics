@@ -1,6 +1,6 @@
 use crate::types::color::ColorRGB;
 use crate::types::math::{Point3D, Vector3D};
-use crate::types::mesh::Face;
+use crate::types::geometry::Face;
 use crate::types::primitives::Vertex;
 
 const BALL_V: [f32; 1203] = [
