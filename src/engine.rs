@@ -3,7 +3,7 @@ use crate::renderer::Renderer;
 use crate::scene::Scene;
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
-use crate::types::math::{Mat4x4, Point2D};
+use crate::types::math::{Mat4x4, Point2D, Vector3D};
 
 pub struct Engine {
     renderer: Renderer,
@@ -60,60 +60,6 @@ impl Engine {
         self.rotate_ball_with_mouse(input_handler);
         self.move_ball(input_handler);
         self.iso_scale_ball(input_handler);
-    }
-
-    fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(0) {
-            let mut x_rot: f32 = 0.00;
-            let mut y_rot: f32 = 0.00;
-
-            let dist_center_threshhold = 50.0;
-
-            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
-            mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
-
-            let rotation_factor = 25000.0;
-
-            if mouse_pos_relative_center.x > dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / rotation_factor;
-            }
-            if mouse_pos_relative_center.x < -dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / rotation_factor;
-            }
-
-            if mouse_pos_relative_center.y > dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / rotation_factor;
-            }
-
-            if mouse_pos_relative_center.y < -dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / rotation_factor;
-            }
-
-            let rot_x_mat = Mat4x4::new([
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
-                [0.0, x_rot.sin(), x_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            let rot_y_mat = Mat4x4::new([
-                [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            
-            let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
-            self.scene.root_node.children[0].apply_transform(combined_rot);
-        
-        
-            self.draw_ball_line = true;
-
-        } else{
-            self.draw_ball_line = false
-        }
     }
 
     fn change_camera_fov(&mut self, input_handler: &InputHandler) {
@@ -175,6 +121,59 @@ impl Engine {
     }
 
 
+    fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
+        if input_handler.is_mouse_button_down(0) {
+            let mut x_rot: f32 = 0.00;
+            let mut y_rot: f32 = 0.00;
+
+            let dist_center_threshhold = 50.0;
+
+            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
+            mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
+            mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
+
+            let rotation_factor = 25000.0;
+
+            if mouse_pos_relative_center.x > dist_center_threshhold {
+                y_rot += mouse_pos_relative_center.x / rotation_factor;
+            }
+            if mouse_pos_relative_center.x < -dist_center_threshhold {
+                y_rot += mouse_pos_relative_center.x / rotation_factor;
+            }
+
+            if mouse_pos_relative_center.y > dist_center_threshhold {
+                x_rot -= mouse_pos_relative_center.y / rotation_factor;
+            }
+
+            if mouse_pos_relative_center.y < -dist_center_threshhold {
+                x_rot -= mouse_pos_relative_center.y / rotation_factor;
+            }
+
+            let rot_x_mat = Mat4x4::new([
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
+                [0.0, x_rot.sin(), x_rot.cos(), 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+
+            let rot_y_mat = Mat4x4::new([
+                [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+
+            
+            let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
+            self.scene.root_node.children[0].children[0].rotate(combined_rot);      
+        
+            self.draw_ball_line = true;
+
+        } else{
+            self.draw_ball_line = false
+        }
+    }
+
     fn move_ball(&mut self, input_handler: &InputHandler) {
         let mut x_move: f32 = 0.0;
         let mut z_move: f32 = 0.0;
@@ -197,14 +196,8 @@ impl Engine {
         }
 
         if x_move != 0.0 || z_move != 0.0 {
-            let move_mat = Mat4x4::new([
-                [1.0, 0.0, 0.0, x_move],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, z_move],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
 
-            self.scene.root_node.children[0].apply_transform(move_mat);
+            self.scene.root_node.children[0].children[0].translate(Vector3D::new(x_move, 0.0, z_move));
         }
     }
 
@@ -221,15 +214,19 @@ impl Engine {
             scale += scale_delta;
         }
 
-        if scale != 0.0 {
-            let scale_mat = Mat4x4::new([
-                [scale, 0.0, 0.0, 0.0],
-                [0.0, scale, 0.0, 0.0],
-                [0.0, 0.0, scale, 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            self.scene.root_node.children[0].apply_transform(scale_mat);
+        if scale != 1.0 {
+            println!("# BEFORE SCALE CHILD 3");
+            println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
+            println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
+            println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
+            println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
+            self.scene.root_node.children[0].children[0].children[0].scale(Vector3D::new(scale,scale,scale));
+            println!("# AFTER SCALE CHILD 3");
+            println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
+            println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
+            println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
+            println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
+            print!("");
         }
     }
 

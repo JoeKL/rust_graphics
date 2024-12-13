@@ -32,21 +32,19 @@ impl Scene {
 
         let lights: Vec<PointLight> = vec![light, light2];
 
-        let mut ball_node=SceneNode::new();
-        let mut transformed_ball_node=SceneNode::new();
-
+        let mut ball_node = SceneNode::new();
+        let mut child_ball_node = SceneNode::new();
+        let mut grandchild_ball_node = SceneNode::new();
+        
         ball_node.set_mesh(Mesh::new_ball());
-        transformed_ball_node.set_mesh(Mesh::new_ball());
-
-        transformed_ball_node.set_local_transform(Mat4x4::new([
-            [1.0, 0.0, 0.0, 2.5],
-            [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 2.5],
-            [0.0, 0.0, 0.0, 1.0]
-        ]));
-
-        transformed_ball_node.add_child(transformed_ball_node.clone());
-        ball_node.add_child(transformed_ball_node);
+        child_ball_node.set_mesh(Mesh::new_ball());
+        grandchild_ball_node.set_mesh(Mesh::new_ball());
+        
+        child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
+        grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
+        
+        child_ball_node.add_child(grandchild_ball_node);
+        ball_node.add_child(child_ball_node);
         root_node.add_child(ball_node);
 
         Scene {
@@ -69,7 +67,8 @@ impl Scene {
             // If this node has a mesh, add a reference to our collection
             if let Some(mesh) = &node.mesh {            
                 let mut mesh_copy = mesh.clone();
-                mesh_copy.transform(node.cached_world_transform);
+                
+                mesh_copy.transform(node.world_transform);
                 transformed_meshes.push(mesh_copy);
             }
             
