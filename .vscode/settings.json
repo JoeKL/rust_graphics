@@ -14,7 +14,7 @@
         "clippy::perf",
         "-W",
         "clippy::style",
-        "-D",
-        "warnings"
+        // "-D",
+        // "warnings"
     ]
 }

@@ -1,6 +1,6 @@
 use crate::types::math::{Point3D, Vector3D};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Mat4x4 {
     pub mat: [[f32; 4]; 4],
 }

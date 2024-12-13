@@ -70,19 +70,21 @@ impl Engine {
             mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
             mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
 
+            let rotation_factor = 25000.0;
+
             if mouse_pos_relative_center.x > dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / 5000.0;
+                y_rot += mouse_pos_relative_center.x / rotation_factor;
             }
             if mouse_pos_relative_center.x < -dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / 5000.0;
+                y_rot += mouse_pos_relative_center.x / rotation_factor;
             }
 
             if mouse_pos_relative_center.y > dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / 5000.0;
+                x_rot -= mouse_pos_relative_center.y / rotation_factor;
             }
 
             if mouse_pos_relative_center.y < -dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / 5000.0;
+                x_rot -= mouse_pos_relative_center.y / rotation_factor;
             }
 
             let rot_x_mat = Mat4x4::new([
@@ -99,10 +101,13 @@ impl Engine {
                 [0.0, 0.0, 0.0, 1.0],
             ]);
 
-            self.scene.mesh_list[0].transform_mesh(rot_x_mat);
-            self.scene.mesh_list[0].transform_mesh(rot_y_mat);
-
+            
+            let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
+            self.scene.root_node.children[0].apply_transform(combined_rot);
+        
+        
             self.draw_ball_line = true;
+
         } else{
             self.draw_ball_line = false
         }
