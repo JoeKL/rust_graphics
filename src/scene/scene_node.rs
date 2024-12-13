@@ -1,5 +1,6 @@
 use crate::types::{geometry::Mesh, math::Mat4x4};
 
+#[derive(Clone)]
 pub struct SceneNode {
     pub local_transform: Mat4x4, //local transformation relative to parent coordinate system
     pub mesh: Option<Mesh>, // Not all nodes need meshes (empty groups/pivots)
@@ -7,6 +8,7 @@ pub struct SceneNode {
     dirty_world_transform: bool,    // Track if world matrix needs update
     pub cached_world_transform: Mat4x4, //transformation back to World Coordinates
 }
+
 
 impl SceneNode {
     pub fn new() -> Self {

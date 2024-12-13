@@ -45,6 +45,7 @@ impl Scene {
             [0.0, 0.0, 0.0, 1.0]
         ]));
 
+        transformed_ball_node.add_child(transformed_ball_node.clone());
         ball_node.add_child(transformed_ball_node);
         root_node.add_child(ball_node);
 
