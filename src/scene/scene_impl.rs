@@ -68,7 +68,7 @@ impl Scene {
             if let Some(mesh) = &node.mesh {            
                 let mut mesh_copy = mesh.clone();
                 
-                mesh_copy.transform(node.world_transform);
+                mesh_copy.transform(node.get_world_transform());
                 transformed_meshes.push(mesh_copy);
             }
             

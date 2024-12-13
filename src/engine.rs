@@ -215,17 +215,17 @@ impl Engine {
         }
 
         if scale != 1.0 {
-            println!("# BEFORE SCALE CHILD 3");
-            println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
-            println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
-            println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
-            println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
+            // println!("# BEFORE SCALE CHILD 3");
+            // println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
+            // println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
+            // println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
+            // println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
             self.scene.root_node.children[0].children[0].children[0].scale(Vector3D::new(scale,scale,scale));
-            println!("# AFTER SCALE CHILD 3");
-            println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
-            println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
-            println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
-            println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
+            // println!("# AFTER SCALE CHILD 3");
+            // println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
+            // println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
+            // println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
+            // println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
             print!("");
         }
     }

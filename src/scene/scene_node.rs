@@ -1,4 +1,7 @@
-use crate::types::{geometry::Mesh, math::{Mat4x4, Vector3D}};
+use crate::types::{
+    geometry::Mesh,
+    math::{Mat4x4, Vector3D},
+};
 
 #[derive(Clone)]
 pub struct SceneNode {
@@ -6,36 +9,31 @@ pub struct SceneNode {
     rotation: Mat4x4,
     scale: Vector3D,
 
-    pub local_transform: Mat4x4, //local transformation relative to parent coordinate system
     pub mesh: Option<Mesh>, // Not all nodes need meshes (empty groups/pivots)
     pub children: Vec<SceneNode>,
-    dirty_world_transform: bool,    // Track if world matrix needs update
-    pub world_transform: Mat4x4, //transformation back to World Coordinates
+    dirty_world_transform: bool, // Track if world matrix needs update
+    pub transform_stack: Vec<Mat4x4>,
 }
-
 
 impl SceneNode {
     pub fn new() -> Self {
         let position = Vector3D::new(0.0, 0.0, 0.0);
-        let rotation = Mat4x4::new_identity(); //quaternions ??
+        let rotation = Mat4x4::new_identity();
         let scale = Vector3D::new(1.0, 1.0, 1.0);
 
-        let local_transform = Mat4x4::new_identity();
         let mesh: Option<Mesh> = None;
         let children: Vec<SceneNode> = Vec::new();
         let dirty_world_transform = false;
-        let world_transform = Mat4x4::new_identity();
-
+        let transform_stack: Vec<Mat4x4> = Vec::new();
 
         Self {
             position,
             rotation,
             scale,
-            local_transform,
             mesh,
             children,
             dirty_world_transform,
-            world_transform,
+            transform_stack,
         }
     }
 
@@ -44,7 +42,7 @@ impl SceneNode {
         self.update_local_transform();
     }
 
-    pub fn set_rotation(&mut self, rot: Mat4x4){
+    pub fn set_rotation(&mut self, rot: Mat4x4) {
         self.rotation = rot;
         self.update_local_transform();
     }
@@ -69,23 +67,25 @@ impl SceneNode {
         self.scale = Vector3D::new(
             self.scale.x * delta_scale.x,
             self.scale.y * delta_scale.y,
-            self.scale.z * delta_scale.z
+            self.scale.z * delta_scale.z,
         );
         self.update_local_transform();
     }
 
-    pub fn set_mesh(&mut self, mesh: Mesh){
+    pub fn set_mesh(&mut self, mesh: Mesh) {
         self.mesh = Some(mesh);
     }
 
-    pub fn add_child(&mut self, mut scene_node: SceneNode){
-        // First prepare the child with parent's transform
-        scene_node.update_transforms(Some(self.world_transform));
+    pub fn add_child(&mut self, mut scene_node: SceneNode) {
+        scene_node.transform_stack = self.transform_stack.clone(); // copy its parents transformation stack
+        let local_transform = scene_node.calculate_local_transform();
+        scene_node.transform_stack.push(local_transform);
+
         // Then add it to children
         self.children.push(scene_node);
     }
 
-    fn update_local_transform(&mut self) {
+    fn calculate_local_transform(&mut self) -> Mat4x4 {
         // First translate to origin
         let to_origin = Mat4x4::from_translation(Vector3D::new(0.0, 0.0, 0.0));
         // Apply scale and rotation
@@ -94,33 +94,44 @@ impl SceneNode {
         let from_origin = Mat4x4::from_translation(self.position); // the problem is here. since the position of child 3 is locally 0,0,2.5 but its world coordiante is 0,0,5.0 its reset to the former one thats the jumping on scale
 
         // Order: translate back * (scale * rotate) * translate to origin
-        self.local_transform = from_origin.mul_mat(transform).mul_mat(to_origin);
-        
+        from_origin.mul_mat(transform).mul_mat(to_origin)
+    }
+
+    fn update_local_transform(&mut self) {
+        let updated_local_transform = self.calculate_local_transform();
+
+        self.transform_stack.pop();
+        self.transform_stack.push(updated_local_transform);
+
         self.dirty_world_transform = true;
-
-        // Before update_transforms
-        self.update_transforms(None);
+        // Add this line to propagate changes
+        self.update_children_stacks();
     }
 
-    pub fn update_transforms(&mut self, parent_transform: Option<Mat4x4>) {
-        // when there is a parent_transform then pT * T
-        let new_world_transform = if let Some(parent) = parent_transform {
-            parent.mul_mat(self.local_transform)
-        } else {
-            self.local_transform
-        };
-
-        // Only update if something changed
-        if self.dirty_world_transform || new_world_transform != self.world_transform {
-            self.world_transform = new_world_transform;
-
-            // Propagate to children
-            for child in &mut self.children {
-                child.update_transforms(Some(self.world_transform));
-            }
+    // Add this function to update children's stacks recursively
+    fn update_children_stacks(&mut self) {
+        for child in &mut self.children {
+            // Give child a copy of our stack except its last entry
+            child.transform_stack = self.transform_stack[..self.transform_stack.len() - 1].to_vec();
+            // Add our updated local transform
+            child
+                .transform_stack
+                .push(self.transform_stack.last().unwrap().clone());
+            // Calculate and add child's local transform
+            let child_local = child.calculate_local_transform();
+            child.transform_stack.push(child_local);
+            // Recurse
+            child.update_children_stacks();
         }
-        self.dirty_world_transform = false;
     }
 
-
+    // Add this to get final world transform for rendering
+    pub fn get_world_transform(&self) -> Mat4x4 {
+        // Multiply entire stack
+        self.transform_stack
+            .iter()
+            .fold(Mat4x4::new_identity(), |acc, transform| {
+                acc.mul_mat(*transform)
+            })
+    }
 }
