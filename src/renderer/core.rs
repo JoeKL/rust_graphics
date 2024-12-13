@@ -28,7 +28,7 @@ impl Renderer {
 
 
     pub fn render_scene(&mut self, scene: &mut Scene) {
-        self.rasterizer.framebuffer.fill(ColorRGB::BLACK);
+        self.rasterizer.framebuffer.fill(ColorRGB::from_u32(0x101010));
         // Get camera matrices once
         let look_at_projection = &scene.camera.get_look_at_projection_matrix();
         let viewport = self.rasterizer.viewport.get_matrix();
