@@ -55,8 +55,11 @@ impl Engine {
         }
 
         self.change_camera_fov(input_handler);
-        self.rotate_ball_with_mouse(input_handler);
         self.rotate_lightsources(input_handler);
+
+        self.rotate_ball_with_mouse(input_handler);
+        self.move_ball(input_handler);
+        self.iso_scale_ball(input_handler);
     }
 
     fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
@@ -133,17 +136,17 @@ impl Engine {
         let x_rot_delta = 0.1;
         let y_rot_delta = 0.1;
 
-        if input_handler.is_key_down(minifb::Key::Up) {
+        if input_handler.is_key_down(minifb::Key::W) {
             x_rot += x_rot_delta;
         }
-        if input_handler.is_key_down(minifb::Key::Down) {
+        if input_handler.is_key_down(minifb::Key::S) {
             x_rot -= x_rot_delta;
         }
 
-        if input_handler.is_key_down(minifb::Key::Left) {
+        if input_handler.is_key_down(minifb::Key::A) {
             y_rot -= y_rot_delta;
         }
-        if input_handler.is_key_down(minifb::Key::Right) {
+        if input_handler.is_key_down(minifb::Key::D) {
             y_rot += y_rot_delta;
         }
 
@@ -168,6 +171,65 @@ impl Engine {
                 new_light_pos = rot_y_mat.mul_point(new_light_pos);
                 light.set_position(new_light_pos);
             }
+        }
+    }
+
+
+    fn move_ball(&mut self, input_handler: &InputHandler) {
+        let mut x_move: f32 = 0.0;
+        let mut z_move: f32 = 0.0;
+
+        let x_move_delta = 0.1;
+        let z_move_delta = 0.1;
+
+        if input_handler.is_key_down(minifb::Key::Up) {
+            z_move -= z_move_delta; 
+        }
+        if input_handler.is_key_down(minifb::Key::Down) {
+            z_move += z_move_delta;
+        }
+
+        if input_handler.is_key_down(minifb::Key::Left) {
+            x_move += x_move_delta;
+        }
+        if input_handler.is_key_down(minifb::Key::Right) {
+            x_move -= x_move_delta;
+        }
+
+        if x_move != 0.0 || z_move != 0.0 {
+            let move_mat = Mat4x4::new([
+                [1.0, 0.0, 0.0, x_move],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, z_move],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+
+            self.scene.root_node.children[0].apply_transform(move_mat);
+        }
+    }
+
+
+    fn iso_scale_ball(&mut self, input_handler: &InputHandler) {
+        let mut scale: f32 = 1.0;
+
+        let scale_delta = 0.01;
+
+        if input_handler.is_key_down(minifb::Key::N) {
+            scale -= scale_delta; 
+        }
+        if input_handler.is_key_down(minifb::Key::M) {
+            scale += scale_delta;
+        }
+
+        if scale != 0.0 {
+            let scale_mat = Mat4x4::new([
+                [scale, 0.0, 0.0, 0.0],
+                [0.0, scale, 0.0, 0.0],
+                [0.0, 0.0, scale, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+
+            self.scene.root_node.children[0].apply_transform(scale_mat);
         }
     }
 

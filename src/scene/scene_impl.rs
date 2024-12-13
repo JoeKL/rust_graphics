@@ -39,9 +39,9 @@ impl Scene {
         transformed_ball_node.set_mesh(Mesh::new_ball());
 
         transformed_ball_node.set_local_transform(Mat4x4::new([
-            [1.0, 0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0, 2.5],
             [0.0, 1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0, 5.0],
+            [0.0, 0.0, 1.0, 2.5],
             [0.0, 0.0, 0.0, 1.0]
         ]));
 
