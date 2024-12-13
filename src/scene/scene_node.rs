@@ -142,13 +142,13 @@ impl SceneNode {
         for child in &mut self.children {
 
             let child_local = match child.has_dirty_locals {
-                true => {
+                false => {
                     // If locals are dirty, try to reuse existing transform or recalculate
                     child.transform_stack
                         .pop()
                         .unwrap_or_else(|| child.calculate_local_transform())
                 }
-                false => {
+                true => {
                     // If locals aren't dirty, just recalculate
                     child.calculate_local_transform()
                 }
