@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::types::{
     geometry::Mesh,
     math::{Mat4x4, Vector3D},
@@ -116,7 +118,7 @@ impl SceneNode {
             // Add our updated local transform
             child
                 .transform_stack
-                .push(self.transform_stack.last().unwrap().clone());
+                .push(*self.transform_stack.last().unwrap());
             // Calculate and add child's local transform
             let child_local = child.calculate_local_transform();
             child.transform_stack.push(child_local);
