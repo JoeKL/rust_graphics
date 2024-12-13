@@ -34,7 +34,7 @@ impl Renderer {
         let viewport = self.rasterizer.viewport.get_matrix();
 
         // Sort triangles
-        let triangles = Renderer::z_face_sort(&scene.mesh_list, &scene.camera.get_position());
+        let triangles = Renderer::z_face_sort(scene.collect_mesh_refs(), &scene.camera.get_position());
 
         // Render them
         self.render_triangles(&triangles, look_at_projection, &viewport, scene);
@@ -42,7 +42,7 @@ impl Renderer {
     }
 
 
-    pub fn z_face_sort(mesh_list: &Vec<Mesh>, camera_position: &Point3D) -> Vec<Triangle> {
+    pub fn z_face_sort(mesh_list: Vec<Mesh>, camera_position: &Point3D) -> Vec<Triangle> {
         let mut triangles: Vec<Triangle> = Vec::new();
 
         for mesh in mesh_list {

@@ -5,6 +5,7 @@ use crate::types::primitives::{Triangle, Vertex};
 
 use crate::utils::*;
 
+#[derive(Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vertex>,
     pub faces: Vec<Face>,
@@ -25,10 +26,11 @@ impl Mesh {
         }
     }
 
-    pub fn transform_mesh(&mut self, transform: Mat4x4) {
+    pub fn transform(&mut self, transform: Mat4x4) {
         for vertex in &mut self.vertices {
             vertex.position = transform.mul_point(vertex.position);
         }
+        //#TODO: Dirty Normals in Vertex when scaling applied. need to recalc vertecies 
     }
 
     pub fn get_triangles(&self) -> Vec<Triangle> {
