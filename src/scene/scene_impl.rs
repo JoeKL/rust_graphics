@@ -1,7 +1,7 @@
 use crate::types::camera::Camera;
 use crate::types::color::ColorRGB;
 use crate::types::light::PointLight;
-use crate::types::math::{Mat4x4, Point3D, Vector3D};
+use crate::types::math::{Point3D, Vector3D};
 use crate::types::geometry::Mesh;
 use super::SceneNode;
 

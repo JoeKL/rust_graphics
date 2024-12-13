@@ -165,7 +165,7 @@ impl Engine {
 
             
             let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
-            self.scene.root_node.children[0].children[0].rotate(combined_rot);      
+            self.scene.root_node.children[0].children[0].children[0].rotate(combined_rot);      
         
             self.draw_ball_line = true;
 
@@ -215,18 +215,7 @@ impl Engine {
         }
 
         if scale != 1.0 {
-            // println!("# BEFORE SCALE CHILD 3");
-            // println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
-            // println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
-            // println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
-            // println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
             self.scene.root_node.children[0].children[0].children[0].scale(Vector3D::new(scale,scale,scale));
-            // println!("# AFTER SCALE CHILD 3");
-            // println!("Child2 local: {:?}", self.scene.root_node.children[0].children[0].local_transform);
-            // println!("Child3 local: {:?}", self.scene.root_node.children[0].children[0].children[0].local_transform);
-            // println!("Child2 world after rotation: {:?}", self.scene.root_node.children[0].children[0].world_transform);
-            // println!("Child3 world after update: {:?}", self.scene.root_node.children[0].children[0].children[0].world_transform);
-            print!("");
         }
     }
 
