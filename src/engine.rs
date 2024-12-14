@@ -1,6 +1,6 @@
 use crate::input::InputHandler;
 use crate::renderer::Renderer;
-use crate::scene::{Scene, SceneNode};
+use crate::scene::Scene;
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
 use crate::types::math::{Mat4x4, Point2D, Vector3D};
