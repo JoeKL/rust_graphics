@@ -1,6 +1,6 @@
 use crate::input::InputHandler;
 use crate::renderer::Renderer;
-use crate::scene::Scene;
+use crate::scene::{Scene, SceneNode};
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
 use crate::types::math::{Mat4x4, Point2D, Vector3D};
@@ -9,9 +9,10 @@ pub struct Engine {
     renderer: Renderer,
     scene: Scene,
     frame: u32,
+    augmentation_segment: i32,
     draw_axis: bool,
     draw_lights: bool,
-    draw_ball_line: bool
+    draw_ball_line: bool,
 }
 
 impl Engine {
@@ -29,6 +30,8 @@ impl Engine {
         );
         let frame = 0;
 
+        let augmentation_segment = 0;
+
         let draw_axis = false;
         let draw_lights = false;
         let draw_ball_line = false;
@@ -37,14 +40,22 @@ impl Engine {
             renderer,
             scene,
             frame,
+            augmentation_segment,
             draw_axis,
             draw_lights,
-            draw_ball_line
+            draw_ball_line,
         }
     }
 
     fn process_input(&mut self, input_handler: &InputHandler) {
         if input_handler.is_key_pressed(minifb::Key::Space) {
+            self.augmentation_segment += 1;
+            if self.augmentation_segment > 2 {
+                self.augmentation_segment = 0;
+            }
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::K) {
             // toggles draw_axis
             self.draw_axis = !self.draw_axis;
         }
@@ -120,7 +131,6 @@ impl Engine {
         }
     }
 
-
     fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
         if input_handler.is_mouse_button_down(0) {
             let mut x_rot: f32 = 0.00;
@@ -163,13 +173,19 @@ impl Engine {
                 [0.0, 0.0, 0.0, 1.0],
             ]);
 
-            
-            let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
-            self.scene.root_node.children[0].children[0].children[0].rotate(combined_rot);      
-        
-            self.draw_ball_line = true;
 
-        } else{
+            let focus_segment = match self.augmentation_segment {
+                0 => &mut self.scene.root_node.children[0],
+                1 => &mut self.scene.root_node.children[0].children[0],
+                2 => &mut self.scene.root_node.children[0].children[0].children[0],
+                _ => return, // Or handle other cases
+            };
+
+            let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
+            focus_segment.rotate(combined_rot);
+
+            self.draw_ball_line = true;
+        } else {
             self.draw_ball_line = false
         }
     }
@@ -182,7 +198,7 @@ impl Engine {
         let z_move_delta = 0.1;
 
         if input_handler.is_key_down(minifb::Key::Up) {
-            z_move -= z_move_delta; 
+            z_move -= z_move_delta;
         }
         if input_handler.is_key_down(minifb::Key::Down) {
             z_move += z_move_delta;
@@ -195,12 +211,17 @@ impl Engine {
             x_move -= x_move_delta;
         }
 
-        if x_move != 0.0 || z_move != 0.0 {
+        let focus_segment = match self.augmentation_segment {
+            0 => &mut self.scene.root_node.children[0],
+            1 => &mut self.scene.root_node.children[0].children[0],
+            2 => &mut self.scene.root_node.children[0].children[0].children[0],
+            _ => return, // Or handle other cases
+        };
 
-            self.scene.root_node.children[0].children[0].translate(Vector3D::new(x_move, 0.0, z_move));
+        if x_move != 0.0 || z_move != 0.0 {
+            focus_segment.translate(Vector3D::new(x_move, 0.0, z_move));
         }
     }
-
 
     fn iso_scale_ball(&mut self, input_handler: &InputHandler) {
         let mut scale: f32 = 1.0;
@@ -208,14 +229,22 @@ impl Engine {
         let scale_delta = 0.01;
 
         if input_handler.is_key_down(minifb::Key::N) {
-            scale -= scale_delta; 
+            scale -= scale_delta;
         }
         if input_handler.is_key_down(minifb::Key::M) {
             scale += scale_delta;
         }
 
+
+        let focus_segment = match self.augmentation_segment {
+            0 => &mut self.scene.root_node.children[0],
+            1 => &mut self.scene.root_node.children[0].children[0],
+            2 => &mut self.scene.root_node.children[0].children[0].children[0],
+            _ => return, // Or handle other cases
+        };
+
         if scale != 1.0 {
-            self.scene.root_node.children[0].children[0].children[0].scale(Vector3D::new(scale,scale,scale));
+            focus_segment.scale(Vector3D::new(scale, scale, scale));
         }
     }
 
@@ -236,7 +265,6 @@ impl Engine {
             self.renderer.render_light_vectors(&mut self.scene);
         }
         if self.draw_ball_line {
-
             let screen_center = Point2D::new(
                 (self.renderer.get_window_width() / 2) as f32,
                 (self.renderer.get_window_height() / 2) as f32,
