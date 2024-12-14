@@ -3,7 +3,7 @@ use crate::renderer::Renderer;
 use crate::scene::Scene;
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
-use crate::types::math::{Mat4x4, Point2D};
+use crate::types::math::{Mat4x4, Point2D, Vector3D};
 
 pub struct Engine {
     renderer: Renderer,
@@ -45,78 +45,21 @@ impl Engine {
 
     fn process_input(&mut self, input_handler: &InputHandler) {
         if input_handler.is_key_pressed(minifb::Key::Space) {
-            if self.draw_axis {
-                self.draw_axis = false
-            } else {
-                self.draw_axis = true
-            }
+            // toggles draw_axis
+            self.draw_axis = !self.draw_axis;
         }
 
         if input_handler.is_key_pressed(minifb::Key::L) {
-            if self.draw_lights {
-                self.draw_lights = false
-            } else {
-                self.draw_lights = true
-            }
+            //toggle draw_lights
+            self.draw_lights = !self.draw_lights;
         }
 
         self.change_camera_fov(input_handler);
-        self.rotate_ball_with_mouse(input_handler);
         self.rotate_lightsources(input_handler);
-    }
 
-    fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(0) {
-            let mut x_rot: f32 = 0.00;
-            let mut y_rot: f32 = 0.00;
-
-            let dist_center_threshhold = 50.0;
-
-            let screen_center = Point2D::new(
-                (self.renderer.get_window_width() / 2) as f32,
-                (self.renderer.get_window_height() / 2) as f32,
-            );
-            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
-            mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
-            let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
-
-            if mouse_pos_relative_center.x > dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / 5000.0;
-            }
-            if mouse_pos_relative_center.x < -dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / 5000.0;
-            }
-
-            if mouse_pos_relative_center.y > dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / 5000.0;
-            }
-
-            if mouse_pos_relative_center.y < -dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / 5000.0;
-            }
-
-            let rot_x_mat = Mat4x4::new([
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
-                [0.0, x_rot.sin(), x_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            let rot_y_mat = Mat4x4::new([
-                [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            self.scene.mesh_list[0].transform_mesh(rot_x_mat);
-            self.scene.mesh_list[0].transform_mesh(rot_y_mat);
-
-            self.draw_ball_line = true;
-        } else{
-            self.draw_ball_line = false
-        }
+        self.rotate_ball_with_mouse(input_handler);
+        self.move_ball(input_handler);
+        self.iso_scale_ball(input_handler);
     }
 
     fn change_camera_fov(&mut self, input_handler: &InputHandler) {
@@ -139,17 +82,17 @@ impl Engine {
         let x_rot_delta = 0.1;
         let y_rot_delta = 0.1;
 
-        if input_handler.is_key_down(minifb::Key::Up) {
+        if input_handler.is_key_down(minifb::Key::W) {
             x_rot += x_rot_delta;
         }
-        if input_handler.is_key_down(minifb::Key::Down) {
+        if input_handler.is_key_down(minifb::Key::S) {
             x_rot -= x_rot_delta;
         }
 
-        if input_handler.is_key_down(minifb::Key::Left) {
+        if input_handler.is_key_down(minifb::Key::A) {
             y_rot -= y_rot_delta;
         }
-        if input_handler.is_key_down(minifb::Key::Right) {
+        if input_handler.is_key_down(minifb::Key::D) {
             y_rot += y_rot_delta;
         }
 
@@ -174,6 +117,105 @@ impl Engine {
                 new_light_pos = rot_y_mat.mul_point(new_light_pos);
                 light.set_position(new_light_pos);
             }
+        }
+    }
+
+
+    fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
+        if input_handler.is_mouse_button_down(0) {
+            let mut x_rot: f32 = 0.00;
+            let mut y_rot: f32 = 0.00;
+
+            let dist_center_threshhold = 50.0;
+
+            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
+            mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
+            mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
+
+            let rotation_factor = 25000.0;
+
+            if mouse_pos_relative_center.x > dist_center_threshhold {
+                y_rot += mouse_pos_relative_center.x / rotation_factor;
+            }
+            if mouse_pos_relative_center.x < -dist_center_threshhold {
+                y_rot += mouse_pos_relative_center.x / rotation_factor;
+            }
+
+            if mouse_pos_relative_center.y > dist_center_threshhold {
+                x_rot -= mouse_pos_relative_center.y / rotation_factor;
+            }
+
+            if mouse_pos_relative_center.y < -dist_center_threshhold {
+                x_rot -= mouse_pos_relative_center.y / rotation_factor;
+            }
+
+            let rot_x_mat = Mat4x4::new([
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
+                [0.0, x_rot.sin(), x_rot.cos(), 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+
+            let rot_y_mat = Mat4x4::new([
+                [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]);
+
+            
+            let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
+            self.scene.root_node.children[0].children[0].children[0].rotate(combined_rot);      
+        
+            self.draw_ball_line = true;
+
+        } else{
+            self.draw_ball_line = false
+        }
+    }
+
+    fn move_ball(&mut self, input_handler: &InputHandler) {
+        let mut x_move: f32 = 0.0;
+        let mut z_move: f32 = 0.0;
+
+        let x_move_delta = 0.1;
+        let z_move_delta = 0.1;
+
+        if input_handler.is_key_down(minifb::Key::Up) {
+            z_move -= z_move_delta; 
+        }
+        if input_handler.is_key_down(minifb::Key::Down) {
+            z_move += z_move_delta;
+        }
+
+        if input_handler.is_key_down(minifb::Key::Left) {
+            x_move += x_move_delta;
+        }
+        if input_handler.is_key_down(minifb::Key::Right) {
+            x_move -= x_move_delta;
+        }
+
+        if x_move != 0.0 || z_move != 0.0 {
+
+            self.scene.root_node.children[0].children[0].translate(Vector3D::new(x_move, 0.0, z_move));
+        }
+    }
+
+
+    fn iso_scale_ball(&mut self, input_handler: &InputHandler) {
+        let mut scale: f32 = 1.0;
+
+        let scale_delta = 0.01;
+
+        if input_handler.is_key_down(minifb::Key::N) {
+            scale -= scale_delta; 
+        }
+        if input_handler.is_key_down(minifb::Key::M) {
+            scale += scale_delta;
+        }
+
+        if scale != 1.0 {
+            self.scene.root_node.children[0].children[0].children[0].scale(Vector3D::new(scale,scale,scale));
         }
     }
 

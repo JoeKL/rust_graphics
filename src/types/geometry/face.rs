@@ -1,5 +1,5 @@
 use crate::types::math::Point3D;
-use crate::types::primitives::Triangle;
+use crate::types::primitives::{Triangle,Vertex};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Face {
@@ -15,7 +15,7 @@ impl Face {
     }
 
     // Helper method to get the actual triangle from vertices
-    pub fn to_triangle(&self, vertices: &[Point3D]) -> Triangle {
+    pub fn to_triangle(self, vertices: &[Vertex]) -> Triangle {
         Triangle::new(
             vertices[self.a],
             vertices[self.b],
@@ -30,7 +30,7 @@ impl Face {
         
         let signed_area = (point_b.x - point_a.x) * (point_c.y - point_a.y)
             - (point_b.y - point_a.y) * (point_c.x - point_a.x);
-        signed_area as f32 / 2.0
+        signed_area / 2.0
     }
 }
 

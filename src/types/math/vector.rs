@@ -113,4 +113,13 @@ impl Vector3D {
             w: self.w
         }
     }
+
+    pub(crate) fn negate(&self) -> Vector3D {
+        Vector3D {
+            x: self.x * -1.0,
+            y: self.y * -1.0,
+            z: self.z * -1.0,
+            w: self.w
+        }
+    }
 }

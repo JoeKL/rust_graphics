@@ -1,6 +1,6 @@
 use crate::types::math::{Point3D, Vector3D};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Mat4x4 {
     pub mat: [[f32; 4]; 4],
 }
@@ -182,5 +182,23 @@ impl Mat4x4 {
     pub fn print_with_label(&self, label: &str) {
         println!("{}:", label);
         self.print();
+    }
+
+    pub(crate) fn from_translation(position: Vector3D) -> Mat4x4 {
+        Mat4x4::new([
+            [1.0, 0.0, 0.0, position.x],
+            [0.0, 1.0, 0.0, position.y],
+            [0.0, 0.0, 1.0, position.z],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
+    }
+
+    pub(crate) fn from_scale(scale: Vector3D) -> Mat4x4 {
+        Mat4x4::new([
+            [scale.x, 0.0, 0.0, 0.0],
+            [0.0, scale.y, 0.0, 0.0],
+            [0.0, 0.0, scale.z, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
     }
 }

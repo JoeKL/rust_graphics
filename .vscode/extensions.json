@@ -1,0 +1,18 @@
+{
+    "recommendations": [
+        "1yib.rust-bundle",
+        "dustypomerleau.rust-syntax",
+        "eamodio.gitlens",
+        "fill-labs.dependi",
+        "github.vscode-pull-request-github",
+        "lorenzopirro.rust-flash-snippets",
+        "mohsen1.prettify-json",
+        "ms-azuretools.vscode-docker",
+        "oderwat.indent-rainbow",
+        "rust-lang.rust-analyzer",
+        "teabyii.ayu",
+        "tomoki1207.pdf",
+        "vadimcn.vscode-lldb",
+        "waderyan.gitblame"
+    ]
+}

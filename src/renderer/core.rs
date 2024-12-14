@@ -1,4 +1,4 @@
-use crate::{scene::Scene, types::{color::ColorRGB, display::ScreenPoint, math::{Mat4x4, Point3D}, mesh::Mesh, primitives::Triangle, shader::{FlatShader, Material}}};
+use crate::{scene::Scene, types::{color::ColorRGB, display::ScreenPoint, math::{Mat4x4, Point3D}, geometry::Mesh, primitives::Triangle, shader::{FlatShader, Material}}};
 use super::Rasterizer;
 
 pub struct Renderer {
@@ -28,25 +28,25 @@ impl Renderer {
 
 
     pub fn render_scene(&mut self, scene: &mut Scene) {
-        self.rasterizer.framebuffer.fill(ColorRGB::BLACK);
+        self.rasterizer.framebuffer.fill(ColorRGB::from_u32(0x101010));
         // Get camera matrices once
         let look_at_projection = &scene.camera.get_look_at_projection_matrix();
         let viewport = self.rasterizer.viewport.get_matrix();
 
         // Sort triangles
-        let triangles = Renderer::z_face_sort(&scene.mesh_list, &scene.camera.get_position());
+        let triangles = Renderer::z_face_sort(scene.collect_mesh_refs(), &scene.camera.get_position());
 
         // Render them
-        self.render_triangles(&triangles, &look_at_projection, &viewport, &scene);
+        self.render_triangles(&triangles, look_at_projection, &viewport, scene);
 
     }
 
 
-    pub fn z_face_sort(mesh_list: &Vec<Mesh>, camera_position: &Point3D) -> Vec<Triangle> {
+    pub fn z_face_sort(mesh_list: Vec<Mesh>, camera_position: &Point3D) -> Vec<Triangle> {
         let mut triangles: Vec<Triangle> = Vec::new();
 
-        for i in 0..mesh_list.len() {
-            for triangle in mesh_list[i].get_triangles() {
+        for mesh in mesh_list {
+            for triangle in mesh.get_triangles() {
                 triangles.push(triangle);
             }
         }
@@ -55,14 +55,14 @@ impl Renderer {
         triangles.sort_by(|a, b| {
             // Calculate centers
             let center_a = Point3D::new(
-                (a.a.x + a.b.x + a.c.x) / 3.0,
-                (a.a.y + a.b.y + a.c.y) / 3.0,
-                (a.a.z + a.b.z + a.c.z) / 3.0,
+                (a.a.position.x + a.b.position.x + a.c.position.x) / 3.0,
+                (a.a.position.y + a.b.position.y + a.c.position.y) / 3.0,
+                (a.a.position.z + a.b.position.z + a.c.position.z) / 3.0,
             );
             let center_b = Point3D::new(
-                (b.a.x + b.b.x + b.c.x) / 3.0,
-                (b.a.y + b.b.y + b.c.y) / 3.0,
-                (b.a.z + b.b.z + b.c.z) / 3.0,
+                (b.a.position.x + b.b.position.x + b.c.position.x) / 3.0,
+                (b.a.position.y + b.b.position.y + b.c.position.y) / 3.0,
+                (b.a.position.z + b.b.position.z + b.c.position.z) / 3.0,
             );
 
             // Calculate squared distances to cam.position
@@ -90,9 +90,9 @@ impl Renderer {
         let material= Material::new(ColorRGB::from_rgb(0, 255, 200), ambient, diffuse, specular, shininess);
 
         for triangle in triangles {
-            let mut point_0: Point3D = triangle.a;
-            let mut point_1: Point3D = triangle.b;
-            let mut point_2: Point3D = triangle.c;
+            let mut point_0: Point3D = triangle.a.position;
+            let mut point_1: Point3D = triangle.b.position;
+            let mut point_2: Point3D = triangle.c.position;
 
             point_0 = look_at_projection_matrix.mul_point(point_0);
             point_1 = look_at_projection_matrix.mul_point(point_1);

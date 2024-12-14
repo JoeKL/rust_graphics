@@ -75,10 +75,10 @@ impl Rasterizer {
             // save d
             result.push(d);
             // with each iteration add another delta to d
-            d = d + a;
+            d += a;
         }
 
-        return result;
+        result
     }
 
     /// Draws a line between two points using bresenham.
@@ -262,19 +262,13 @@ impl Rasterizer {
     ) {
         // sort the y points such that y0 < y1 < y2
         if p1.y < p0.y {
-            let temp: ScreenPoint = p0;
-            p0 = p1;
-            p1 = temp;
+            std::mem::swap(&mut p0, &mut p1);
         }
         if p2.y < p0.y {
-            let temp: ScreenPoint = p0;
-            p0 = p2;
-            p2 = temp;
+            std::mem::swap(&mut p0, &mut p2);
         }
         if p2.y < p1.y {
-            let temp: ScreenPoint = p2;
-            p2 = p1;
-            p1 = temp;
+            std::mem::swap(&mut p2, &mut p1);
         }
 
         // calculate boundaries of the triangle given by p0,p1,p2
@@ -369,7 +363,7 @@ impl Rasterizer {
         triangle: &Triangle,
         camera_position: &Point3D,
         material: &Material,
-        lights: &Vec<PointLight>,
+        lights: &[PointLight],
         shader: &impl ShadingModel,
     ) -> ColorRGB {
         // Calculate triangle center and normal
