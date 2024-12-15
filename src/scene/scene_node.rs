@@ -5,7 +5,6 @@ use crate::types::{
     math::{Mat4x4, Vector3D},
 };
 
-#[derive(Clone)]
 pub struct SceneNode {
     position: Vector3D, // current position
     rotation: Mat4x4,   // current rotation

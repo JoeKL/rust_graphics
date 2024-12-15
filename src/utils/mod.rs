@@ -1,4 +1,4 @@
 #![allow(dead_code)]
-mod obj_loader;
+mod ball_obj;
 
-pub use obj_loader::{create_faces, create_vertices};
+pub use ball_obj::{BALL_F, BALL_V};

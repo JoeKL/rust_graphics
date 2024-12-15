@@ -1,3 +1,4 @@
+use crate::renderer::RenderTriangle;
 use crate::types::camera::Camera;
 use crate::types::color::ColorRGB;
 use crate::types::light::PointLight;
@@ -28,17 +29,16 @@ impl Scene {
 
         //light sources
         let light = PointLight::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE, 1.0);
-        let light2 = PointLight::new(Point3D::new(-10.0, 10.0, 0.0), ColorRGB::WHITE, 0.5);
 
-        let lights: Vec<PointLight> = vec![light, light2];
+        let lights: Vec<PointLight> = vec![light];
 
         let mut ball_node = SceneNode::new();
         let mut child_ball_node = SceneNode::new();
         let mut grandchild_ball_node = SceneNode::new();
         
-        ball_node.set_mesh(Mesh::new_ball());
-        child_ball_node.set_mesh(Mesh::new_ball());
-        grandchild_ball_node.set_mesh(Mesh::new_ball());
+        ball_node.set_mesh(Mesh::create_ball());
+        child_ball_node.set_mesh(Mesh::create_ball());
+        grandchild_ball_node.set_mesh(Mesh::create_ball());
         
         child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
@@ -54,30 +54,27 @@ impl Scene {
         }
     }
 
-    pub fn collect_mesh_refs(&self) -> Vec<Mesh> {
-        let mut transformed_meshes: Vec<Mesh> = Vec::new();
-        let mut node_queue: Vec<&SceneNode> = Vec::new();
-        
-        // Start with root node
-        node_queue.push(&self.root_node);
+    pub fn collect_triangles(&self) -> Vec<RenderTriangle> {
+        let mut transformed_triangles: Vec<RenderTriangle> = Vec::new();
+        let mut node_queue = vec![&self.root_node];
+
         
         // Keep processing until queue is empty
         while let Some(node) = node_queue.pop() {
 
-            // If this node has a mesh, add a reference to our collection
+            // If this node has a mesh, add a reference to collection
             if let Some(mesh) = &node.mesh {            
-                let mut mesh_copy = mesh.clone();
-                
-                mesh_copy.transform(node.get_world_transform());
-                transformed_meshes.push(mesh_copy);
+                let mut mesh_snapshot = mesh.clone();           // clone since we dont want to override the meshes. we just want a snapshot of them
+                mesh_snapshot.transform(node.get_world_transform()); // translate snapshot into world coordinates 
+                transformed_triangles.extend(mesh_snapshot.get_render_triangles()); // push into buffer
             }
             
-            // Add references to all children to our queue
+            // Add references to all children to queue
             for child in &node.children {
                 node_queue.push(child);
             }
         }
         
-        transformed_meshes
+        transformed_triangles
     }
 }
