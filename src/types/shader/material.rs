@@ -1,4 +1,4 @@
-use crate::types::{color::ColorRGB, math::Vector3D};
+use crate::types::color::ColorRGB;
 
 pub struct Material {
     pub color: ColorRGB,

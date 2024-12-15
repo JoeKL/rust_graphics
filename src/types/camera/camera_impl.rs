@@ -18,9 +18,6 @@ pub struct Camera {
     projection_matrix: Mat4x4,
     look_at_projection_matrix: Mat4x4,
 
-    //cache target to recalculate while rotating camera
-    pub current_target: Point3D,
-
     // flags
     needs_update: bool,
 }
@@ -43,7 +40,6 @@ impl Camera {
             look_at_matrix: Mat4x4::new_identity(),
             projection_matrix: Mat4x4::new_identity(),
             look_at_projection_matrix: Mat4x4::new_identity(),
-            current_target: target,
             needs_update: true,
         };
 
@@ -141,11 +137,13 @@ impl Camera {
         self.fov_in_degrees
     }
 
+    #[allow(dead_code)]
     pub fn get_look_at_matrix(&mut self) -> Mat4x4 {
         self.update_matrices();
         self.look_at_matrix
     }
-
+    
+    #[allow(dead_code)]
     pub fn get_projection_matrix(&mut self) -> Mat4x4 {
         self.update_matrices();
         self.projection_matrix

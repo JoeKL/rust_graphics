@@ -1,4 +1,4 @@
-#![allow(unused, dead_code)]
+// #![allow(unused, dead_code)]
 
 pub mod camera;
 pub mod texture;

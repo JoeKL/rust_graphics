@@ -1,7 +1,7 @@
 use crate::renderer::RenderTriangle;
 use crate::types::math::{Mat4x4, Point3D, Vector3D};
-use crate::types::primitives::{Triangle, Vertex};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use crate::types::primitives::Vertex;
+use std::sync::atomic::Ordering;
 
 use crate::models::*;
 
@@ -50,31 +50,18 @@ impl Mesh {
     }
 
     pub fn add_triangle(&mut self, indices: [u32; 3], material_id: u32) {
-        let triangle_idx = self.triangle_indices.len() / 3; // since 3 vertecies corrospond to one triangle
+        for &index in &indices {
+            if index as usize >= self.vertices.len() {
+                panic!(
+                    "Invalid vertex index: {}. Mesh only has {} vertices",
+                    index,
+                    self.vertices.len()
+                );
+            }
+        }
+
         self.triangle_indices.extend_from_slice(&indices); // extends_from_slice instead of append to not remove items from indices array
-
-        let v0 = self.vertices[indices[0] as usize].position;
-        let v1 = self.vertices[indices[1] as usize].position;
-        let v2 = self.vertices[indices[2] as usize].position;
-
         self.material_indices.push(material_id);
-    }
-
-    fn calculate_triangle_normal(v0: [f32; 3], v1: [f32; 3], v2: [f32; 3]) -> [f32; 3] {
-        // Calculate vectors from v0 to v1 and v0 to v2
-        let edge1 = [v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]];
-        let edge2 = [v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]];
-
-        // Cross product
-        let normal = [
-            edge1[1] * edge2[2] - edge1[2] * edge2[1],
-            edge1[2] * edge2[0] - edge1[0] * edge2[2],
-            edge1[0] * edge2[1] - edge1[1] * edge2[0],
-        ];
-
-        // Normalize
-        let length = (normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]).sqrt();
-        [normal[0] / length, normal[1] / length, normal[2] / length]
     }
 
     pub fn transform(&mut self, transform: Mat4x4) {
@@ -108,7 +95,7 @@ impl Mesh {
                 let mut v2_idx = self.triangle_indices[triangle_index * 3 + 2] as usize;
 
                 //check which one is the one were focusing on vertex_index == v0 || v1 || v2
-                if (vertex_index == v1_idx) {
+                if vertex_index == v1_idx {
                     // rotate to make v1 become v0
                     // rotate once left [v1, v2, v0]
 
@@ -116,7 +103,7 @@ impl Mesh {
                     v1_idx = v2_idx; // Move v2 to middle position
                     v2_idx = v0_idx; // Move v0 to last position
                     v0_idx = temp; // Put your focus vertex (original v1) in first position
-                } else if (vertex_index == v2_idx) {
+                } else if vertex_index == v2_idx {
                     // rotate to make v2 become v0
                     let temp = v2_idx; // Save v2 (your focus vertex)
                     v2_idx = v1_idx; // Move v1 to last position
@@ -252,31 +239,31 @@ impl Mesh {
         mesh
     }
 
-    pub fn create_cube() -> Self {
-        let mut mesh = Mesh::new();
+    // pub fn create_cube() -> Self {
+    //     let mut mesh = Mesh::new();
 
-        // convert raw vertex positions into vertex chunks
-        for chunk in CUBE_V.chunks(3) {
-            let vertex = Vertex {
-                position: [chunk[0], chunk[1], chunk[2]],
-                normal: [0.0, 0.0, 0.0], // will be calculated later
-                color: [1.0, 1.0, 1.0],  // Default white color
-            };
-            mesh.vertices.push(vertex);
-        }
+    //     // convert raw vertex positions into vertex chunks
+    //     for chunk in CUBE_V.chunks(3) {
+    //         let vertex = Vertex {
+    //             position: [chunk[0], chunk[1], chunk[2]],
+    //             normal: [0.0, 0.0, 0.0], // will be calculated later
+    //             color: [1.0, 1.0, 1.0],  // Default white color
+    //         };
+    //         mesh.vertices.push(vertex);
+    //     }
 
-        // process triangle indices to triangles
-        for triangle_indices in CUBE_F.chunks(3) {
-            let indices = [
-                triangle_indices[0] as u32,
-                triangle_indices[1] as u32,
-                triangle_indices[2] as u32,
-            ];
+    //     // process triangle indices to triangles
+    //     for triangle_indices in CUBE_F.chunks(3) {
+    //         let indices = [
+    //             triangle_indices[0] as u32,
+    //             triangle_indices[1] as u32,
+    //             triangle_indices[2] as u32,
+    //         ];
 
-            // Add triangle with default material (say, 0)
-            mesh.add_triangle(indices, 0);
-        }
-        mesh.build_adj_list();
-        mesh
-    }
+    //         // Add triangle with default material (say, 0)
+    //         mesh.add_triangle(indices, 0);
+    //     }
+    //     mesh.build_adj_list();
+    //     mesh
+    // }
 }

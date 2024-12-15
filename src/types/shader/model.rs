@@ -1,6 +1,6 @@
 use crate::types::{
     color::ColorRGB,
-    light::{self, PointLight},
+    light::PointLight,
     math::{Point3D, Vector3D},
     shader::Material,
 };
