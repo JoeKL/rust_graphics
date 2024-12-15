@@ -1,5 +1,5 @@
 
-use crate::types::math::{Point2D, Point3D};
+use crate::types::math::{Point2D,Point3D};
 
 
 #[derive(Debug, Clone, Copy)]

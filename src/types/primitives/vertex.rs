@@ -1,7 +1,4 @@
-use crate::types::{
-    color::ColorRGB,
-    math::{Point3D, Vector3D},
-};
+use crate::types::math::Point3D;
 
 
 #[derive(Debug, Clone, Copy)]

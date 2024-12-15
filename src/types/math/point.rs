@@ -1,5 +1,5 @@
 
-use crate::types::math::{Vector2D, Vector3D};
+use crate::types::math::{Vector2D,Vector3D};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point2D {
