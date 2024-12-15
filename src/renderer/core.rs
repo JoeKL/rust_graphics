@@ -1,4 +1,4 @@
-use super::{Rasterizer, RenderTriangle};
+use super::{Frustum, Rasterizer, RenderTriangle};
 use crate::{
     scene::Scene,
     types::{
@@ -19,27 +19,6 @@ impl Renderer {
         }
     }
 
-    pub fn render_scene(&mut self, scene: &mut Scene) {
-        self.rasterizer
-            .framebuffer
-            .fill(ColorRGB::from_u32(0x101010));
-        // Get camera matrices once
-        let look_at_projection = &scene.camera.get_look_at_projection_matrix();
-        let viewport = self.rasterizer.viewport.get_matrix();
-
-        let vertices: Vec<(usize, Vec<Vertex>)> = scene.transform_and_collect_vertices();
-        let mesh_refs: Vec<&Mesh> = scene.collect_mesh_refs();
-
-        let triangles: Vec<RenderTriangle> = Mesh::construct_triangles(vertices, mesh_refs);
-
-        // Sort triangles
-        let sorted_triangles = Renderer::z_face_sort(triangles, &scene.camera.get_position());
-
-        // Render them
-        self.render_triangles(&sorted_triangles, look_at_projection, &viewport, scene);
-    }
-
-
     pub fn get_window_width(&self) -> usize {
         self.rasterizer.framebuffer.get_width()
     }
@@ -50,6 +29,34 @@ impl Renderer {
 
     pub fn get_buffer(&self) -> Vec<u32> {
         self.rasterizer.framebuffer.get_buffer().to_vec()
+    }
+
+    pub fn render_scene(&mut self, scene: &mut Scene) {
+        self.rasterizer
+            .framebuffer
+            .fill(ColorRGB::from_u32(0x101010));
+        // Get camera matrices once
+        let frustum_matrix = &scene.camera.get_frustum_matrix();
+        let viewport = self.rasterizer.viewport.get_matrix();
+
+
+        // Create frustum from camera matrix
+        let view_frustum = Frustum::from_matrix(frustum_matrix);
+
+        let vertices: Vec<(usize, Vec<Vertex>)> = scene.transform_and_collect_vertices();
+        let mesh_refs: Vec<&Mesh> = scene.collect_mesh_refs();
+        let triangles: Vec<RenderTriangle> = Mesh::construct_triangles(vertices, mesh_refs);
+
+        // Filter triangles using frustum culling before sorting
+        //somehow check if inside my frustum 
+        let visible_triangles = triangles;
+
+
+        // Sort triangles
+        let sorted_triangles = Renderer::z_face_sort(visible_triangles, &scene.camera.get_position());
+
+        // Render them
+        self.render_triangles(&sorted_triangles, frustum_matrix, &viewport, scene);
     }
 
     pub fn z_face_sort(
@@ -79,7 +86,7 @@ impl Renderer {
     pub fn render_triangles(
         &mut self,
         triangles: &Vec<RenderTriangle>,
-        look_at_projection_matrix: &Mat4x4,
+        frustum_matrix: &Mat4x4,
         viewport_matrix: &Mat4x4,
         scene: &Scene,
     ) {
@@ -101,9 +108,9 @@ impl Renderer {
             let mut point_1: Point3D = triangle.vertices[1].to_point();
             let mut point_2: Point3D = triangle.vertices[2].to_point();
 
-            point_0 = look_at_projection_matrix.mul_point(point_0);
-            point_1 = look_at_projection_matrix.mul_point(point_1);
-            point_2 = look_at_projection_matrix.mul_point(point_2);
+            point_0 = frustum_matrix.mul_point(point_0);
+            point_1 = frustum_matrix.mul_point(point_1);
+            point_2 = frustum_matrix.mul_point(point_2);
 
             // perspective divide
             point_0.dehomogen();
@@ -143,7 +150,7 @@ impl Renderer {
     }
 
     pub fn render_axis(&mut self, scene: &mut Scene) {
-        let look_at_projection_matrix = scene.camera.get_look_at_projection_matrix();
+        let frustum_matrix = scene.camera.get_frustum_matrix();
         let viewport_matrix = self.rasterizer.viewport.get_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
@@ -161,8 +168,8 @@ impl Renderer {
             let mut start_point = start;
             let mut end_point = end;
 
-            start_point = look_at_projection_matrix.mul_point(start_point);
-            end_point = look_at_projection_matrix.mul_point(end_point);
+            start_point = frustum_matrix.mul_point(start_point);
+            end_point = frustum_matrix.mul_point(end_point);
 
             start_point.dehomogen();
             end_point.dehomogen();
@@ -184,7 +191,7 @@ impl Renderer {
     }
 
     pub fn render_light_vectors(&mut self, scene: &mut Scene) {
-        let look_at_projection_matrix = scene.camera.get_look_at_projection_matrix();
+        let frustum_matrix = scene.camera.get_frustum_matrix();
         let viewport_matrix = self.rasterizer.viewport.get_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
@@ -193,8 +200,8 @@ impl Renderer {
             let mut start_point = lights.get_position();
             let mut end_point = origin;
 
-            start_point = look_at_projection_matrix.mul_point(start_point);
-            end_point = look_at_projection_matrix.mul_point(end_point);
+            start_point = frustum_matrix.mul_point(start_point);
+            end_point = frustum_matrix.mul_point(end_point);
 
             start_point.dehomogen();
             end_point.dehomogen();

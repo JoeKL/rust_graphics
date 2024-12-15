@@ -16,7 +16,7 @@ pub struct Camera {
     // Cache matrices to avoid recomputing when nothing changes
     look_at_matrix: Mat4x4,
     projection_matrix: Mat4x4,
-    look_at_projection_matrix: Mat4x4,
+    frustum_matrix: Mat4x4,
 
     // flags
     needs_update: bool,
@@ -39,7 +39,7 @@ impl Camera {
             far: 1000.0,
             look_at_matrix: Mat4x4::new_identity(),
             projection_matrix: Mat4x4::new_identity(),
-            look_at_projection_matrix: Mat4x4::new_identity(),
+            frustum_matrix: Mat4x4::new_identity(),
             needs_update: true,
         };
 
@@ -124,7 +124,7 @@ impl Camera {
         };
 
         // Combine view and projection matrices
-        self.look_at_projection_matrix = self.projection_matrix.mul_mat(self.look_at_matrix);
+        self.frustum_matrix = self.projection_matrix.mul_mat(self.look_at_matrix);
         self.needs_update = false;
     }
 
@@ -149,8 +149,8 @@ impl Camera {
         self.projection_matrix
     }
 
-    pub fn get_look_at_projection_matrix(&mut self) -> Mat4x4 {
+    pub fn get_frustum_matrix(&mut self) -> Mat4x4 {
         self.update_matrices();
-        self.look_at_projection_matrix
+        self.frustum_matrix
     }
 }
