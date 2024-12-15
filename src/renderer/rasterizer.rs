@@ -5,8 +5,8 @@ use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
 use crate::types::light::PointLight;
 use crate::types::math::Point3D;
-use crate::types::primitives::Triangle;
 use crate::types::shader::{Material, ShadingModel};
+use super::RenderTriangle;
 
 pub struct Rasterizer {
     pub framebuffer: FrameBuffer,
@@ -360,17 +360,16 @@ impl Rasterizer {
     }
 
     pub fn shade_triangle(
-        triangle: &Triangle,
+        triangle: &RenderTriangle,
         camera_position: &Point3D,
         material: &Material,
         lights: &[PointLight],
         shader: &impl ShadingModel,
     ) -> ColorRGB {
         // Calculate triangle center and normal
-        let center = triangle.calc_center();
-        let normal = triangle.calc_normal();
+        let center = triangle.calculate_center();
+        let normal = triangle.normal_to_vector();
         let view_vector = camera_position.sub_p(center).normalize();
-                
         shader.calc_color(&center, &normal, &view_vector, material, lights)
     }
 
