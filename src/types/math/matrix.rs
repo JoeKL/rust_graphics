@@ -121,26 +121,20 @@ impl Mat4x4 {
         result_mat
     }
 
-    pub fn mul_vec(self, v: Vector3D) -> Point3D {
-        let x = self.mat[0][0] * v.x
-            + self.mat[0][1] * v.y
-            + self.mat[0][2] * v.z
-            + self.mat[0][3] * v.w as f32;
-        let y = self.mat[1][0] * v.x
-            + self.mat[1][1] * v.y
-            + self.mat[1][2] * v.z
-            + self.mat[1][3] * v.w as f32;
-        let z = self.mat[2][0] * v.x
-            + self.mat[2][1] * v.y
-            + self.mat[2][2] * v.z
-            + self.mat[2][3] * v.w as f32;
-        let w = self.mat[3][0] * v.x
-            + self.mat[3][1] * v.y
-            + self.mat[3][2] * v.z
-            + self.mat[3][3] * v.w as f32;
-        let mut result_point = Point3D::new(x, y, z);
-        result_point.w = w as u32;
-        result_point
+    pub fn mul_vec(&self, v: Vector3D) -> Vector3D {
+        let x = self.mat[0][0] * v.x + 
+                self.mat[0][1] * v.y + 
+                self.mat[0][2] * v.z;
+                
+        let y = self.mat[1][0] * v.x + 
+                self.mat[1][1] * v.y + 
+                self.mat[1][2] * v.z;
+                
+        let z = self.mat[2][0] * v.x + 
+                self.mat[2][1] * v.y + 
+                self.mat[2][2] * v.z;
+        
+        Vector3D::new(x, y, z)
     }
 
     pub fn mul_point(self, v: Point3D) -> Point3D {
