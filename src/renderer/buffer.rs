@@ -92,6 +92,15 @@ impl FrameBuffer {
         }
     }
 
+    pub fn get_pixel(&mut self, x: i32, y: i32) -> u32{
+        if self.is_in_bounds(x, y) {
+            let index = self.get_index(x as usize, y as usize);
+            self.buffer[index]
+        } else {
+            0
+        }
+    }
+
     pub fn fill(&mut self, color: ColorRGB) {
         self.buffer.fill(color.get_as_u32());
     }
