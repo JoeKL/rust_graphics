@@ -3,7 +3,7 @@ use crate::types::math::{Point3D, Mat4x4};
 use crate::types::primitives::{Triangle, Vertex};
 
 
-use crate::utils::*;
+use crate::models::*;
 
 #[derive(Debug, Clone)]
 pub struct Mesh {
@@ -161,6 +161,34 @@ impl Mesh {
 
         // process triangle indices to triangles
         for triangle_indices in BALL_F.chunks(3) {
+            let indices = [
+                triangle_indices[0] as u32,
+                triangle_indices[1] as u32,
+                triangle_indices[2] as u32,
+            ];
+            
+            // Add triangle with default material (say, 0)
+            mesh.add_triangle(indices, 0);
+        }
+
+        mesh
+    }
+
+    pub fn create_cube() -> Self {
+        let mut mesh = Mesh::new();
+        
+        // convert raw vertex positions into vertex chunks
+        for chunk in CUBE_V.chunks(3) {
+            let vertex = Vertex {
+                position: [chunk[0], chunk[1], chunk[2]],
+                normal: [0.0, 0.0, 0.0], // will be calculated later
+                color: [1.0, 1.0, 1.0],  // Default white color
+            };
+            mesh.vertices.push(vertex);
+        }
+
+        // process triangle indices to triangles
+        for triangle_indices in CUBE_F.chunks(3) {
             let indices = [
                 triangle_indices[0] as u32,
                 triangle_indices[1] as u32,
