@@ -179,29 +179,28 @@ impl Mesh {
                 let v1 = &self.vertices[v1_idx];
                 let v2 = &self.vertices[v2_idx];
 
-                // //signed_area = get area of triangle
-                // let signed_area = ((v1.x - v0.x) * (v2.y - v0.y)
-                // - (v1.y - v0.y) * (v2.x - v0.x))/2.0;
+                //signed_area = get area of triangle
+                let signed_area = ((v1.position[0] - v0.position[0]) * (v2.position[1] - v0.position[1])
+                - (v1.position[1] - v0.position[1]) * (v2.position[0] - v0.position[0]))/2.0;
 
-                // //vec1 = A - V
-                // let vec1 = v1.sub_p(v0);
-                // //vec2 = B - V
-                // let vec2 = v2.sub_p(v0);
+                //vec1 = A - V
+                let vec1 = Vector3D::new(v1.position[0] - v0.position[0], v1.position[1] - v0.position[1], v1.position[2] - v0.position[2]);
 
-                // //theta = get angle between the two edges in the triangle it is part of
-                // let cos_theta = vec1.normalize().dot(vec2.normalize());
-                // let theta = cos_theta.acos();
+                //vec2 = B - V
+                let vec2 = Vector3D::new(v2.position[0] - v0.position[0], v2.position[1] - v0.position[1], v2.position[2] - v0.position[2]);
+                //theta = get angle between the two edges in the triangle it is part of
+                let cos_theta = vec1.normalize().dot(vec2.normalize());
+                let theta = cos_theta.acos();
 
-                // weighted_normal[0] += self.triangle_normals[index][0] * signed_area * theta;
-                // weighted_normal[1] += self.triangle_normals[index][1] * signed_area * theta;
-                // weighted_normal[2] += self.triangle_normals[index][2] * signed_area * theta;
-
+                weighted_normal[0] += self.triangle_normals[vertex_index][0] * signed_area * theta;
+                weighted_normal[1] += self.triangle_normals[vertex_index][1] * signed_area * theta;
+                weighted_normal[2] += self.triangle_normals[vertex_index][2] * signed_area * theta;
 
             }
 
-            // let v_normal_vec = Vector3D::new(weighted_normal[0], weighted_normal[1], weighted_normal[2]).normalize();
+            let v_normal_vec = Vector3D::new(weighted_normal[0], weighted_normal[1], weighted_normal[2]).normalize();
         
-            // self.vertices[vertex_index as usize].normal = [v_normal_vec.x, v_normal_vec.y, v_normal_vec.z];
+            self.vertices[vertex_index].normal = [v_normal_vec.x, v_normal_vec.y, v_normal_vec.z];
             // v_normal = normalize(Σ(area_i * theta_i * face_normal_i))
 
         }
