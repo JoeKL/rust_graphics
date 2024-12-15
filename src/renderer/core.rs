@@ -2,10 +2,7 @@ use super::{Rasterizer, RenderTriangle};
 use crate::{
     scene::Scene,
     types::{
-        color::ColorRGB,
-        display::ScreenPoint,
-        math::{Mat4x4, Point3D},
-        shader::{FlatShader, Material},
+        color::ColorRGB, display::ScreenPoint, geometry::Mesh, math::{Mat4x4, Point3D}, primitives::Vertex, shader::{FlatShader, Material}
     },
 };
 
@@ -22,6 +19,27 @@ impl Renderer {
         }
     }
 
+    pub fn render_scene(&mut self, scene: &mut Scene) {
+        self.rasterizer
+            .framebuffer
+            .fill(ColorRGB::from_u32(0x101010));
+        // Get camera matrices once
+        let look_at_projection = &scene.camera.get_look_at_projection_matrix();
+        let viewport = self.rasterizer.viewport.get_matrix();
+
+        let vertices: Vec<(usize, Vec<Vertex>)> = scene.transform_and_collect_vertices();
+        let mesh_refs: Vec<&Mesh> = scene.collect_mesh_refs();
+
+        let triangles: Vec<RenderTriangle> = Mesh::construct_triangles(vertices, mesh_refs);
+
+        // Sort triangles
+        let sorted_triangles = Renderer::z_face_sort(triangles, &scene.camera.get_position());
+
+        // Render them
+        self.render_triangles(&sorted_triangles, look_at_projection, &viewport, scene);
+    }
+
+
     pub fn get_window_width(&self) -> usize {
         self.rasterizer.framebuffer.get_width()
     }
@@ -32,22 +50,6 @@ impl Renderer {
 
     pub fn get_buffer(&self) -> Vec<u32> {
         self.rasterizer.framebuffer.get_buffer().to_vec()
-    }
-
-    pub fn render_scene(&mut self, scene: &mut Scene) {
-        self.rasterizer
-            .framebuffer
-            .fill(ColorRGB::from_u32(0x101010));
-        // Get camera matrices once
-        let look_at_projection = &scene.camera.get_look_at_projection_matrix();
-        let viewport = self.rasterizer.viewport.get_matrix();
-
-        // Sort triangles
-        let triangles =
-            Renderer::z_face_sort(scene.collect_triangles(), &scene.camera.get_position());
-
-        // Render them
-        self.render_triangles(&triangles, look_at_projection, &viewport, scene);
     }
 
     pub fn z_face_sort(

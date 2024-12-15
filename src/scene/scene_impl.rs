@@ -1,9 +1,9 @@
-use crate::renderer::RenderTriangle;
 use crate::types::camera::Camera;
 use crate::types::color::ColorRGB;
 use crate::types::light::PointLight;
 use crate::types::math::{Point3D, Vector3D};
 use crate::types::geometry::Mesh;
+use crate::types::primitives::Vertex;
 use super::SceneNode;
 
 pub struct Scene {
@@ -54,8 +54,8 @@ impl Scene {
         }
     }
 
-    pub fn collect_triangles(&self) -> Vec<RenderTriangle> {
-        let mut transformed_triangles: Vec<RenderTriangle> = Vec::new();
+    pub fn transform_and_collect_vertices(&self) -> Vec<(usize, Vec<Vertex>)> {
+        let mut vertex_tupels: Vec<(usize, Vec<Vertex>)> = Vec::new();
         let mut node_queue = vec![&self.root_node];
 
         
@@ -66,7 +66,9 @@ impl Scene {
             if let Some(mesh) = &node.mesh {            
                 let mut mesh_snapshot = mesh.clone();           // clone since we dont want to override the meshes. we just want a snapshot of them
                 mesh_snapshot.transform(node.get_world_transform()); // translate snapshot into world coordinates 
-                transformed_triangles.extend(mesh_snapshot.get_render_triangles()); // push into buffer
+                let mesh_id = mesh_snapshot.id;
+
+                vertex_tupels.push((mesh_id, mesh_snapshot.vertices)); // push into buffer
             }
             
             // Add references to all children to queue
@@ -75,6 +77,29 @@ impl Scene {
             }
         }
         
-        transformed_triangles
+        vertex_tupels
+    }
+
+
+    pub fn collect_mesh_refs(&self) -> Vec<&Mesh> {
+        let mut mesh_refs: Vec<&Mesh> = Vec::new();
+        let mut node_queue = vec![&self.root_node];
+
+        // Keep processing until queue is empty
+        while let Some(node) = node_queue.pop() {
+
+            // If this node has a mesh, add a reference to collection
+            if let Some(mesh) = &node.mesh {            
+                
+                mesh_refs.push(mesh); // push into buffer
+            }
+            
+            // Add references to all children to queue
+            for child in &node.children {
+                node_queue.push(child);
+            }
+        }
+        
+        mesh_refs
     }
 }

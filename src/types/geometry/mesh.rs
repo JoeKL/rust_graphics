@@ -1,38 +1,38 @@
 use crate::renderer::RenderTriangle;
 use crate::types::math::{Mat4x4, Point3D, Vector3D};
 use crate::types::primitives::{Triangle, Vertex};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::models::*;
 
+use super::MESH_ID_COUNTER;
+
 #[derive(Debug, Clone)]
 pub struct Mesh {
+    pub id: usize,
     pub vertices: Vec<Vertex>,
     pub triangle_indices: Vec<u32>, // triple of indices represent a triangle [1,2,3,4,5,6] -> triangle between vertex 1,2,3 and 4,5,6
-    pub triangle_normals: Vec<[f32; 3]>, // represent x:f32, y:f32, z:f32
     pub material_indices: Vec<u32>, // each index in this array represents one triangle in triangle_indices
-    pub vertex_triangle_adj_list: Vec<Vec<usize>> // 1:[721, 733, 744] //vertex_index:[triangle_index, triangle_index, triangle_index]
+    pub vertex_triangle_adj_list: Vec<Vec<usize>>, // 1:[721, 733, 744] //vertex_index:[triangle_index, triangle_index, triangle_index]
 }
 impl Mesh {
     pub fn new() -> Self {
+        let id = MESH_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Self {
+            id,
             vertices: Vec::new(),
             triangle_indices: Vec::new(),
-            triangle_normals: Vec::new(),
             material_indices: Vec::new(),
             vertex_triangle_adj_list: Vec::new(),
         }
     }
 
-    pub fn build_adj_list(&mut self){
+    pub fn build_adj_list(&mut self) {
         self.vertex_triangle_adj_list = vec![Vec::new(); self.vertices.len()]; // correctly initialize it since the amount of vertecies is now known
-        
-        let current_triangles = self
-        .triangle_indices
-        .chunks(3)
-        .enumerate(); // builds a list of chunks and enumerates it
 
+        let current_triangles = self.triangle_indices.chunks(3).enumerate(); // builds a list of chunks and enumerates it
 
-        for (triangle_index,vertex_index) in current_triangles{
+        for (triangle_index, vertex_index) in current_triangles {
             // triangle:
             // (
             //     797, //triangle_index
@@ -46,9 +46,7 @@ impl Mesh {
             self.vertex_triangle_adj_list[vertex_index[0] as usize].push(triangle_index);
             self.vertex_triangle_adj_list[vertex_index[1] as usize].push(triangle_index);
             self.vertex_triangle_adj_list[vertex_index[2] as usize].push(triangle_index);
-
         }
-
     }
 
     pub fn add_triangle(&mut self, indices: [u32; 3], material_id: u32) {
@@ -59,8 +57,6 @@ impl Mesh {
         let v1 = self.vertices[indices[1] as usize].position;
         let v2 = self.vertices[indices[2] as usize].position;
 
-        let normal = Mesh::calculate_triangle_normal(v0, v1, v2);
-        self.triangle_normals.push(normal);
         self.material_indices.push(material_id);
     }
 
@@ -81,43 +77,6 @@ impl Mesh {
         [normal[0] / length, normal[1] / length, normal[2] / length]
     }
 
-    pub fn recalculate_face_normals(&mut self) {
-        // Clear existing normals and prepare new ones
-        self.triangle_normals.clear();
-        self.triangle_normals
-            .reserve(self.triangle_indices.len() / 3);
-
-        // Process triangles in groups of 3 indices
-        for triangle_indices in self.triangle_indices.chunks(3) {
-            // Get vertex positions for this triangle
-            let v0 = Point3D::new(
-                self.vertices[triangle_indices[0] as usize].position[0],
-                self.vertices[triangle_indices[0] as usize].position[1],
-                self.vertices[triangle_indices[0] as usize].position[2],
-            );
-            let v1 = Point3D::new(
-                self.vertices[triangle_indices[1] as usize].position[0],
-                self.vertices[triangle_indices[1] as usize].position[1],
-                self.vertices[triangle_indices[1] as usize].position[2],
-            );
-            let v2 = Point3D::new(
-                self.vertices[triangle_indices[2] as usize].position[0],
-                self.vertices[triangle_indices[2] as usize].position[1],
-                self.vertices[triangle_indices[2] as usize].position[2],
-            );
-
-            // Calculate edges
-            let edge1 = v1.sub_p(v0); // Vector from v0 to v1
-            let edge2 = v2.sub_p(v0); // Vector from v0 to v2
-
-            // Calculate normal using cross product
-            let normal = edge1.cross(edge2).normalize();
-
-            // Store the normal
-            self.triangle_normals.push([normal.x, normal.y, normal.z]);
-        }
-    }
-
     pub fn transform(&mut self, transform: Mat4x4) {
         for vertex in &mut self.vertices {
             let vertex_point =
@@ -131,98 +90,136 @@ impl Mesh {
         //#TODO: Dirty Normals in Vertex when scaling applied. need to recalc vertecies
         //WARNING: WHEN SCALING IS NOT ISO IT WILL LEAD TO INCORRECT WARNINGS. WE NEED TO RECALCULATE THEN
         //transform normals
-        for normal in &mut self.triangle_normals {
-            let normal_vec = Vector3D::new(normal[0], normal[1], normal[2]);
-            let transformed = transform.mul_vec(normal_vec).normalize(); // This returns a Point3D!
-            *normal = [transformed.x, transformed.y, transformed.z];
-        }
+
         self.calculate_vertex_normals();
     }
 
     pub fn calculate_vertex_normals(&mut self) {
-
         //vertex_index:[triangle_index, triangle_index, triangle_index]
-        // 1:[721, 733, 744] 
+        // 1:[721, 733, 744]
         for (vertex_index, vertex_entry) in self.vertex_triangle_adj_list.iter().enumerate() {
-
             let mut weighted_normal: [f32; 3] = [0.0, 0.0, 0.0];
 
             //https://github.com/vijaiaeroastro/HalfMesh/tree/master/include ?? :(
 
-            for triangle_index in vertex_entry{
-
-                let mut v0_idx = self.triangle_indices[triangle_index*3] as usize;
-                let mut v1_idx = self.triangle_indices[triangle_index*3+1] as usize;
-                let mut v2_idx = self.triangle_indices[triangle_index*3+2] as usize;               
+            for triangle_index in vertex_entry {
+                let mut v0_idx = self.triangle_indices[triangle_index * 3] as usize;
+                let mut v1_idx = self.triangle_indices[triangle_index * 3 + 1] as usize;
+                let mut v2_idx = self.triangle_indices[triangle_index * 3 + 2] as usize;
 
                 //check which one is the one were focusing on vertex_index == v0 || v1 || v2
-                if(vertex_index == v1_idx){
+                if (vertex_index == v1_idx) {
                     // rotate to make v1 become v0
                     // rotate once left [v1, v2, v0]
 
                     let temp = v1_idx; // Save v1 (your focus vertex)
-                    v1_idx = v2_idx;     // Move v2 to middle position
-                    v2_idx = v0_idx;     // Move v0 to last position
-                    v0_idx = temp;    // Put your focus vertex (original v1) in first position
-
-                } else if(vertex_index == v2_idx){
+                    v1_idx = v2_idx; // Move v2 to middle position
+                    v2_idx = v0_idx; // Move v0 to last position
+                    v0_idx = temp; // Put your focus vertex (original v1) in first position
+                } else if (vertex_index == v2_idx) {
                     // rotate to make v2 become v0
-                    let temp = v2_idx;   // Save v2 (your focus vertex)
-                    v2_idx = v1_idx;     // Move v1 to last position
-                    v1_idx = v0_idx;      // Move v0 to middle position
-                    v0_idx = temp;    // Put your focus vertex (original v2) in first position
+                    let temp = v2_idx; // Save v2 (your focus vertex)
+                    v2_idx = v1_idx; // Move v1 to last position
+                    v1_idx = v0_idx; // Move v0 to middle position
+                    v0_idx = temp; // Put your focus vertex (original v2) in first position
                 }
 
-
-                // // //triangle is made of these vertecies:
+                // triangle is made of these vertecies:
                 let v0 = &self.vertices[v0_idx];
                 let v1 = &self.vertices[v1_idx];
                 let v2 = &self.vertices[v2_idx];
 
-                //signed_area = get area of triangle
-                let signed_area = ((v1.position[0] - v0.position[0]) * (v2.position[1] - v0.position[1])
-                - (v1.position[1] - v0.position[1]) * (v2.position[0] - v0.position[0]))/2.0;
+                // Calculate triangle normal using cross product of two edges
+                let edge1 = Vector3D::new(
+                    v1.position[0] - v0.position[0],
+                    v1.position[1] - v0.position[1],
+                    v1.position[2] - v0.position[2],
+                );
 
-                //vec1 = A - V
-                let vec1 = Vector3D::new(v1.position[0] - v0.position[0], v1.position[1] - v0.position[1], v1.position[2] - v0.position[2]);
+                let edge2 = Vector3D::new(
+                    v2.position[0] - v0.position[0],
+                    v2.position[1] - v0.position[1],
+                    v2.position[2] - v0.position[2],
+                );
 
-                //vec2 = B - V
-                let vec2 = Vector3D::new(v2.position[0] - v0.position[0], v2.position[1] - v0.position[1], v2.position[2] - v0.position[2]);
+                // Calculate triangle normal using cross product
+                let triangle_normal = edge1.cross(edge2).normalize();
+
+                // Calculate signed area for weighting
+                let signed_area = ((v1.position[0] - v0.position[0])
+                    * (v2.position[1] - v0.position[1])
+                    - (v1.position[1] - v0.position[1]) * (v2.position[0] - v0.position[0]))
+                    / 2.0;
+
+                // Calculate angle at vertex for weighting
                 //theta = get angle between the two edges in the triangle it is part of
-                let cos_theta = vec1.normalize().dot(vec2.normalize());
+                let cos_theta = edge1.normalize().dot(edge2.normalize());
                 let theta = cos_theta.acos();
 
-                weighted_normal[0] += self.triangle_normals[vertex_index][0] * signed_area * theta;
-                weighted_normal[1] += self.triangle_normals[vertex_index][1] * signed_area * theta;
-                weighted_normal[2] += self.triangle_normals[vertex_index][2] * signed_area * theta;
-
+                weighted_normal[0] += triangle_normal.x * signed_area * theta;
+                weighted_normal[1] += triangle_normal.y * signed_area * theta;
+                weighted_normal[2] += triangle_normal.z * signed_area * theta;
             }
 
-            let v_normal_vec = Vector3D::new(weighted_normal[0], weighted_normal[1], weighted_normal[2]).normalize();
-        
+            let v_normal_vec =
+                Vector3D::new(weighted_normal[0], weighted_normal[1], weighted_normal[2])
+                    .normalize();
+
             self.vertices[vertex_index].normal = [v_normal_vec.x, v_normal_vec.y, v_normal_vec.z];
             // v_normal = normalize(Σ(area_i * theta_i * face_normal_i))
-
         }
     }
 
-    pub fn get_render_triangles(&self) -> Vec<RenderTriangle> {
+    pub fn construct_triangles(
+        vertices: Vec<(usize, Vec<Vertex>)>,
+        mesh_refs: Vec<&Mesh>,
+    ) -> Vec<RenderTriangle> {
         let mut triangles = Vec::new();
 
-        // Process indices in groups of 3
-        for triangle_idx in 0..(self.triangle_indices.len() / 3) {
-            let i0 = self.triangle_indices[triangle_idx * 3] as usize;
-            let i1 = self.triangle_indices[triangle_idx * 3 + 1] as usize;
-            let i2 = self.triangle_indices[triangle_idx * 3 + 2] as usize;
+        for (mesh_id, mesh_ref) in mesh_refs.iter().enumerate() {
+            if let Some(mesh_vertices) = vertices.iter().find(|(id, _)| *id == mesh_id) {
+                // Now we have the correct vertices for this mesh
+                let transformed_vertices = &mesh_vertices.1;
+                // Process indices in groups of 3
+                for triangle_idx in 0..(mesh_ref.triangle_indices.len() / 3) {
+                    let i0 = mesh_ref.triangle_indices[triangle_idx * 3] as usize;
+                    let i1 = mesh_ref.triangle_indices[triangle_idx * 3 + 1] as usize;
+                    let i2 = mesh_ref.triangle_indices[triangle_idx * 3 + 2] as usize;
 
-            // Create triangle with copied vertex data
-            let triangle = RenderTriangle {
-                vertices: [self.vertices[i0], self.vertices[i1], self.vertices[i2]],
-                normal: self.triangle_normals[triangle_idx],
-                material_id: self.material_indices[triangle_idx],
-            };
+                    // Get the transformed vertices using our indices
+                    let v0 = &transformed_vertices[i0];
+                    let v1 = &transformed_vertices[i1];
+                    let v2 = &transformed_vertices[i2];
 
-            triangles.push(triangle);
+                    // Calculate triangle normal using cross product of two edges
+                    let edge1 = Vector3D::new(
+                        v1.position[0] - v0.position[0],
+                        v1.position[1] - v0.position[1],
+                        v1.position[2] - v0.position[2],
+                    );
+
+                    let edge2 = Vector3D::new(
+                        v2.position[0] - v0.position[0],
+                        v2.position[1] - v0.position[1],
+                        v2.position[2] - v0.position[2],
+                    );
+
+                    // Calculate triangle normal using cross product
+                    let triangle_normal = edge1.cross(edge2).normalize();
+
+                    // Create triangle with copied vertex data
+                    let triangle = RenderTriangle {
+                        vertices: [
+                            vertices[mesh_id].1[i0],
+                            vertices[mesh_id].1[i1],
+                            vertices[mesh_id].1[i2],
+                        ],
+                        normal: [triangle_normal.x, triangle_normal.y, triangle_normal.z],
+                        material_id: mesh_ref.material_indices[triangle_idx],
+                    };
+                    triangles.push(triangle);
+                }
+            }
         }
         triangles
     }
