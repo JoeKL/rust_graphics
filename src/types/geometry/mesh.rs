@@ -1,5 +1,5 @@
 use crate::renderer::RenderTriangle;
-use crate::types::math::{Point3D, Mat4x4};
+use crate::types::math::{Mat4x4, Point3D, Vector3D};
 use crate::types::primitives::{Triangle, Vertex};
 
 
@@ -117,8 +117,21 @@ impl Mesh {
 
             vertex.position = [transformed.x, transformed.y, transformed.z];
         }
-        self.recalculate_face_normals(); // we need to recalulate face normals. otherwise the normals are stuck in space while the triangles are moved away
+        //WARNING: WHEN SCALING IS NOT ISO IT WILL LEAD TO INCORRECT WARNINGS. WE NEED TO RECALCULATE THEN
+        //transform normals
+        for normal in &mut self.triangle_normals {
+            let normal_vec = Vector3D::new(normal[0], normal[1], normal[2]);
+            let transformed = transform.mul_vec(normal_vec).normalize();  // This returns a Point3D!
+            *normal = [transformed.x, transformed.y, transformed.z];
+        }
+
         //#TODO: Dirty Normals in Vertex when scaling applied. need to recalcc vertecies 
+    }
+
+    pub fn calculate_vertex_normals(&mut self){
+        for vertex in &self.vertices{
+            //v_normal = normalize(Σ(area_i * theta_i * face_normal_i))
+        }
     }
 
     pub fn get_render_triangles(&self) -> Vec<RenderTriangle> {
