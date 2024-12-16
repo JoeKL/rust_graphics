@@ -51,9 +51,22 @@ impl Renderer {
         //somehow check if inside my frustum 
         let visible_triangles: Vec<RenderTriangle> = triangles.into_iter().filter(|t| view_frustum.triangle_in_bounds(t)).collect();
 
+        //backface culling
+        let backface_culled_triangles: Vec<RenderTriangle> = visible_triangles.into_iter().filter(|t| RenderTriangle::is_front_facing(t, &scene.camera.direction)).collect();
+
 
         // Sort triangles
-        let sorted_triangles = Renderer::z_face_sort(visible_triangles, &scene.camera.get_position());
+        let sorted_triangles = Renderer::z_face_sort(backface_culled_triangles, &scene.camera.get_position());
+
+        // in World coordinates
+
+        // Frustum transformation
+
+        // in NDC
+
+        // Viewport transformation
+
+        //in Screen coordinates
 
         // Render them
         self.render_triangles(&sorted_triangles, frustum_matrix, &viewport, scene);
