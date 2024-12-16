@@ -211,7 +211,7 @@ impl Mesh {
         triangles
     }
 
-    pub fn create_ball() -> Self {
+    pub fn create_ball(material_id: u32) -> Self {
         let mut mesh = Mesh::new();
 
         // convert raw vertex positions into vertex chunks
@@ -233,7 +233,7 @@ impl Mesh {
             ];
 
             // Add triangle with default material (say, 0)
-            mesh.add_triangle(indices, 0);
+            mesh.add_triangle(indices, material_id);
         }
         mesh.build_adj_list();
         mesh

@@ -36,9 +36,9 @@ impl Scene {
         let mut child_ball_node = SceneNode::new();
         let mut grandchild_ball_node = SceneNode::new();
         
-        ball_node.set_mesh(Mesh::create_ball());
-        child_ball_node.set_mesh(Mesh::create_ball());
-        grandchild_ball_node.set_mesh(Mesh::create_ball());
+        ball_node.set_mesh(Mesh::create_ball(0));
+        child_ball_node.set_mesh(Mesh::create_ball(1));
+        grandchild_ball_node.set_mesh(Mesh::create_ball(2));
         
         child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
