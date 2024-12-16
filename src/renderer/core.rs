@@ -61,15 +61,6 @@ impl Renderer {
         // Sort triangles
         Renderer::z_face_sort(&mut triangles, &scene.camera.get_position());
 
-        // in World coordinates
-
-        // Frustum transformation
-
-        // in NDC
-
-        // Viewport transformation
-
-        //in Screen coordinates
 
         // Render them
         self.render_triangles(&triangles, frustum_matrix, &viewport, scene);
@@ -107,23 +98,31 @@ impl Renderer {
     ) {
 
         for triangle in triangles {
+
+            // in World coordinates
+
             let mut point_0: Point3D = triangle.vertices[0].to_point();
             let mut point_1: Point3D = triangle.vertices[1].to_point();
             let mut point_2: Point3D = triangle.vertices[2].to_point();
-
+        
+            // Frustum transformation
             point_0 = frustum_matrix.mul_point(point_0);
             point_1 = frustum_matrix.mul_point(point_1);
             point_2 = frustum_matrix.mul_point(point_2);
+
+            // in NDC
 
             // perspective divide
             point_0.dehomogen();
             point_1.dehomogen();
             point_2.dehomogen();
 
+            // Viewport transformation
             point_0 = viewport_matrix.mul_point(point_0);
             point_1 = viewport_matrix.mul_point(point_1);
             point_2 = viewport_matrix.mul_point(point_2);
 
+            //in Screen coordinates
             let screen_point_0 = ScreenPoint {
                 y: point_0.y as i32,
                 x: point_0.x as i32,
