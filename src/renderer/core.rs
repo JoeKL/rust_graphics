@@ -43,28 +43,30 @@ impl Renderer {
         // Create frustum from camera matrix
         let view_frustum = Frustum::from_matrix(frustum_matrix);
 
-        let vertices: Vec<(usize, Vec<Vertex>)> = scene.transform_and_collect_vertices();
-        let mesh_refs: Vec<&Mesh> = scene.collect_mesh_refs();
-        let mut triangles: Vec<RenderTriangle> = Mesh::construct_triangles(vertices, mesh_refs);
+        let vertex_buffer: Vec<(usize, Vec<Vertex>)> = scene.transform_and_collect_vertices();
+        let mesh_ref_buffer: Vec<&Mesh> = scene.collect_mesh_refs();
+
+        //constructing triangles to cull
+        
+        let mut triangle_buffer: Vec<RenderTriangle> = Mesh::construct_triangles(vertex_buffer, mesh_ref_buffer);
 
         //frustum culling
-        triangles.retain(|t| {
-            view_frustum.triangle_in_bounds(t)
+        triangle_buffer.retain(|t| {
+            view_frustum.triangle_in_bounds_conservative(t)
         });
         
         //backface culling
-        triangles.retain(|t| {
+        triangle_buffer.retain(|t| {
             RenderTriangle::is_front_facing(t, &scene.camera.direction)
         });
                 
-
         // Sort triangles
-        Renderer::z_face_sort(&mut triangles, &scene.camera.get_position());
-
+        Renderer::z_face_sort(&mut triangle_buffer, &scene.camera.get_position());
 
         // Render them
-        self.render_triangles(&triangles, frustum_matrix, &viewport, scene);
+        self.render_triangles(&triangle_buffer, frustum_matrix, &viewport, scene);
     }
+
 
     pub fn z_face_sort(
         triangles: &mut [RenderTriangle],
