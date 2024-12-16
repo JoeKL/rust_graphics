@@ -28,7 +28,7 @@ fn main() {
     )
     .unwrap();
 
-    window.set_target_fps(60);
+    // window.set_target_fps(60);
 
     let mut input_handler = InputHandler::new();
 
