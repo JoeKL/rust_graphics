@@ -28,4 +28,21 @@ impl RenderTriangle {
     pub fn normal_to_vector(self) -> Vector3D{
         Vector3D::new(self.normal[0], self.normal[1], self.normal[2])
     }
+
+    pub fn is_front_facing(render_triangle: &RenderTriangle, camera_direction: &Vector3D) -> bool{
+        // triangle_normal · (0,0,1) = normal.z
+
+        // If normal.z > 0: cull (facing away)
+        // If normal.z < 0: keep (facing camera)
+
+        //epsilon 0.5 = 45°
+        //epsilon 0.25 = 22.5°
+
+        let epsilon = 0.1;
+
+        if render_triangle.normal_to_vector().dot(*camera_direction) - epsilon > 0.0{
+            return false
+        }
+        true
+    }
 }
