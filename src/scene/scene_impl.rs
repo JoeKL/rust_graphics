@@ -24,7 +24,7 @@ impl Scene {
 
         let mut camera: Camera = Camera::new(pos, target, up);
 
-        camera.set_position(Point3D::new(10.0, 10.0, -20.0));
+        camera.set_position(Point3D::new(0.0, 0.0, -20.0));
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
         //light sources

@@ -46,23 +46,24 @@ pub struct Point3D {
     pub x: f32,
     pub y: f32,
     pub z: f32,
-    pub w: u32,
+    pub w: f32,
 }
 
 impl Point3D {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
-        let w = 1;
+        let w = 1.0;
         Self { x, y, z, w }
     }
 
     pub fn dehomogen(&mut self) {
-        if self.z == 0.0 {
-            println!("trying to divide by zero")
+        if self.w == 0.0 {
+            println!("trying to divide by zero");
+            return;
         }
-        self.x /= -self.z;
-        self.y /= -self.z;
-        self.z = -1.0;
-        self.w = 1;
+        self.x /= self.w;
+        self.y /= self.w;
+        self.z /= self.w;
+        self.w = 1.0;
     }
 
     pub fn sub_v(&self, v: Vector3D) -> Vector3D {
