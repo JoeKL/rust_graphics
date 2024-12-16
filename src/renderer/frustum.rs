@@ -126,6 +126,21 @@ impl Frustum {
     }   
 
     pub fn triangle_in_bounds(&self, render_triangle: &RenderTriangle) -> bool{
+        let mut strike = 0;
+        for vertex in render_triangle.vertices{
+            if !(self.point_in_bounds(Point3D::new(vertex.position[0], vertex.position[1], vertex.position[2]))){
+                
+                strike += 1;
+            }
+        }
+        if strike < 3 {
+            
+            return true
+        }
+        false
+    }
+
+    pub fn triangle_in_bounds_conservative(&self, render_triangle: &RenderTriangle) -> bool{
         for vertex in render_triangle.vertices{
             if !(self.point_in_bounds(Point3D::new(vertex.position[0], vertex.position[1], vertex.position[2]))){
                 
@@ -135,6 +150,3 @@ impl Frustum {
         true
     }
 }
-
-// after that check for each point if its in the frustum by
-// somehow dot product of plane and point ??
