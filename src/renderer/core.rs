@@ -48,7 +48,6 @@ impl Renderer {
         let triangles: Vec<RenderTriangle> = Mesh::construct_triangles(vertices, mesh_refs);
 
         // Filter triangles using frustum culling before sorting
-        //somehow check if inside my frustum 
         let visible_triangles: Vec<RenderTriangle> = triangles.into_iter().filter(|t| view_frustum.triangle_in_bounds(t)).collect();
 
         //backface culling
@@ -103,18 +102,6 @@ impl Renderer {
         viewport_matrix: &Mat4x4,
         scene: &Scene,
     ) {
-        let ambient = 0.1;
-        let diffuse = 0.5;
-        let specular = 0.5;
-        let shininess = 50.0;
-
-        let material = Material::new(
-            ColorRGB::from_rgb(0, 255, 200),
-            ambient,
-            diffuse,
-            specular,
-            shininess,
-        );
 
         for triangle in triangles {
             let mut point_0: Point3D = triangle.vertices[0].to_point();
@@ -147,6 +134,8 @@ impl Renderer {
                 y: point_2.y as i32,
             };
 
+            let material: Vec<Material> = vec![Material::MATERIAL_0, Material::MATERIAL_1, Material::MATERIAL_2];
+
             self.rasterizer.draw_triangle(
                 screen_point_0,
                 screen_point_1,
@@ -154,7 +143,7 @@ impl Renderer {
                 Rasterizer::shade_triangle(
                     triangle,
                     &scene.camera.get_position(),
-                    &material,
+                    &material[triangle.material_id as usize],
                     &scene.lights,
                     &self.shader,
                 ),

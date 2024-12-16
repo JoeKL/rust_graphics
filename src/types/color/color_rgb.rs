@@ -2,10 +2,10 @@ use crate::types::math::Vector3D;
 
 #[derive(Debug, Clone, Copy)]
 pub struct ColorRGB {
-    as_u32: u32,
-    r: u8,
-    g: u8,
-    b: u8,
+    pub as_u32: u32,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }
 
 impl ColorRGB {
