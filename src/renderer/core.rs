@@ -45,17 +45,21 @@ impl Renderer {
 
         let vertices: Vec<(usize, Vec<Vertex>)> = scene.transform_and_collect_vertices();
         let mesh_refs: Vec<&Mesh> = scene.collect_mesh_refs();
-        let triangles: Vec<RenderTriangle> = Mesh::construct_triangles(vertices, mesh_refs);
+        let mut triangles: Vec<RenderTriangle> = Mesh::construct_triangles(vertices, mesh_refs);
 
-        // Filter triangles using frustum culling before sorting
-        let visible_triangles: Vec<RenderTriangle> = triangles.into_iter().filter(|t| view_frustum.triangle_in_bounds(t)).collect();
-
+        //frustum culling
+        triangles.retain(|t| {
+            view_frustum.triangle_in_bounds(t)
+        });
+        
         //backface culling
-        let backface_culled_triangles: Vec<RenderTriangle> = visible_triangles.into_iter().filter(|t| RenderTriangle::is_front_facing(t, &scene.camera.direction)).collect();
-
+        triangles.retain(|t| {
+            RenderTriangle::is_front_facing(t, &scene.camera.direction)
+        });
+                
 
         // Sort triangles
-        let sorted_triangles = Renderer::z_face_sort(backface_culled_triangles, &scene.camera.get_position());
+        Renderer::z_face_sort(&mut triangles, &scene.camera.get_position());
 
         // in World coordinates
 
@@ -68,13 +72,13 @@ impl Renderer {
         //in Screen coordinates
 
         // Render them
-        self.render_triangles(&sorted_triangles, frustum_matrix, &viewport, scene);
+        self.render_triangles(&triangles, frustum_matrix, &viewport, scene);
     }
 
     pub fn z_face_sort(
-        mut triangles: Vec<RenderTriangle>,
+        triangles: &mut [RenderTriangle],
         camera_position: &Point3D,
-    ) -> Vec<RenderTriangle> {
+    ){
         // Sort based on distance to eye
         triangles.sort_by(|a, b| {
             // Calculate centers
@@ -92,7 +96,6 @@ impl Renderer {
             // Sort furthest first
             dist_b.partial_cmp(&dist_a).unwrap()
         });
-        triangles
     }
 
     pub fn render_triangles(
