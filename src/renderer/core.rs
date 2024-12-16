@@ -49,7 +49,7 @@ impl Renderer {
 
         // Filter triangles using frustum culling before sorting
         //somehow check if inside my frustum 
-        let visible_triangles = triangles;
+        let visible_triangles: Vec<RenderTriangle> = triangles.into_iter().filter(|t| view_frustum.triangle_in_bounds(t)).collect();
 
 
         // Sort triangles
