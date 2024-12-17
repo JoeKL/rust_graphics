@@ -199,48 +199,49 @@ impl Renderer {
                 Material::MATERIAL_2,
             ];
 
-            // self.rasterizer.draw_triangle(
-            //     screen_point_0,
-            //     screen_point_1,
-            //     screen_point_2,
-            //     Rasterizer::shade_triangle(
-            //         triangle,
-            //         &scene.camera.get_position(),
-            //         &material[triangle.material_id as usize],
-            //         &scene.lights,
-            //         &self.shader,
-            //     )
-            // );
-
-            self.rasterizer.draw_gradient_triangle(
+            self.rasterizer.draw_triangle(
                 screen_point_0,
                 screen_point_1,
                 screen_point_2,
                 Rasterizer::shade_triangle(
-                    &triangle.vertices[0].to_point(),
+                    &triangle.calculate_center(),
                     &scene.camera.get_position(),
-                    &Vector3D::from_array(triangle.normal[0]),
-                    &material[triangle.material_id as usize],
-                    &scene.lights,
-                    &self.shader,
-                ),
-                Rasterizer::shade_triangle(
-                    &triangle.vertices[1].to_point(),
-                    &scene.camera.get_position(),
-                    &Vector3D::from_array(triangle.normal[1]),
-                    &material[triangle.material_id as usize],
-                    &scene.lights,
-                    &self.shader,
-                ),                
-                Rasterizer::shade_triangle(
-                    &triangle.vertices[2].to_point(),
-                    &scene.camera.get_position(),
-                    &Vector3D::from_array(triangle.normal[2]),
+                    &triangle.normal_to_face_vector(),
                     &material[triangle.material_id as usize],
                     &scene.lights,
                     &self.shader,
                 )
             );
+
+            // self.rasterizer.draw_gradient_triangle(
+            //     screen_point_0,
+            //     screen_point_1,
+            //     screen_point_2,
+            //     Rasterizer::shade_triangle(
+            //         &triangle.vertices[0].to_point(),
+            //         &scene.camera.get_position(),
+            //         &Vector3D::from_array(triangle.normal[0]),
+            //         &material[triangle.material_id as usize],
+            //         &scene.lights,
+            //         &self.shader,
+            //     ),
+            //     Rasterizer::shade_triangle(
+            //         &triangle.vertices[1].to_point(),
+            //         &scene.camera.get_position(),
+            //         &Vector3D::from_array(triangle.normal[1]),
+            //         &material[triangle.material_id as usize],
+            //         &scene.lights,
+            //         &self.shader,
+            //     ),                
+            //     Rasterizer::shade_triangle(
+            //         &triangle.vertices[2].to_point(),
+            //         &scene.camera.get_position(),
+            //         &Vector3D::from_array(triangle.normal[2]),
+            //         &material[triangle.material_id as usize],
+            //         &scene.lights,
+            //         &self.shader,
+            //     )
+            // );
         }
     }
 
