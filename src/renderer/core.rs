@@ -6,7 +6,23 @@ use crate::{
     },
 };
 
+// pub struct DrawCommand {
+//     first_vertex: usize, // where does the mesh begin in the vertex buffer
+//     vertex_count: usize, // how many vertices are in the mesh
+//     first_index: usize,  // where do the triangle_indices start in the index buffer
+//     index_count: usize,  // how many triangle_indices are there in the mesh (N triangles = N * 3 indices)
+//     material_id: usize,  // which material does the mesh have
+//     transform: Mat4x4,   // transformation of the mesh to world coordinates
+// }
+
 pub struct Renderer {
+    // vertex_buffer: Vec<Vertex>,
+    // index_buffer: Vec<u32>,
+    // draw_commands: Vec<DrawCommand>,
+    // materials: Vec<Material>,
+    // // frame_buffer: Vec<Vec<Color>>,
+    // depth_buffer: Vec<Vec<f32>>,
+
     pub rasterizer: Rasterizer,
     pub shader: FlatShader,
 }
