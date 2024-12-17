@@ -55,6 +55,10 @@ impl Point3D {
         Self { x, y, z, w }
     }
 
+    pub fn from_array(array: [f32; 3]) -> Point3D{
+        Point3D::new(array[0], array[1], array[2])
+    }
+
     pub fn dehomogen(&mut self) {
         if self.w == 0.0 {
             println!("trying to divide by zero");
