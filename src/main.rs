@@ -34,8 +34,6 @@ fn main() {
 
     let mut render_engine = Engine::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
 
-    let mut display_buffer ;
-
     let mut time_since_title_update = Instant::now();
     let mut frame_count = 0;
 
@@ -54,11 +52,9 @@ fn main() {
         }
 
         input_handler.update(&window);
-        
-        display_buffer = render_engine.run(&input_handler);
 
         window
-            .update_with_buffer(&display_buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
+            .update_with_buffer(&render_engine.run(&input_handler), WINDOW_WIDTH, WINDOW_HEIGHT)
             .unwrap();
     }
 }

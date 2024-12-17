@@ -19,18 +19,6 @@ impl Renderer {
         }
     }
 
-    pub fn get_window_width(&self) -> usize {
-        self.rasterizer.framebuffer.get_width()
-    }
-
-    pub fn get_window_height(&self) -> usize {
-        self.rasterizer.framebuffer.get_height()
-    }
-
-    pub fn get_buffer(&self) -> Vec<u32> {
-        self.rasterizer.framebuffer.get_buffer().to_vec()
-    }
-
     pub fn render_scene(&mut self, scene: &mut Scene) {
         self.rasterizer
             .framebuffer
@@ -47,7 +35,6 @@ impl Renderer {
         let mesh_ref_buffer: Vec<&Mesh> = scene.collect_mesh_refs();
 
         //constructing triangles to cull
-        
         let mut triangle_buffer: Vec<RenderTriangle> = Mesh::construct_triangles(vertex_buffer, mesh_ref_buffer);
 
         //frustum culling
