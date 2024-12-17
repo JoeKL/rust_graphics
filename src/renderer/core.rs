@@ -64,9 +64,6 @@ impl Renderer {
 
         (self.vertex_buffer, self.index_buffer, self.draw_commands) = scene.collect_geometry();
 
-        // let vertex_buffer: Vec<(usize, Vec<Vertex>)> = scene.transform_and_collect_vertices();
-        // let mesh_ref_buffer: Vec<&Mesh> = scene.collect_mesh_refs();
-
         //constructing triangles to cull
         let mut triangle_buffer: Vec<RenderTriangle> = Vec::new();
 
