@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::types::math::{Mat4x4, Point3D, Vector3D};
 use crate::types::primitives::Vertex;
 use std::sync::atomic::Ordering;
@@ -89,9 +90,9 @@ impl Mesh {
             //https://github.com/vijaiaeroastro/HalfMesh/tree/master/include ?? :(
 
             for triangle_index in vertex_entry {
-                let mut v0_idx = self.triangle_indices[triangle_index * 3] as usize;
-                let mut v1_idx = self.triangle_indices[triangle_index * 3 + 1] as usize;
-                let mut v2_idx = self.triangle_indices[triangle_index * 3 + 2] as usize;
+                let v0_idx = self.triangle_indices[triangle_index * 3] as usize;
+                let v1_idx = self.triangle_indices[triangle_index * 3 + 1] as usize;
+                let v2_idx = self.triangle_indices[triangle_index * 3 + 2] as usize;
                 
                 // Get the current vertex we're calculating normal for
                 let current_vertex = &self.vertices[vertex_index];

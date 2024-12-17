@@ -4,7 +4,7 @@ use crate::{
     types::{
         color::ColorRGB,
         display::ScreenPoint,
-        math::{Mat4x4, Point3D, Vector3D},
+        math::{Mat4x4, Point3D},
         primitives::Vertex,
         shader::{FlatShader, Material},
     },
