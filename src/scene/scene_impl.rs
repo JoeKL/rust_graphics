@@ -120,6 +120,7 @@ impl Scene {
             if let Some(mesh) = &mut node.mesh {        
 
                 mesh.calculate_vertex_normals();    
+                
 
                 // Create draw command
                 draw_command_buffer.push(DrawCommand {
@@ -127,7 +128,7 @@ impl Scene {
                     vertex_count: mesh.vertices.len(),
                     first_triangle_index: triangle_index_buffer.len(),
                     triangle_index_count: mesh.triangle_indices.len(),
-                    material_id: 0,
+                    material_id: mesh.material_indices[0] as usize, // for now just use the material of the first triangle found in mesh. 
                     transform: world_transform,  // Store transform for later use
                 });
                 
