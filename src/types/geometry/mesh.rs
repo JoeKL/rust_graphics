@@ -157,60 +157,6 @@ impl Mesh {
         }
     }
 
-    pub fn construct_triangles(
-        vertices: Vec<(usize, Vec<Vertex>)>,
-        mesh_refs: Vec<&Mesh>,
-    ) -> Vec<RenderTriangle> {
-        let mut triangles = Vec::new();
-
-        for (mesh_id, mesh_ref) in mesh_refs.iter().enumerate() {
-            if let Some(mesh_vertices) = vertices.iter().find(|(id, _)| *id == mesh_id) {
-                // Now we have the correct vertices for this mesh
-                let transformed_vertices = &mesh_vertices.1;
-                // Process indices in groups of 3
-                for triangle_idx in 0..(mesh_ref.triangle_indices.len() / 3) {
-                    let i0 = mesh_ref.triangle_indices[triangle_idx * 3] as usize;
-                    let i1 = mesh_ref.triangle_indices[triangle_idx * 3 + 1] as usize;
-                    let i2 = mesh_ref.triangle_indices[triangle_idx * 3 + 2] as usize;
-
-                    // Get the transformed vertices using our indices
-                    let v0 = &transformed_vertices[i0];
-                    let v1 = &transformed_vertices[i1];
-                    let v2 = &transformed_vertices[i2];
-
-                    // Calculate triangle normal using cross product of two edges
-                    let edge1 = Vector3D::new(
-                        v1.position[0] - v0.position[0],
-                        v1.position[1] - v0.position[1],
-                        v1.position[2] - v0.position[2],
-                    );
-
-                    let edge2 = Vector3D::new(
-                        v2.position[0] - v0.position[0],
-                        v2.position[1] - v0.position[1],
-                        v2.position[2] - v0.position[2],
-                    );
-
-                    // Calculate triangle normal using cross product
-                    let triangle_normal = edge1.cross(edge2).normalize();
-
-                    // Create triangle with copied vertex data
-                    let triangle = RenderTriangle {
-                        vertices: [
-                            vertices[mesh_id].1[i0],
-                            vertices[mesh_id].1[i1],
-                            vertices[mesh_id].1[i2],
-                        ],
-                        normal: [triangle_normal.x, triangle_normal.y, triangle_normal.z],
-                        material_id: mesh_ref.material_indices[triangle_idx],
-                    };
-                    triangles.push(triangle);
-                }
-            }
-        }
-        triangles
-    }
-
     pub fn create_ball(material_id: u32) -> Self {
         let mut mesh = Mesh::new();
 
