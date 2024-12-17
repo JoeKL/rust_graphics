@@ -54,7 +54,7 @@ fn main() {
         input_handler.update(&window);
 
         window
-            .update_with_buffer(&render_engine.run(&input_handler), WINDOW_WIDTH, WINDOW_HEIGHT)
+            .update_with_buffer(render_engine.run(&input_handler), WINDOW_WIDTH, WINDOW_HEIGHT)
             .unwrap();
     }
 }

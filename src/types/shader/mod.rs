@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 mod material;
 mod model;
 use std::sync::atomic::AtomicUsize;

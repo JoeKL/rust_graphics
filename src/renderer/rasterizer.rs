@@ -371,7 +371,7 @@ impl Rasterizer {
         shader: &impl ShadingModel,
     ) -> ColorRGB {
         let view_vector = camera_position.sub_p(*vertex).normalize();
-        shader.calc_color(&vertex, normal, &view_vector, material, lights)
+        shader.calc_color(vertex, normal, &view_vector, material, lights)
     }
 
 }
