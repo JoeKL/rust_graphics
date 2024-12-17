@@ -1,6 +1,6 @@
 use crate::types::math::Point3D;
 
-
+#[repr(C)]  // Important: ensures consistent memory layout
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
     pub position: [f32; 3],  
