@@ -1,3 +1,4 @@
+use crate::renderer::DrawCommand;
 use crate::types::camera::Camera;
 use crate::types::color::ColorRGB;
 use crate::types::light::PointLight;
@@ -40,6 +41,7 @@ impl Scene {
         child_ball_node.set_mesh(Mesh::create_ball(1));
         grandchild_ball_node.set_mesh(Mesh::create_ball(2));
         
+        // ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         
@@ -101,5 +103,43 @@ impl Scene {
         }
         
         mesh_refs
+    }
+    
+    pub fn collect_geometry(&mut self) -> (Vec<Vertex>, Vec<u32>, Vec<DrawCommand>) {
+        let mut vertex_buffer: Vec<Vertex> = Vec::new();
+        let mut triangle_index_buffer: Vec<u32> = Vec::new();
+        let mut draw_command_buffer: Vec<DrawCommand> = Vec::new();
+
+        let mut node_queue: Vec<&mut SceneNode> = vec![&mut self.root_node];
+
+        // Keep processing until queue is empty
+        while let Some(node) = node_queue.pop() {
+            let world_transform = node.get_world_transform();
+
+            // If this node has a mesh, add a reference to collection
+            if let Some(mesh) = &mut node.mesh {        
+
+                mesh.calculate_vertex_normals();    
+
+                // Create draw command
+                draw_command_buffer.push(DrawCommand {
+                    first_vertex: vertex_buffer.len(), // first element will be inserted at current length +1
+                    vertex_count: mesh.vertices.len(),
+                    first_triangle_index: triangle_index_buffer.len(),
+                    triangle_index_count: mesh.triangle_indices.len(),
+                    material_id: 0,
+                    transform: world_transform,  // Store transform for later use
+                });
+                
+                vertex_buffer.extend(&mesh.vertices);
+                triangle_index_buffer.extend(&mesh.triangle_indices);
+            }
+            
+            // Add references to all children to queue
+            for child in &mut node.children {
+                node_queue.push(child);
+            }
+        }
+        (vertex_buffer, triangle_index_buffer, draw_command_buffer)
     }
 }

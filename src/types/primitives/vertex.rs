@@ -1,4 +1,4 @@
-use crate::types::math::Point3D;
+use crate::types::math::{Mat4x4, Point3D, Vector3D};
 
 #[repr(C)]  // Important: ensures consistent memory layout
 #[derive(Debug, Clone, Copy)]
@@ -16,5 +16,13 @@ impl Vertex{
 
     pub fn to_point(self) -> Point3D {
         Point3D::new(self.position[0], self.position[1], self.position[2])
+    }
+
+    pub fn transform(& mut self, transform_mat: Mat4x4){
+        let transformed_position = transform_mat.mul_point(Point3D::new(self.position[0], self.position[1], self.position[2]));
+        let transformed_normal = transform_mat.mul_vec(Vector3D::new(self.normal[0], self.normal[1], self.normal[2]).normalize());
+
+        self.position = [transformed_position.x, transformed_position.y, transformed_position.z];
+        self.normal = [transformed_normal.x, transformed_normal.y, transformed_normal.z];
     }
 }
