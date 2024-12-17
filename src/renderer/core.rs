@@ -66,7 +66,6 @@ impl Renderer {
 
         //constructing triangles to cull
         let mut triangle_buffer: Vec<RenderTriangle> = Vec::new();
-
         for draw_command in &self.draw_commands {
             triangle_buffer.extend(Self::construct_triangles(
                 &mut self.vertex_buffer,
@@ -87,12 +86,13 @@ impl Renderer {
         // Render them
         self.render_triangles(&triangle_buffer, frustum_matrix, &viewport, scene);
     }
+
+
     pub fn construct_triangles(
         vertices: &mut [Vertex],
         indices: &[u32],
         draw_command: &DrawCommand,
     ) -> Vec<RenderTriangle> {
-
         for vertex_idx in 0..draw_command.vertex_count {
             vertices[draw_command.first_vertex + vertex_idx].transform(draw_command.transform);
         }
@@ -110,23 +110,16 @@ impl Renderer {
             let v0_idx = draw_command.first_vertex + i0;
             let v1_idx = draw_command.first_vertex + i1;
             let v2_idx = draw_command.first_vertex + i2;
-            
+
             // Get references to transformed vertices
             let v0 = &vertices[v0_idx];
             let v1 = &vertices[v1_idx];
             let v2 = &vertices[v2_idx];
 
-            let normal_x = (v0.normal[0] + v1.normal[0] + v2.normal[0]) / 3.0;
-            let normal_y = (v0.normal[1] + v1.normal[1] + v2.normal[1]) / 3.0;
-            let normal_z = (v0.normal[2] + v1.normal[2] + v2.normal[2]) / 3.0;
-
-            // // Calculate normal
-            let triangle_normal = Vector3D::new(normal_x, normal_y, normal_z);
-
             // Create triangle
             let triangle = RenderTriangle {
                 vertices: [*v0, *v1, *v2], // or clone() if needed
-                normal: [triangle_normal.x, triangle_normal.y, triangle_normal.z],
+                normal: [v0.normal, v1.normal, v2.normal],
                 material_id: draw_command.material_id as u32,
             };
 
@@ -206,17 +199,47 @@ impl Renderer {
                 Material::MATERIAL_2,
             ];
 
-            self.rasterizer.draw_triangle(
+            // self.rasterizer.draw_triangle(
+            //     screen_point_0,
+            //     screen_point_1,
+            //     screen_point_2,
+            //     Rasterizer::shade_triangle(
+            //         triangle,
+            //         &scene.camera.get_position(),
+            //         &material[triangle.material_id as usize],
+            //         &scene.lights,
+            //         &self.shader,
+            //     )
+            // );
+
+            self.rasterizer.draw_gradient_triangle(
                 screen_point_0,
                 screen_point_1,
                 screen_point_2,
                 Rasterizer::shade_triangle(
-                    triangle,
+                    &triangle.vertices[0].to_point(),
                     &scene.camera.get_position(),
+                    &Vector3D::from_array(triangle.normal[0]),
                     &material[triangle.material_id as usize],
                     &scene.lights,
                     &self.shader,
                 ),
+                Rasterizer::shade_triangle(
+                    &triangle.vertices[1].to_point(),
+                    &scene.camera.get_position(),
+                    &Vector3D::from_array(triangle.normal[1]),
+                    &material[triangle.material_id as usize],
+                    &scene.lights,
+                    &self.shader,
+                ),                
+                Rasterizer::shade_triangle(
+                    &triangle.vertices[2].to_point(),
+                    &scene.camera.get_position(),
+                    &Vector3D::from_array(triangle.normal[2]),
+                    &material[triangle.material_id as usize],
+                    &scene.lights,
+                    &self.shader,
+                )
             );
         }
     }

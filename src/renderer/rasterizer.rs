@@ -4,9 +4,8 @@ use crate::renderer::{FrameBuffer, Viewport};
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
 use crate::types::light::PointLight;
-use crate::types::math::Point3D;
+use crate::types::math::{Point3D, Vector3D};
 use crate::types::shader::{Material, ShadingModel};
-use super::RenderTriangle;
 
 pub struct Rasterizer {
     pub framebuffer: FrameBuffer,
@@ -256,19 +255,23 @@ impl Rasterizer {
         mut p0: ScreenPoint,
         mut p1: ScreenPoint,
         mut p2: ScreenPoint,
-        c0: ColorRGB,
-        c1: ColorRGB,
-        c2: ColorRGB,
+        mut c0: ColorRGB,
+        mut c1: ColorRGB,
+        mut c2: ColorRGB,
     ) {
         // sort the y points such that y0 < y1 < y2
         if p1.y < p0.y {
             std::mem::swap(&mut p0, &mut p1);
+            std::mem::swap(&mut c0, &mut c1);
+
         }
         if p2.y < p0.y {
             std::mem::swap(&mut p0, &mut p2);
+            std::mem::swap(&mut c0, &mut c2);
         }
         if p2.y < p1.y {
             std::mem::swap(&mut p2, &mut p1);
+            std::mem::swap(&mut c2, &mut c1);
         }
 
         // calculate boundaries of the triangle given by p0,p1,p2
@@ -321,13 +324,13 @@ impl Rasterizer {
         let denom: f32 = 1.0 / (v0x * v1y - v1x * v0y);
 
         // for every row from the left wall+1 to the right wall -1 set pixel to color
-        for y in (p0.y)..(p2.y) {
+        for y in (p0.y)..=(p2.y) {
             let current_row = (y - p0.y) as usize;
             let x_start = x_left[current_row] as i32;
             let x_end = x_right[current_row] as i32;
 
             // Fill pixels for current scanline (excluding edges)
-            for x in (x_start + 1)..x_end {
+            for x in (x_start + 1)..=x_end {
                 // Calculate barycentric coordinates more efficiently
                 let px: f32 = x as f32 - x0 as f32; // x distance from vertex 0 to current pixel
                 let py: f32 = y as f32 - y0 as f32; // y distance from vertex 0 to current pixel
@@ -360,17 +363,15 @@ impl Rasterizer {
     }
 
     pub fn shade_triangle(
-        triangle: &RenderTriangle,
+        vertex: &Point3D,
         camera_position: &Point3D,
+        normal: &Vector3D,
         material: &Material,
         lights: &[PointLight],
         shader: &impl ShadingModel,
     ) -> ColorRGB {
-        // Calculate triangle center and normal
-        let center = triangle.calculate_center();
-        let normal = triangle.normal_to_vector();
-        let view_vector = camera_position.sub_p(center).normalize();
-        shader.calc_color(&center, &normal, &view_vector, material, lights)
+        let view_vector = camera_position.sub_p(*vertex).normalize();
+        shader.calc_color(&vertex, normal, &view_vector, material, lights)
     }
 
 }

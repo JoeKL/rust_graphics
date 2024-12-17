@@ -92,40 +92,38 @@ impl Mesh {
                 let mut v0_idx = self.triangle_indices[triangle_index * 3] as usize;
                 let mut v1_idx = self.triangle_indices[triangle_index * 3 + 1] as usize;
                 let mut v2_idx = self.triangle_indices[triangle_index * 3 + 2] as usize;
+                
+                // Get the current vertex we're calculating normal for
+                let current_vertex = &self.vertices[vertex_index];
 
-                //check which one is the one were focusing on vertex_index == v0 || v1 || v2
-                if vertex_index == v1_idx {
-                    // rotate to make v1 become v0
-                    // rotate once left [v1, v2, v0]
+                // Get the other two vertices (order doesn't matter as long as we're consistent)
+                let other_vertex1 = &self.vertices[if vertex_index == v0_idx {
+                    v1_idx
+                } else if vertex_index == v1_idx {
+                    v2_idx
+                } else {
+                    v0_idx
+                }];
 
-                    let temp = v1_idx; // Save v1 (your focus vertex)
-                    v1_idx = v2_idx; // Move v2 to middle position
-                    v2_idx = v0_idx; // Move v0 to last position
-                    v0_idx = temp; // Put your focus vertex (original v1) in first position
-                } else if vertex_index == v2_idx {
-                    // rotate to make v2 become v0
-                    let temp = v2_idx; // Save v2 (your focus vertex)
-                    v2_idx = v1_idx; // Move v1 to last position
-                    v1_idx = v0_idx; // Move v0 to middle position
-                    v0_idx = temp; // Put your focus vertex (original v2) in first position
-                }
+                let other_vertex2 = &self.vertices[if vertex_index == v0_idx {
+                    v2_idx
+                } else if vertex_index == v1_idx {
+                    v0_idx
+                } else {
+                    v1_idx
+                }];
 
-                // triangle is made of these vertecies:
-                let v0 = &self.vertices[v0_idx];
-                let v1 = &self.vertices[v1_idx];
-                let v2 = &self.vertices[v2_idx];
-
-                // Calculate triangle normal using cross product of two edges
+                // Calculate edges from current vertex
                 let edge1 = Vector3D::new(
-                    v1.position[0] - v0.position[0],
-                    v1.position[1] - v0.position[1],
-                    v1.position[2] - v0.position[2],
+                    other_vertex1.position[0] - current_vertex.position[0],
+                    other_vertex1.position[1] - current_vertex.position[1],
+                    other_vertex1.position[2] - current_vertex.position[2],
                 );
 
                 let edge2 = Vector3D::new(
-                    v2.position[0] - v0.position[0],
-                    v2.position[1] - v0.position[1],
-                    v2.position[2] - v0.position[2],
+                    other_vertex2.position[0] - current_vertex.position[0],
+                    other_vertex2.position[1] - current_vertex.position[1],
+                    other_vertex2.position[2] - current_vertex.position[2],
                 );
 
                 // Calculate triangle normal using cross product

@@ -9,7 +9,7 @@ pub trait ShadingModel {
     fn calc_color(
         &self,
         surface_point: &Point3D,
-        normal: &Vector3D,
+        surface_normal: &Vector3D,
         view_vector: &Vector3D,
         material: &Material,
         lights: &[PointLight],
@@ -23,7 +23,7 @@ impl ShadingModel for FlatShader {
     fn calc_color(
         &self,
         surface_point: &Point3D,
-        normal: &Vector3D,
+        surface_normal: &Vector3D,
         view_vector: &Vector3D,
         material: &Material,
         lights: &[PointLight],
@@ -45,12 +45,12 @@ impl ShadingModel for FlatShader {
             // Diffuse component
             let cd_diffuse = material_color
                 .mul(material.diffuse)
-                .mul(f32::max(light_dir.dot(*normal), 0.0));
+                .mul(f32::max(light_dir.dot(*surface_normal), 0.0));
 
                 // Specular component
                 let cs_specular = Vector3D::new(1.0, 1.0, 1.0)
                     .mul(material.specular)
-                    .mul(f32::max(halfway.dot(*normal), 0.0).powf(material.shininess));
+                    .mul(f32::max(halfway.dot(*surface_normal), 0.0).powf(material.shininess));
         
                     let light_color = light.get_color().to_vector();
                     let light_contribution = cd_diffuse
