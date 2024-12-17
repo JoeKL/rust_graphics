@@ -117,10 +117,7 @@ impl Scene {
             let world_transform = node.get_world_transform();
 
             // If this node has a mesh, add a reference to collection
-            if let Some(mesh) = &mut node.mesh {        
-
-                mesh.calculate_vertex_normals();    
-                
+            if let Some(mesh) = &mut node.mesh {                    
 
                 // Create draw command
                 draw_command_buffer.push(DrawCommand {
