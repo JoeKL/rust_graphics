@@ -8,7 +8,6 @@ use crate::types::primitives::Vertex;
 use super::SceneNode;
 
 pub struct Scene {
-    #[allow(dead_code)]
     pub root_node: SceneNode,
     pub camera: Camera,
     pub lights: Vec<PointLight>,
@@ -56,54 +55,6 @@ impl Scene {
         }
     }
 
-    pub fn transform_and_collect_vertices(&self) -> Vec<(usize, Vec<Vertex>)> {
-        let mut vertex_tupels: Vec<(usize, Vec<Vertex>)> = Vec::new();
-        let mut node_queue = vec![&self.root_node];
-
-        
-        // Keep processing until queue is empty
-        while let Some(node) = node_queue.pop() {
-
-            // If this node has a mesh, add a reference to collection
-            if let Some(mesh) = &node.mesh {            
-                let mut mesh_snapshot = mesh.clone();           // clone since we dont want to override the meshes. we just want a snapshot of them
-                mesh_snapshot.transform(node.get_world_transform()); // translate snapshot into world coordinates 
-                let mesh_id = mesh_snapshot.id;
-
-                vertex_tupels.push((mesh_id, mesh_snapshot.vertices)); // push into buffer
-            }
-            
-            // Add references to all children to queue
-            for child in &node.children {
-                node_queue.push(child);
-            }
-        }
-        
-        vertex_tupels
-    }
-
-
-    pub fn collect_mesh_refs(&self) -> Vec<&Mesh> {
-        let mut mesh_refs: Vec<&Mesh> = Vec::new();
-        let mut node_queue = vec![&self.root_node];
-
-        // Keep processing until queue is empty
-        while let Some(node) = node_queue.pop() {
-
-            // If this node has a mesh, add a reference to collection
-            if let Some(mesh) = &node.mesh {            
-                
-                mesh_refs.push(mesh); // push into buffer
-            }
-            
-            // Add references to all children to queue
-            for child in &node.children {
-                node_queue.push(child);
-            }
-        }
-        
-        mesh_refs
-    }
     
     pub fn collect_geometry(&mut self) -> (Vec<Vertex>, Vec<u32>, Vec<DrawCommand>) {
         let mut vertex_buffer: Vec<Vertex> = Vec::new();
