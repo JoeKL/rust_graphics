@@ -1,4 +1,3 @@
-use crate::renderer::RenderTriangle;
 use crate::types::math::{Mat4x4, Point3D, Vector3D};
 use crate::types::primitives::Vertex;
 use std::sync::atomic::Ordering;
@@ -133,19 +132,16 @@ impl Mesh {
                 let triangle_normal = edge1.cross(edge2).normalize();
 
                 // Calculate signed area for weighting
-                let signed_area = ((v1.position[0] - v0.position[0])
-                    * (v2.position[1] - v0.position[1])
-                    - (v1.position[1] - v0.position[1]) * (v2.position[0] - v0.position[0]))
-                    / 2.0;
+                let triangle_area = triangle_normal.length() / 2.0;
 
                 // Calculate angle at vertex for weighting
                 //theta = get angle between the two edges in the triangle it is part of
                 let cos_theta = edge1.normalize().dot(edge2.normalize());
                 let theta = cos_theta.acos();
 
-                weighted_normal[0] += triangle_normal.x * signed_area * theta;
-                weighted_normal[1] += triangle_normal.y * signed_area * theta;
-                weighted_normal[2] += triangle_normal.z * signed_area * theta;
+                weighted_normal[0] += triangle_normal.x * triangle_area * theta;
+                weighted_normal[1] += triangle_normal.y * triangle_area * theta;
+                weighted_normal[2] += triangle_normal.z * triangle_area * theta;
             }
 
             let v_normal_vec =
@@ -182,6 +178,7 @@ impl Mesh {
             mesh.add_triangle(indices, material_id);
         }
         mesh.build_adj_list();
+        mesh.calculate_vertex_normals();
         mesh
     }
 

@@ -122,4 +122,8 @@ impl Vector3D {
             w: self.w
         }
     }
+    
+    pub fn length(&self) -> f32 {
+        (self.x.powf(2.0) + self.y.powf(2.0) + self.z.powf(2.0)).sqrt()
+    }
 }

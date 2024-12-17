@@ -114,7 +114,7 @@ impl SceneNode {
         // Apply scale and rotation
         let transform = Mat4x4::from_scale(self.scale).mul_mat(self.rotation);
         // Translate back
-        let from_origin = Mat4x4::from_translation(self.position); // the problem is here. since the position of child 3 is locally 0,0,2.5 but its world coordiante is 0,0,5.0 its reset to the former one thats the jumping on scale
+        let from_origin = Mat4x4::from_translation(self.position); 
 
         // Order: translate back * (scale * rotate) * translate to origin
         from_origin.mul_mat(transform).mul_mat(to_origin)

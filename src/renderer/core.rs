@@ -119,25 +119,12 @@ impl Renderer {
             let v1 = &vertices[v1_idx];
             let v2 = &vertices[v2_idx];
 
-            // let normal_x = v0.normal[0] + v1.normal[0] + v2.normal[0];
-            // let normal_y = v0.normal[1] + v1.normal[1] + v2.normal[1];
-            // let normal_z = v0.normal[2] + v1.normal[2] + v2.normal[2];
-            
-            // Calculate edges for normal
-            let edge1 = Vector3D::new(
-                v1.position[0] - v0.position[0],
-                v1.position[1] - v0.position[1],
-                v1.position[2] - v0.position[2],
-            );
-            let edge2 = Vector3D::new(
-                v2.position[0] - v0.position[0],
-                v2.position[1] - v0.position[1],
-                v2.position[2] - v0.position[2],
-            );
+            let normal_x = (v0.normal[0] + v1.normal[0] + v2.normal[0]) / 3.0;
+            let normal_y = (v0.normal[1] + v1.normal[1] + v2.normal[1]) / 3.0;
+            let normal_z = (v0.normal[2] + v1.normal[2] + v2.normal[2]) / 3.0;
 
             // // Calculate normal
-            let triangle_normal = edge1.cross(edge2).normalize();
-            // let triangle_normal = Vector3D::new(normal_x, normal_y, normal_z).normalize();
+            let triangle_normal = Vector3D::new(normal_x, normal_y, normal_z);
 
             // Create triangle
             let triangle = RenderTriangle {
