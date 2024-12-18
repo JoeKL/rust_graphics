@@ -36,17 +36,17 @@ impl Scene {
         let mut child_ball_node = SceneNode::new();
         let mut grandchild_ball_node = SceneNode::new();
         
-        ball_node.set_mesh(Mesh::create_cube(0, [0.0, 1.0, 0.8]));
+        ball_node.set_mesh(Mesh::create_plane(0, [0.0, 1.0, 0.8]));
 
-        // ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
+        //  ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
         child_ball_node.set_mesh(Mesh::create_cube(1, [0.78, 0.42, 0.0]));
         grandchild_ball_node.set_mesh(Mesh::create_cube(2, [0.78, 0.0, 0.6]));
         
-        // ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
+        //  ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         
-        child_ball_node.add_child(grandchild_ball_node);
+        // child_ball_node.add_child(grandchild_ball_node);
         ball_node.add_child(child_ball_node);
         root_node.add_child(ball_node);
 
@@ -71,7 +71,7 @@ impl Scene {
             parent_transform: Mat4x4,
         ) {
             let world_transform = parent_transform.mul_mat(node.get_world_transform());  // Or however you combine transforms
-    
+
             if let Some(mesh) = &mut node.mesh {
                 draw_command_buffer.push(DrawCommand {
                     first_vertex: vertex_buffer.len(),          // Start index in vertex buffer (current length before adding new vertices)
