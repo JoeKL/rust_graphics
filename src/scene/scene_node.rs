@@ -21,7 +21,7 @@ impl SceneNode {
     //create a new Node with no rotation, no scaling, at origin, without mesh, and no transformation stack
     pub fn new() -> Self {
         let position = Vector3D::new(0.0, 0.0, 0.0);
-        let rotation = Mat4x4::new_identity();
+        let rotation = Mat4x4::identity();
         let scale = Vector3D::new(1.0, 1.0, 1.0);
 
         let has_dirty_locals = false;
@@ -114,7 +114,7 @@ impl SceneNode {
         // Apply scale and rotation
         let transform = Mat4x4::from_scale(self.scale).mul_mat(self.rotation);
         // Translate back
-        let from_origin = Mat4x4::from_translation(self.position); // the problem is here. since the position of child 3 is locally 0,0,2.5 but its world coordiante is 0,0,5.0 its reset to the former one thats the jumping on scale
+        let from_origin = Mat4x4::from_translation(self.position); 
 
         // Order: translate back * (scale * rotate) * translate to origin
         from_origin.mul_mat(transform).mul_mat(to_origin)
@@ -174,7 +174,7 @@ impl SceneNode {
         // Multiply entire stack
         self.transform_stack
             .iter()
-            .fold(Mat4x4::new_identity(), |acc, transform| {
+            .fold(Mat4x4::identity(), |acc, transform| {
                 acc.mul_mat(*transform)
             })
     }

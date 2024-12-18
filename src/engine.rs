@@ -139,8 +139,8 @@ impl Engine {
             let dist_center_threshhold = 50.0;
 
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
-            mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
+            mouse_pos_relative_center.x -= (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+            mouse_pos_relative_center.y -= (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
 
             let rotation_factor = 25000.0;
 
@@ -248,7 +248,7 @@ impl Engine {
         }
     }
 
-    pub fn run(&mut self, input_handler: &InputHandler) -> Vec<u32> {
+    pub fn run(&mut self, input_handler: &InputHandler) -> &[u32] {
         self.frame += 1;
 
         // Handle input
@@ -266,12 +266,12 @@ impl Engine {
         }
         if self.draw_ball_line {
             let screen_center = Point2D::new(
-                (self.renderer.get_window_width() / 2) as f32,
-                (self.renderer.get_window_height() / 2) as f32,
+                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32,
+                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32,
             );
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -= (self.renderer.get_window_width() / 2) as f32;
-            mouse_pos_relative_center.y -= (self.renderer.get_window_height() / 2) as f32;
+            mouse_pos_relative_center.x -= (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+            mouse_pos_relative_center.y -= (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
             let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
 
             let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
@@ -285,6 +285,6 @@ impl Engine {
                 .draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
         }
 
-        self.renderer.get_buffer()
+        self.renderer.rasterizer.framebuffer.get_buffer()
     }
 }

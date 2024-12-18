@@ -1,7 +1,5 @@
 use crate::types::math::{Point3D, Vector3D};
 
-use super::vertex::Vertex;
-
 #[derive(Debug, Clone, Copy)]
 pub struct Triangle {
     pub a: Point3D,

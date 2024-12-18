@@ -1,14 +1,14 @@
 // 8 vertices * 3 coordinates = 24 floats
 pub const CUBE_V: [f32; 24] = [
     // Each line is one vertex: x, y, z
-    -0.5, -0.5,  0.5,    // vertex 0
-     0.5, -0.5,  0.5,    // vertex 1
-     0.5,  0.5,  0.5,    // vertex 2
-    -0.5,  0.5,  0.5,    // vertex 3
-    -0.5, -0.5, -0.5,    // vertex 4
-     0.5, -0.5, -0.5,    // vertex 5
-     0.5,  0.5, -0.5,    // vertex 6
-    -0.5,  0.5, -0.5     // vertex 7
+    -1.0, -1.0,  1.0,    // vertex 0
+     1.0, -1.0,  1.0,    // vertex 1
+     1.0,  1.0,  1.0,    // vertex 2
+    -1.0,  1.0,  1.0,    // vertex 3
+    -1.0, -1.0, -1.0,    // vertex 4
+     1.0, -1.0, -1.0,    // vertex 5
+     1.0,  1.0, -1.0,    // vertex 6
+    -1.0,  1.0, -1.0     // vertex 7
 ];
 
 // 12 triangles * 3 indices each = 36 indices

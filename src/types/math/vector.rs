@@ -1,5 +1,5 @@
 
-use crate::types::math::{Point2D, Point3D};
+use crate::types::math::{Point2D,Point3D};
 
 
 #[derive(Debug, Clone, Copy)]
@@ -65,6 +65,10 @@ impl Vector3D {
         Self { x, y, z, w }
     }
 
+    pub fn from_array(array: [f32; 3]) -> Vector3D{
+        Vector3D::new(array[0], array[1], array[2])
+    }
+
     pub fn dot(&self, v: Vector3D) -> f32 {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
@@ -121,5 +125,9 @@ impl Vector3D {
             z: self.z * -1.0,
             w: self.w
         }
+    }
+    
+    pub fn length(&self) -> f32 {
+        (self.x.powf(2.0) + self.y.powf(2.0) + self.z.powf(2.0)).sqrt()
     }
 }

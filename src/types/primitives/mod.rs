@@ -1,8 +1,6 @@
-mod line;
+#![allow(dead_code)]
 mod triangle;
 mod vertex;
 
-pub use line::Line3D;
 
-pub use triangle::Triangle;
 pub use vertex::Vertex;
