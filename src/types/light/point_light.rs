@@ -1,4 +1,4 @@
-use crate::types::math::{Point3D, Vector3D};
+use crate::types::math::{Mat4x4, Point3D, Vector3D};
 use crate::types::color::ColorRGB;
 
 #[derive(Debug, Clone, Copy)]
@@ -48,4 +48,13 @@ impl PointLight {
             self.get_color().get_b() as f32 / 255.0,
         )
     }
+
+    pub fn transform_light(&mut self, projection_mat: Mat4x4){
+        self.set_position(projection_mat.mul_point(self.get_position()))
+    }   
+
+    pub fn new_transformed_light(light: &PointLight, loot_at_mat: Mat4x4) -> PointLight{
+        let new_light_pos = loot_at_mat.mul_point(light.get_position());
+        PointLight::new(new_light_pos, light.get_color(), light.get_intensity())
+    }   
 }
