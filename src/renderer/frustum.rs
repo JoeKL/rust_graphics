@@ -1,6 +1,7 @@
-use crate::types::math::{Mat4x4, Point3D, Vector3D};
-
-use super::RenderTriangle;
+use crate::types::{
+    math::{Mat4x4, Point3D, Vector3D},
+    primitives::Vertex,
+};
 
 pub struct Plane {
     point: Point3D,
@@ -124,9 +125,9 @@ impl Frustum {
         true
     }
 
-    pub fn triangle_in_bounds(&self, render_triangle: &RenderTriangle) -> bool {
+    pub fn triangle_in_bounds(&self, triangle_vertices: [&Vertex; 3]) -> bool {
         let mut strike = 0;
-        for vertex in render_triangle.vertices {
+        for vertex in triangle_vertices {
             if !(self.point_in_bounds(Point3D::new(
                 vertex.position[0],
                 vertex.position[1],
@@ -141,8 +142,8 @@ impl Frustum {
         false
     }
 
-    pub fn triangle_in_bounds_conservative(&self, render_triangle: &RenderTriangle) -> bool {
-        for vertex in render_triangle.vertices {
+    pub fn triangle_in_bounds_conservative(&self, triangle_vertices: [&Vertex; 3]) -> bool {
+        for vertex in triangle_vertices {
             if !(self.point_in_bounds(Point3D::new(
                 vertex.position[0],
                 vertex.position[1],

@@ -32,7 +32,7 @@ impl Material {
             id: 0,
             ambient: 0.1,
             diffuse: 0.5,
-            specular: 0.5,
+            specular: 1.0,
             shininess: 50.0,
         },
         Material {
@@ -45,7 +45,7 @@ impl Material {
         Material {
             id: 2,
             ambient: 0.15,
-            diffuse: 0.6,
+            diffuse: 0.7,
             specular: 0.1,
             shininess: 5.0,
         },

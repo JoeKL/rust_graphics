@@ -1,4 +1,4 @@
-use super::{DrawCommand, Fragment, Frustum, Rasterizer, RenderTriangle};
+use super::{DrawCommand, Fragment, Frustum, Rasterizer};
 use crate::{
     scene::Scene,
     types::{
@@ -13,7 +13,7 @@ use crate::{
 pub struct Renderer {
     // Input buffers
     vertex_buffer: Vec<Vertex>,
-    index_buffer: Vec<u32>,
+    triangle_index_buffer: Vec<u32>,
     draw_commands: Vec<DrawCommand>,
 
     // Transformed data
@@ -44,10 +44,11 @@ pub struct Renderer {
 impl Renderer {
     pub fn new(window_width: usize, window_height: usize) -> Self {
         let vertex_buffer: Vec<Vertex> = Vec::new();
-        let index_buffer: Vec<u32> = Vec::new();
+        let triangle_index_buffer: Vec<u32> = Vec::new();
         let draw_commands: Vec<DrawCommand> = Vec::new();
 
-        let transformed_vertices: Vec<Vertex> = Vec::new();
+        let transformed_vertices: Vec<Vertex> = Vec::new();       
+
 
         let fragment_buffer: Vec<Fragment> = Vec::new();
         let z_buffer: Vec<f32> = Vec::new();
@@ -63,7 +64,7 @@ impl Renderer {
         // let frame_buffer: Vec<Vec<Color>>= Vec::new();
         Self {
             vertex_buffer,
-            index_buffer,
+            triangle_index_buffer,
             draw_commands,
 
             transformed_vertices,
@@ -122,7 +123,7 @@ impl Renderer {
         // at some point materials from the resource manager
         // build the depth buffer (this could also be done earlier)
 
-        (self.vertex_buffer, self.index_buffer, self.draw_commands) = scene.collect();
+        (self.vertex_buffer, self.triangle_index_buffer, self.draw_commands) = scene.collect();
         self.transformed_vertices = self.vertex_buffer.clone();
     }
 
@@ -137,32 +138,39 @@ impl Renderer {
             for vertex_idx in 0..draw_command.vertex_count {
                 // 1. Local to World transform
                 self.transformed_vertices[draw_command.first_vertex + vertex_idx]
-                    .transform(draw_command.transform);
+                    .transform(draw_command.transform);              
+            }
+        }
+
+        for draw_command in &self.draw_commands {
+            for vertex_idx in 0..draw_command.vertex_count {       
                 // 2. World to look_at transform (camera space)
                 self.transformed_vertices[draw_command.first_vertex + vertex_idx]
                     .transform(self.look_at_matrix);
             }
         }
 
-        // 3. Lighting calculations (in view space)
-        for vertex in &mut self.transformed_vertices {
-            vertex.color = self.shader.calc_color(
-                &vertex.position_to_point(),
-                &vertex.normal_to_vector(),
-                &vertex.color,
-                &scene.camera.direction.normalize(),
-                &self.material_cache[0],
-                &scene.lights,
-            )
+        for draw_command in &self.draw_commands {
+            // 3. Lighting calculations (in view space)
+            for vertex in &mut self.transformed_vertices {
+                vertex.color = self.shader.calc_color(
+                    &vertex.position_to_point(),
+                    &vertex.normal_to_vector(),
+                    &vertex.color,
+                    &scene.camera.direction.normalize(),
+                    &self.material_cache[draw_command.material_id],
+                    &scene.lights,
+                )
+            }
         }
 
         for vertex in &mut self.transformed_vertices {
             // 4. Projection transform
             let mut vertex_pos = self.projection_matrix.mul_point(vertex.position_to_point());
-            
+
             // 5. Homogeneous divide (w)
             vertex_pos.dehomogen();
-            
+
             //6. Viewport transformation (Clip Space -> Screen Space)
             vertex_pos = self.viewport_matrix.mul_point(vertex_pos);
             vertex.position = [vertex_pos.x, vertex_pos.y, vertex_pos.z]
@@ -180,14 +188,31 @@ impl Renderer {
             // Process indices in groups of 3 to form triangles
             for i in (0..draw_command.triangle_index_count).step_by(3) {
                 // Get vertex indices
-                let i0 = self.index_buffer[draw_command.first_triangle_index + i];
-                let i1 = self.index_buffer[draw_command.first_triangle_index + i + 1];
-                let i2 = self.index_buffer[draw_command.first_triangle_index + i + 2];
+                let i0 = self.triangle_index_buffer[draw_command.first_triangle_index + i];
+                let i1 = self.triangle_index_buffer[draw_command.first_triangle_index + i + 1];
+                let i2 = self.triangle_index_buffer[draw_command.first_triangle_index + i + 2];
 
                 // Get transformed vertices
-                let v0 = &self.transformed_vertices[i0 as usize];
+                let v0: &Vertex = &self.transformed_vertices[i0 as usize];
                 let v1 = &self.transformed_vertices[i1 as usize];
                 let v2 = &self.transformed_vertices[i2 as usize];
+
+                // Check if triangle is completely outside screen (change to || to if only one is enough)
+                if !self
+                    .rasterizer
+                    .framebuffer
+                    .is_in_bounds(v0.position[0] as i32, v0.position[1] as i32)
+                    && !self
+                        .rasterizer
+                        .framebuffer
+                        .is_in_bounds(v1.position[0] as i32, v1.position[1] as i32)
+                    && !self
+                        .rasterizer
+                        .framebuffer
+                        .is_in_bounds(v2.position[0] as i32, v2.position[1] as i32)
+                {
+                    continue;
+                }
 
                 // Triangle setup (bounding box)
                 //calculate bounding box
@@ -195,35 +220,26 @@ impl Renderer {
                 let mut bounds_min_x = v0.position[0]
                     .min(v1.position[0])
                     .min(v2.position[0])
-                    .floor() as usize; 
+                    .floor() as i32;
                 let mut bounds_max_x = v0.position[0]
                     .max(v1.position[0])
                     .max(v2.position[0])
-                    .ceil() as usize;
+                    .ceil() as i32;
                 let mut bounds_min_y = v0.position[1]
                     .min(v1.position[1])
                     .min(v2.position[1])
-                    .floor() as usize;
+                    .floor() as i32;
                 let mut bounds_max_y = v0.position[1]
                     .max(v1.position[1])
                     .max(v2.position[1])
-                    .ceil() as usize;
-
-                // Check if triangle is completely outside screen
-                // if bounds_max_x < 0
-                //     || bounds_min_x >= self.rasterizer.framebuffer.get_width()
-                //     || bounds_max_y < 0
-                //     || bounds_min_y >= self.rasterizer.framebuffer.get_height()
-                // {
-                //     continue;
-                // }
+                    .ceil() as i32;
 
                 // Clamp to screen boundaries before the loops
                 bounds_min_x = bounds_min_x.max(0);
-                bounds_max_x = bounds_max_x.min(self.rasterizer.framebuffer.get_width());
+                bounds_max_x = bounds_max_x.min(self.rasterizer.framebuffer.get_width() as i32);
 
                 bounds_min_y = bounds_min_y.max(0);
-                bounds_max_y = bounds_max_y.min(self.rasterizer.framebuffer.get_height());
+                bounds_max_y = bounds_max_y.min(self.rasterizer.framebuffer.get_height() as i32);
 
                 // For each pixel in triangle's bounding box:
                 for y in (bounds_min_y)..=(bounds_max_y) {
@@ -253,9 +269,13 @@ impl Renderer {
                                 alpha * v0.color[2] + beta * v1.color[2] + gamma * v2.color[2],
                             ];
 
-                            let z_buffer_idx = y * self.rasterizer.framebuffer.get_width() + x;
+                            let z_buffer_idx =
+                                y as usize * self.rasterizer.framebuffer.get_width() + x as usize;
 
-                            if z_buffer_idx > self.rasterizer.framebuffer.get_width() * self.rasterizer.framebuffer.get_height(){
+                            if z_buffer_idx
+                                > self.rasterizer.framebuffer.get_width()
+                                    * self.rasterizer.framebuffer.get_height()
+                            {
                                 continue;
                             }
 
@@ -266,8 +286,8 @@ impl Renderer {
                                 self.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
 
                                 self.fragment_buffer.push(Fragment {
-                                    x: x.try_into().unwrap(),
-                                    y: y.try_into().unwrap(),
+                                    x,
+                                    y,
                                     z: interpolated_z,
                                     color: interpolated_color,
                                     material_id: draw_command.material_id,
