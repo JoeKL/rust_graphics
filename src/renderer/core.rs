@@ -160,8 +160,6 @@ impl Renderer {
         
         }
 
-        println!("colors for this frame calculated.");
-
         for vertex in &mut self.transformed_vertices {
             // 4. Projection transform
             let mut vertex_pos = self.projection_matrix.mul_point(vertex.position_to_point());
