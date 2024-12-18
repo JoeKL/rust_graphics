@@ -50,11 +50,11 @@ impl Renderer {
         let z_buffer: Vec<f32> = Vec::new();
         let material_cache: Vec<Material> = Vec::new();
 
-        let look_at_matrix: Mat4x4 = Mat4x4::new_identity();
-        let projection_matrix: Mat4x4 = Mat4x4::new_identity();
-        let viewport_matrix: Mat4x4 = Mat4x4::new_identity();
+        let look_at_matrix: Mat4x4 = Mat4x4::identity();
+        let projection_matrix: Mat4x4 = Mat4x4::identity();
+        let viewport_matrix: Mat4x4 = Mat4x4::identity();
 
-        let frustum_matrix: Mat4x4 = Mat4x4::new_identity();
+        let frustum_matrix: Mat4x4 = Mat4x4::identity();
         let view_frustum: Frustum = Frustum::new();
 
         // let frame_buffer: Vec<Vec<Color>>= Vec::new();
@@ -125,11 +125,6 @@ impl Renderer {
 
     /// Vertex Processing Stage
     fn process_vertices(&mut self, scene: &Scene) {
-        // set zbuffer
-        let width = self.rasterizer.framebuffer.get_width();
-        let height = self.rasterizer.framebuffer.get_height();
-        self.z_buffer = vec![f32::INFINITY; width * height];
-
         for draw_command in &self.draw_commands {
             for vertex_idx in 0..draw_command.vertex_count {
                 // 1. Local to World transform
@@ -351,6 +346,11 @@ impl Renderer {
 
         //create material cache
         self.material_cache = Material::MATERIAL_ARRAY.to_vec();
+
+        // set zbuffer
+        let width = self.rasterizer.framebuffer.get_width();
+        let height = self.rasterizer.framebuffer.get_height();
+        self.z_buffer = vec![f32::INFINITY; width * height];
 
         self.process_commands(scene);
         self.process_vertices(scene);

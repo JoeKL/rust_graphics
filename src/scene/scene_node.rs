@@ -21,7 +21,7 @@ impl SceneNode {
     //create a new Node with no rotation, no scaling, at origin, without mesh, and no transformation stack
     pub fn new() -> Self {
         let position = Vector3D::new(0.0, 0.0, 0.0);
-        let rotation = Mat4x4::new_identity();
+        let rotation = Mat4x4::identity();
         let scale = Vector3D::new(1.0, 1.0, 1.0);
 
         let has_dirty_locals = false;
@@ -174,7 +174,7 @@ impl SceneNode {
         // Multiply entire stack
         self.transform_stack
             .iter()
-            .fold(Mat4x4::new_identity(), |acc, transform| {
+            .fold(Mat4x4::identity(), |acc, transform| {
                 acc.mul_mat(*transform)
             })
     }
