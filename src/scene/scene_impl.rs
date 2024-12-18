@@ -33,19 +33,19 @@ impl Scene {
         let lights: Vec<PointLight> = vec![light];
 
         let mut ball_node = SceneNode::new();
-        let mut child_ball_node = SceneNode::new();
-        let mut grandchild_ball_node = SceneNode::new();
+        // let mut child_ball_node = SceneNode::new();
+        // let mut grandchild_ball_node = SceneNode::new();
         
-        ball_node.set_mesh(Mesh::create_ball(0));
-        child_ball_node.set_mesh(Mesh::create_ball(1));
-        grandchild_ball_node.set_mesh(Mesh::create_ball(2));
+        ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
+        // child_ball_node.set_mesh(Mesh::create_ball(1, [0.78, 0.42, 0.0]));
+        // grandchild_ball_node.set_mesh(Mesh::create_ball(2, [0.78, 0.0, 0.6]));
         
         // ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
-        child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
-        grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
+        // child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
+        // grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
         
-        child_ball_node.add_child(grandchild_ball_node);
-        ball_node.add_child(child_ball_node);
+        // child_ball_node.add_child(grandchild_ball_node);
+        // ball_node.add_child(child_ball_node);
         root_node.add_child(ball_node);
 
         Scene {
@@ -56,7 +56,7 @@ impl Scene {
     }
 
     
-    pub fn collect_geometry(&mut self) -> (Vec<Vertex>, Vec<u32>, Vec<DrawCommand>) {
+    pub fn collect(&mut self) -> (Vec<Vertex>, Vec<u32>, Vec<DrawCommand>) {
         let mut vertex_buffer: Vec<Vertex> = Vec::new();
         let mut triangle_index_buffer: Vec<u32> = Vec::new();
         let mut draw_command_buffer: Vec<DrawCommand> = Vec::new();

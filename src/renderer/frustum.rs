@@ -36,6 +36,11 @@ pub struct Frustum {
 }
 
 impl Frustum {
+    pub fn new() -> Frustum {
+        let planes: Vec<Plane> = Vec::new();
+        Self { planes }
+    }
+
     // Create frustum from view-projection matrix
     pub fn from_matrix(matrix: &Mat4x4) -> Self {
         // howto construct frustum
@@ -55,17 +60,16 @@ impl Frustum {
         // multiply all corners by invevrse frustum matrix to map from NDC to world space. This will result in frustum corners in worldspace
 
         let inverse_matrix = matrix.inverse();
-        
+
         let mut frustum_p000 = inverse_matrix.mul_point(p000);
         let mut frustum_p001 = inverse_matrix.mul_point(p001);
         let mut frustum_p010 = inverse_matrix.mul_point(p010);
         let mut frustum_p011 = inverse_matrix.mul_point(p011);
-        
+
         let mut frustum_p100 = inverse_matrix.mul_point(p100);
         let mut frustum_p101 = inverse_matrix.mul_point(p101);
         let mut frustum_p110 = inverse_matrix.mul_point(p110);
         let mut frustum_p111 = inverse_matrix.mul_point(p111);
-
 
         frustum_p000.dehomogen();
         frustum_p001.dehomogen();
@@ -77,74 +81,74 @@ impl Frustum {
         frustum_p110.dehomogen();
         frustum_p111.dehomogen();
 
-
-
         // println!("________");
 
         // println!("{:?}", frustum_p000);
         // println!("{:?}", frustum_p010);
         // println!("{:?}", frustum_p100);
         // println!("{:?}", frustum_p110);
-        // println!("");        
+        // println!("");
         // println!("{:?}", frustum_p001);
         // println!("{:?}", frustum_p011);
         // println!("{:?}", frustum_p101);
         // println!("{:?}", frustum_p111);
 
-
-
         // construct all 6 planes in worldspace (left, right, top, bottom, front, back)
         let planes: Vec<Plane> = vec![
             //left -x
-            Plane::new(frustum_p001, frustum_p000, frustum_p010), 
+            Plane::new(frustum_p001, frustum_p000, frustum_p010),
             //right +x
-            Plane::new(frustum_p101, frustum_p111, frustum_p100), 
+            Plane::new(frustum_p101, frustum_p111, frustum_p100),
             //top +y
-            Plane::new(frustum_p111,  frustum_p011,frustum_p110), 
+            Plane::new(frustum_p111, frustum_p011, frustum_p110),
             //bottom -y
-            Plane::new(frustum_p101, frustum_p000, frustum_p001), 
+            Plane::new(frustum_p101, frustum_p000, frustum_p001),
             //back +z
-            Plane::new(frustum_p001, frustum_p011, frustum_p101), 
+            Plane::new(frustum_p001, frustum_p011, frustum_p101),
             //front -z
-            Plane::new(frustum_p000, frustum_p100 , frustum_p010), 
+            Plane::new(frustum_p000, frustum_p100, frustum_p010),
         ];
 
         //all normals placed such that they are facing outwards
 
         Self { planes }
     }
-    
-    pub fn point_in_bounds(&self, point: Point3D) -> bool{
-        for plane in &self.planes{
-            // if outside of plane (not inside viewing frustum)
-            if plane.distance(point) >= 0.0{
 
-                return false
+    pub fn point_in_bounds(&self, point: Point3D) -> bool {
+        for plane in &self.planes {
+            // if outside of plane (not inside viewing frustum)
+            if plane.distance(point) >= 0.0 {
+                return false;
             }
         }
         true
-    }   
+    }
 
-    pub fn triangle_in_bounds(&self, render_triangle: &RenderTriangle) -> bool{
+    pub fn triangle_in_bounds(&self, render_triangle: &RenderTriangle) -> bool {
         let mut strike = 0;
-        for vertex in render_triangle.vertices{
-            if !(self.point_in_bounds(Point3D::new(vertex.position[0], vertex.position[1], vertex.position[2]))){
-                
+        for vertex in render_triangle.vertices {
+            if !(self.point_in_bounds(Point3D::new(
+                vertex.position[0],
+                vertex.position[1],
+                vertex.position[2],
+            ))) {
                 strike += 1;
             }
         }
         if strike < 3 {
-            
-            return true
+            return true;
         }
         false
     }
 
-    pub fn triangle_in_bounds_conservative(&self, render_triangle: &RenderTriangle) -> bool{
-        for vertex in render_triangle.vertices{
-            if !(self.point_in_bounds(Point3D::new(vertex.position[0], vertex.position[1], vertex.position[2]))){
-                
-                return false
+    pub fn triangle_in_bounds_conservative(&self, render_triangle: &RenderTriangle) -> bool {
+        for vertex in render_triangle.vertices {
+            if !(self.point_in_bounds(Point3D::new(
+                vertex.position[0],
+                vertex.position[1],
+                vertex.position[2],
+            ))) {
+                return false;
             }
         }
         true

@@ -6,6 +6,7 @@ mod core;
 mod render_triangle;
 mod frustum;
 mod draw_command;
+mod fragment;
 
 pub use viewport::Viewport;
 pub use buffer::FrameBuffer;
@@ -14,3 +15,4 @@ pub use core::Renderer;
 pub use render_triangle::RenderTriangle;
 pub use frustum::Frustum;
 pub use draw_command::DrawCommand;
+pub use fragment::Fragment;
