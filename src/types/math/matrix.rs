@@ -6,7 +6,7 @@ pub struct Mat4x4 {
 }
 
 impl Mat4x4 {
-    pub fn new_identity() -> Mat4x4 {
+    pub fn identity() -> Mat4x4 {
         let mat = [
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
@@ -44,7 +44,7 @@ impl Mat4x4 {
     /// let result = mat1.mulMat(mat2);
     /// ```
     pub fn mul_mat(&self, m: Mat4x4) -> Mat4x4 {
-        let mut result_mat = Mat4x4::new_identity();
+        let mut result_mat = Mat4x4::identity();
 
         // First row
         result_mat.mat[0][0] = self.mat[0][0] * m.mat[0][0]
