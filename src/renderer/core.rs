@@ -45,7 +45,6 @@ impl Renderer {
 
         let transformed_vertices: Vec<Vertex> = Vec::new();       
 
-
         let fragment_buffer: Vec<Fragment> = Vec::new();
         let z_buffer: Vec<f32> = Vec::new();
         let material_cache: Vec<Material> = Vec::new();
