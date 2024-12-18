@@ -127,7 +127,7 @@ impl Renderer {
         for draw_command in &self.draw_commands {
             for vertex_idx in 0..draw_command.vertex_count {
                 // 1. Local to World transform
-                self.transformed_vertices[draw_command.first_vertex + vertex_idx]
+                self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx]
                     .transform(draw_command.transform);              
             }
         }
@@ -135,7 +135,7 @@ impl Renderer {
         for draw_command in &self.draw_commands {
             for vertex_idx in 0..draw_command.vertex_count {       
                 // 2. World to look_at transform (camera space)
-                self.transformed_vertices[draw_command.first_vertex + vertex_idx]
+                self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx]
                     .transform(self.look_at_matrix);
             }
         }
@@ -179,12 +179,17 @@ impl Renderer {
 
         // For each draw command/mesh
         for draw_command in &self.draw_commands {
+
+            let index_start = draw_command.first_triangle_index_offset;
+            let index_length = draw_command.triangle_index_count;
+            let index_end = index_length + index_start;
+
             // Process indices in groups of 3 to form triangles
-            for i in (0..draw_command.triangle_index_count).step_by(3) {
+            for i in (index_start..index_end).step_by(3) {
                 // Get vertex indices
-                let i0 = self.triangle_index_buffer[draw_command.first_triangle_index + i];
-                let i1 = self.triangle_index_buffer[draw_command.first_triangle_index + i + 1];
-                let i2 = self.triangle_index_buffer[draw_command.first_triangle_index + i + 2];
+                let i0 = self.triangle_index_buffer[i];
+                let i1 = self.triangle_index_buffer[i + 1];
+                let i2 = self.triangle_index_buffer[i + 2];
 
                 // Get transformed vertices
                 let v0: &Vertex = &self.transformed_vertices[i0 as usize];
