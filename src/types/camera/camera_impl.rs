@@ -37,9 +37,9 @@ impl Camera {
             aspect_ratio: 16.0 / 9.0,
             near: 0.1,
             far: 1000.0,
-            look_at_matrix: Mat4x4::new_identity(),
-            projection_matrix: Mat4x4::new_identity(),
-            frustum_matrix: Mat4x4::new_identity(),
+            look_at_matrix: Mat4x4::identity(),
+            projection_matrix: Mat4x4::identity(),
+            frustum_matrix: Mat4x4::identity(),
             needs_update: true,
         };
 
