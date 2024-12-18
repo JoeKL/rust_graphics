@@ -6,7 +6,7 @@ pub struct Mat4x4 {
 }
 
 impl Mat4x4 {
-    pub fn new_identity() -> Mat4x4 {
+    pub fn identity() -> Mat4x4 {
         let mat = [
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
@@ -44,7 +44,7 @@ impl Mat4x4 {
     /// let result = mat1.mulMat(mat2);
     /// ```
     pub fn mul_mat(&self, m: Mat4x4) -> Mat4x4 {
-        let mut result_mat = Mat4x4::new_identity();
+        let mut result_mat = Mat4x4::identity();
 
         // First row
         result_mat.mat[0][0] = self.mat[0][0] * m.mat[0][0]
@@ -122,41 +122,38 @@ impl Mat4x4 {
     }
 
     pub fn mul_vec(&self, v: Vector3D) -> Vector3D {
-        let x = self.mat[0][0] * v.x + 
-                self.mat[0][1] * v.y + 
-                self.mat[0][2] * v.z;
-                
-        let y = self.mat[1][0] * v.x + 
-                self.mat[1][1] * v.y + 
-                self.mat[1][2] * v.z;
-                
-        let z = self.mat[2][0] * v.x + 
-                self.mat[2][1] * v.y + 
-                self.mat[2][2] * v.z;
-        
+        let x = self.mat[0][0] * v.x + self.mat[0][1] * v.y + self.mat[0][2] * v.z;
+
+        let y = self.mat[1][0] * v.x + self.mat[1][1] * v.y + self.mat[1][2] * v.z;
+
+        let z = self.mat[2][0] * v.x + self.mat[2][1] * v.y + self.mat[2][2] * v.z;
+
         Vector3D::new(x, y, z)
     }
-
-    pub fn mul_point(self, v: Point3D) -> Point3D {
+    pub fn mul_point(&self, v: Point3D) -> Point3D {
         let x = self.mat[0][0] * v.x
             + self.mat[0][1] * v.y
             + self.mat[0][2] * v.z
-            + self.mat[0][3] * v.w as f32;
+            + self.mat[0][3] * v.w;
+
         let y = self.mat[1][0] * v.x
             + self.mat[1][1] * v.y
             + self.mat[1][2] * v.z
-            + self.mat[1][3] * v.w as f32;
+            + self.mat[1][3] * v.w;
+
         let z = self.mat[2][0] * v.x
             + self.mat[2][1] * v.y
             + self.mat[2][2] * v.z
-            + self.mat[2][3] * v.w as f32;
+            + self.mat[2][3] * v.w;
+
         let w = self.mat[3][0] * v.x
             + self.mat[3][1] * v.y
             + self.mat[3][2] * v.z
-            + self.mat[3][3] * v.w as f32;
-        let mut result_point = Point3D::new(x, y, z);
-        result_point.w = w as u32;
-        result_point
+            + self.mat[3][3] * v.w;
+
+        let mut return_p = Point3D::new(x, y, z);
+        return_p.w = w;
+        return_p
     }
 
     pub fn print(&self) {
@@ -194,5 +191,69 @@ impl Mat4x4 {
             [0.0, 0.0, scale.z, 0.0],
             [0.0, 0.0, 0.0, 1.0],
         ])
+    }
+
+    // Helper function to get matrix minor
+    fn get_minor(&self, row: usize, col: usize) -> f32 {
+        let mut minor = [[0.0; 3]; 3];
+        let mut m_i = 0;
+
+        for i in 0..4 {
+            if i == row {
+                continue;
+            }
+            let mut m_j = 0;
+
+            for j in 0..4 {
+                if j == col {
+                    continue;
+                }
+                minor[m_i][m_j] = self.mat[i][j];
+                m_j += 1;
+            }
+            m_i += 1;
+        }
+
+        // Calculate determinant of 3x3 matrix
+        minor[0][0] * (minor[1][1] * minor[2][2] - minor[1][2] * minor[2][1])
+            - minor[0][1] * (minor[1][0] * minor[2][2] - minor[1][2] * minor[2][0])
+            + minor[0][2] * (minor[1][0] * minor[2][1] - minor[1][1] * minor[2][0])
+    }
+
+    // Calculate cofactor
+    fn get_cofactor(&self, row: usize, col: usize) -> f32 {
+        let sign = if (row + col) % 2 == 0 { 1.0 } else { -1.0 };
+        sign * self.get_minor(row, col)
+    }
+
+    // Calculate determinant
+    pub fn determinant(&self) -> f32 {
+        let mut det = 0.0;
+        for j in 0..4 {
+            det += self.mat[0][j] * self.get_cofactor(0, j);
+        }
+        det
+    }
+
+    // Calculate complete inverse
+    pub fn inverse(&self) -> Self {
+        let det = self.determinant();
+
+        // Check if matrix is invertible
+        if det.abs() < 1e-6 {
+            panic!("matrix not invertible")
+        }
+
+        let mut result = Mat4x4 { mat: [[0.0; 4]; 4] };
+        let inv_det = 1.0 / det;
+
+        // Calculate adjugate matrix and multiply by 1/determinant
+        for i in 0..4 {
+            for j in 0..4 {
+                result.mat[j][i] = self.get_cofactor(i, j) * inv_det;
+            }
+        }
+
+        result
     }
 }
