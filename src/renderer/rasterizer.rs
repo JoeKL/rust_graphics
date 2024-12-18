@@ -364,14 +364,15 @@ impl Rasterizer {
 
     pub fn shade_triangle(
         vertex: &Point3D,
-        camera_position: &Point3D,
         normal: &Vector3D,
+        color: &[f32; 3],
+        camera_position: &Point3D,
         material: &Material,
         lights: &[PointLight],
         shader: &impl ShadingModel,
-    ) -> ColorRGB {
+    ) -> [f32; 3] {
         let view_vector = camera_position.sub_p(*vertex).normalize();
-        shader.calc_color(vertex, normal, &view_vector, material, lights)
+        shader.calc_color(vertex, normal,color, &view_vector, material, lights)
     }
 
 }

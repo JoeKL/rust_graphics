@@ -152,7 +152,7 @@ impl Mesh {
         }
     }
 
-    pub fn create_ball(material_id: u32) -> Self {
+    pub fn create_ball(material_id: u32, color: [f32; 3]) -> Self {
         let mut mesh = Mesh::new();
 
         // convert raw vertex positions into vertex chunks
@@ -160,7 +160,7 @@ impl Mesh {
             let vertex = Vertex {
                 position: [chunk[0], chunk[1], chunk[2]],
                 normal: [0.0, 0.0, 0.0], // will be calculated later
-                color: [1.0, 1.0, 1.0],  // Default white color
+                color,  // Default white color
             };
             mesh.vertices.push(vertex);
         }

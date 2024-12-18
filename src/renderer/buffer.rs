@@ -1,7 +1,7 @@
 use crate::types::color::ColorRGB;
 
 pub struct FrameBuffer {
-    buffer: Vec<u32>,
+    pub buffer: Vec<u32>,
     width: usize,
     height: usize,
 }

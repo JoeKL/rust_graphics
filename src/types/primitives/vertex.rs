@@ -14,8 +14,12 @@ impl Vertex{
         Self { position, normal, color }
     }
 
-    pub fn to_point(self) -> Point3D {
+    pub fn position_to_point(self) -> Point3D {
         Point3D::new(self.position[0], self.position[1], self.position[2])
+    }
+
+    pub fn normal_to_vector(self) -> Vector3D {
+        Vector3D::new(self.normal[0], self.normal[1], self.normal[2])
     }
 
     pub fn transform(& mut self, transform_mat: Mat4x4){

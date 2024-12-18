@@ -1,6 +1,6 @@
 use crate::types::math::Mat4x4;
 
-
+#[derive(Debug)]
 pub struct DrawCommand {
     pub first_vertex: usize, // where does the mesh begin in the vertex buffer
     pub vertex_count: usize, // how many vertices are in the mesh
