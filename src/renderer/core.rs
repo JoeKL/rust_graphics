@@ -2,11 +2,7 @@ use super::{DrawCommand, Fragment, Frustum, Rasterizer};
 use crate::{
     scene::Scene,
     types::{
-        color::ColorRGB,
-        display::ScreenPoint,
-        math::{Mat4x4, Point3D},
-        primitives::Vertex,
-        shader::{FlatShader, Material, ShadingModel},
+        color::ColorRGB, display::ScreenPoint, light::PointLight, math::{Mat4x4, Point3D}, primitives::Vertex, shader::{FlatShader, Material, ShadingModel}
     },
 };
 
@@ -149,6 +145,10 @@ impl Renderer {
                     .transform(self.look_at_matrix);
             }
         }
+        let mut transformed_lights: Vec<PointLight> = Vec::new();
+        for light in &scene.lights{
+            transformed_lights.push(PointLight::new_transformed_light(light, self.look_at_matrix))
+        }
 
         for draw_command in &self.draw_commands {
             // 3. Lighting calculations (in view space)
@@ -159,7 +159,7 @@ impl Renderer {
                     &vertex.color,
                     &scene.camera.direction.normalize(),
                     &self.material_cache[draw_command.material_id],
-                    &scene.lights,
+                    &transformed_lights,
                 )
             }
         }
