@@ -146,8 +146,9 @@ impl Renderer {
 
         for draw_command in &self.draw_commands {
             // 3. Lighting calculations (in view space)
-            for vertex in &mut self.transformed_vertices {
-                vertex.color = self.shader.calc_color(
+            for vertex_idx in 0..draw_command.vertex_count {
+                let vertex = &mut self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx];
+                    vertex.color = self.shader.calc_color(
                     &vertex.position_to_point(),
                     &vertex.normal_to_vector(),
                     &vertex.color,
@@ -156,7 +157,10 @@ impl Renderer {
                     &transformed_lights,
                 )
             }
+        
         }
+
+        println!("colors for this frame calculated.");
 
         for vertex in &mut self.transformed_vertices {
             // 4. Projection transform
@@ -272,7 +276,7 @@ impl Renderer {
                                 y as usize * self.rasterizer.framebuffer.get_width() + x as usize;
 
                             if z_buffer_idx
-                                > self.rasterizer.framebuffer.get_width()
+                                >= self.rasterizer.framebuffer.get_width()
                                     * self.rasterizer.framebuffer.get_height()
                             {
                                 continue;
@@ -330,8 +334,12 @@ impl Renderer {
                 ),
             );
         }
+
         // clear buffer afterwards
         self.fragment_buffer.clear();
+        self.vertex_buffer.clear();
+        self.transformed_vertices.clear();
+        self.draw_commands.clear();
     }
 
     pub fn render_scene(&mut self, scene: &mut Scene) {
