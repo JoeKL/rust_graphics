@@ -160,7 +160,7 @@ impl Mesh {
             let vertex = Vertex {
                 position: [chunk[0], chunk[1], chunk[2]],
                 normal: [0.0, 0.0, 0.0], // will be calculated later
-                color,  // Default white color
+                color, 
             };
             mesh.vertices.push(vertex);
         }
@@ -181,31 +181,32 @@ impl Mesh {
         mesh
     }
 
-    // pub fn create_cube() -> Self {
-    //     let mut mesh = Mesh::new();
+    pub fn create_cube(material_id: u32, color: [f32; 3]) -> Self {
+        let mut mesh = Mesh::new();
 
-    //     // convert raw vertex positions into vertex chunks
-    //     for chunk in CUBE_V.chunks(3) {
-    //         let vertex = Vertex {
-    //             position: [chunk[0], chunk[1], chunk[2]],
-    //             normal: [0.0, 0.0, 0.0], // will be calculated later
-    //             color: [1.0, 1.0, 1.0],  // Default white color
-    //         };
-    //         mesh.vertices.push(vertex);
-    //     }
+        // convert raw vertex positions into vertex chunks
+        for chunk in CUBE_V.chunks(3) {
+            let vertex = Vertex {
+                position: [chunk[0], chunk[1], chunk[2]],
+                normal: [0.0, 0.0, 0.0], // will be calculated later
+                color, 
+            };
+            mesh.vertices.push(vertex);
+        }
 
-    //     // process triangle indices to triangles
-    //     for triangle_indices in CUBE_F.chunks(3) {
-    //         let indices = [
-    //             triangle_indices[0] as u32,
-    //             triangle_indices[1] as u32,
-    //             triangle_indices[2] as u32,
-    //         ];
+        // process triangle indices to triangles
+        for triangle_indices in CUBE_F.chunks(3) {
+            let indices = [
+                triangle_indices[0] as u32,
+                triangle_indices[1] as u32,
+                triangle_indices[2] as u32,
+            ];
 
-    //         // Add triangle with default material (say, 0)
-    //         mesh.add_triangle(indices, 0);
-    //     }
-    //     mesh.build_adj_list();
-    //     mesh
-    // }
+            // Add triangle with default material (say, 0)
+            mesh.add_triangle(indices, 0);
+        }
+        mesh.build_adj_list();
+        mesh.calculate_vertex_normals();
+        mesh
+    }
 }
