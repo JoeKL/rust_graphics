@@ -37,6 +37,8 @@ impl Scene {
         // let mut grandchild_ball_node = SceneNode::new();
         
         ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
+
+        // ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
         // child_ball_node.set_mesh(Mesh::create_ball(1, [0.78, 0.42, 0.0]));
         // grandchild_ball_node.set_mesh(Mesh::create_ball(2, [0.78, 0.0, 0.6]));
         
