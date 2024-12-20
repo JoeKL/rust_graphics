@@ -59,6 +59,7 @@ impl Camera {
         self.needs_update = true;
     }
 
+    #[allow(dead_code)]
     pub fn get_position(&self) -> Point3D {
         self.position
     }

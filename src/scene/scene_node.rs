@@ -1,179 +1,109 @@
 #![allow(dead_code)]
 
-use crate::types::{
-    geometry::Mesh,
-    math::{Mat4x4, Vector3D},
+use std::{
+    cell::RefCell,
+    rc::{Rc, Weak},
 };
 
+use crate::types::math::Mat4x4;
+
+use super::Object;
+
 pub struct SceneNode {
-    position: Vector3D, // current position
-    rotation: Mat4x4,   // current rotation
-    scale: Vector3D,    // current scale
-
-    has_dirty_transform_mat: bool,
-
-    pub mesh: Option<Mesh>, // Not all nodes need meshes (empty groups/pivots)
-    pub children: Vec<SceneNode>, // Vector of child nodes
-    pub transform_stack: Vec<Mat4x4>, // transformation stack stacks the necessary transformations from root to child for each node
+    local_transform: Mat4x4,          // Node's transform relative to parent
+    world_transform: Mat4x4,          // Cached world transform
+    object: Option<Object>,           // Optional because not all nodes need objects
+    parent: Weak<RefCell<SceneNode>>, // weak reference to parent so that it will be revoked when
+    // parent is popped
+    children: Vec<Rc<RefCell<SceneNode>>>, //Each node can have many owners (Rc) but only one can modify it at a time (RefCell)
 }
 
 impl SceneNode {
     //create a new Node with no rotation, no scaling, at origin, without mesh, and no transformation stack
     pub fn new() -> Self {
-        let position = Vector3D::new(0.0, 0.0, 0.0);
-        let rotation = Mat4x4::identity();
-        let scale = Vector3D::new(1.0, 1.0, 1.0);
-
-        let has_dirty_transform_mat = false;
-
-        let mesh: Option<Mesh> = None;
-        let children: Vec<SceneNode> = Vec::new();
-        let transform_stack: Vec<Mat4x4> = Vec::new();
+        let local_transform = Mat4x4::identity();
+        let world_transform = Mat4x4::identity();
+        let object: Option<Object> = None;
+        let parent = Weak::new();
+        let children: Vec<Rc<RefCell<SceneNode>>> = Vec::new();
 
         Self {
-            position,
-            rotation,
-            scale,
-            has_dirty_transform_mat,
-            mesh,
+            local_transform,
+            world_transform,
+            object,
+            parent,
             children,
-            transform_stack,
         }
     }
 
-    //overwrites the current local position
-    pub fn set_position(&mut self, pos: Vector3D) {
-        self.position = pos;
-        self.has_dirty_transform_mat = true;
-        self.update_local_transform();
+    pub fn set_object(&mut self, object: Object) {
+        self.object = Some(object);
     }
 
-    //overwrites the current local rotation
-    pub fn set_rotation(&mut self, rot: Mat4x4) {
-        self.rotation = rot;
-        self.has_dirty_transform_mat = true;
-        self.update_local_transform();
+    pub fn remove_object(&mut self) {
+        self.object.take();
     }
 
-    //overwrites the current local scale
-    pub fn set_scale(&mut self, scale: Vector3D) {
-        self.scale = scale;
-        self.has_dirty_transform_mat = true;
-        self.update_local_transform();
+    // #TODO add set_position, set_scale, set_rotation, translate, scale and rotate
+
+    pub fn set_transform(node: &Rc<RefCell<SceneNode>>, transform: Mat4x4) {
+        node.borrow_mut().local_transform = transform;
+
+        SceneNode::update_world_transform(node);
     }
 
-    //adds a delta to local position
-    pub fn translate(&mut self, delta: Vector3D) {
-        self.position = self.position.add(delta);
-        self.has_dirty_transform_mat = true;
-        self.update_local_transform();
+    pub fn transform_node(node: &Rc<RefCell<SceneNode>>, delta_transform: Mat4x4) {
+        node.borrow_mut().local_transform =
+            node.borrow_mut().local_transform.mul_mat(delta_transform);
+
+        // TODO need to updated bounding boxes of object if option == true
+        SceneNode::update_world_transform(node);
     }
 
-    //adds a delta to local rotation
-    pub fn rotate(&mut self, delta_rot: Mat4x4) {
-        self.rotation = delta_rot.mul_mat(self.rotation);
-        self.has_dirty_transform_mat = true;
-        self.update_local_transform();
-    }
+    // function udates the world_transform and propergates it to its children
+    fn update_world_transform(node: &Rc<RefCell<SceneNode>>) {
+        let new_world_transform = {
+            // get reference of node to access parent
+            let node_ref = node.borrow();
 
-    //adds a delta to local scale
-    pub fn scale(&mut self, delta_scale: Vector3D) {
-        self.scale = Vector3D::new(
-            self.scale.x * delta_scale.x,
-            self.scale.y * delta_scale.y,
-            self.scale.z * delta_scale.z,
-        );
-        self.has_dirty_transform_mat = true;
-        self.update_local_transform();
-    }
+            //try to set parent_world by accessing parents node and getting its worldtransform
+            let parent_world = node_ref
+                .parent
+                .upgrade() // Try to get strong reference to parent
+                .map(|p| p.borrow().world_transform) // Get transform if parent exists
+                .unwrap_or_else(Mat4x4::identity); // Fall back to identity if parent is gone
 
-    // appends mesh to node
-    pub fn set_mesh(&mut self, mesh: Mesh) {
-        self.mesh = Some(mesh);
-    }
+            //calculate nodes new world_transform by multiplying the parents world with the nodes
+            //local transform
+            parent_world.mul_mat(node_ref.local_transform)
+        };
 
-    // appends child to current node
-    pub fn add_child(&mut self, mut scene_node: SceneNode) {
-        // copy its parents transformation stack
-        scene_node.transform_stack = self.transform_stack.clone();
+        // Update our world transform and all children
+        let mut node_mut = node.borrow_mut();
+        node_mut.world_transform = new_world_transform;
 
-        // calculate local transformation based on given information
-        let local_transform = scene_node.calculate_local_transform();
-
-        // add local transformation to stack as last element, so it can be easily retrived and modified
-        scene_node.transform_stack.push(local_transform);
-
-        // Then add it to children
-        self.children.push(scene_node);
-    }
-
-    //calculates local transformation based on current self.rotation, self.scale and self.translation
-    fn calculate_local_transform(&mut self) -> Mat4x4 {
-        // First translate to origin
-        let to_origin = Mat4x4::from_translation(Vector3D::new(0.0, 0.0, 0.0));
-        // Apply scale and rotation
-        let transform = Mat4x4::from_scale(self.scale).mul_mat(self.rotation);
-        // Translate back
-        let from_origin = Mat4x4::from_translation(self.position);
-
-        // Order: translate back * (scale * rotate) * translate to origin
-        from_origin.mul_mat(transform).mul_mat(to_origin)
-    }
-
-    // updates local transformation
-    fn update_local_transform(&mut self) {
-        //recalculates local transformation
-        let updated_local_transform = self.calculate_local_transform();
-
-        //swaps current local transformation with updated one
-        self.transform_stack.pop();
-        self.transform_stack.push(updated_local_transform);
-
-        //reset because locals now updated
-        self.has_dirty_transform_mat = false;
-
-        // propagate changes of parents locals to children
-        self.update_children_stacks();
-    }
-
-    // update children's stacks recursively
-    fn update_children_stacks(&mut self) {
-        for child in &mut self.children {
-            let child_local = match child.has_dirty_transform_mat {
-                false => {
-                    // If locals are dirty, try to reuse existing transform or recalculate
-                    child
-                        .transform_stack
-                        .pop()
-                        .unwrap_or_else(|| child.calculate_local_transform())
-                }
-                true => {
-                    // If locals aren't dirty, just recalculate
-                    child.calculate_local_transform()
-                }
-            };
-
-            // Give child a copy of transformation_stack except its last is empty
-            child.transform_stack = self.transform_stack[..self.transform_stack.len() - 1].to_vec();
-
-            // Add updated local transform of childs parent
-            child
-                .transform_stack
-                .push(*self.transform_stack.last().unwrap());
-
-            // add child's local transform
-            child.transform_stack.push(child_local);
-
-            // Recurse
-            child.update_children_stacks();
+        // Update all children recursively
+        for child in &node_mut.children {
+            Self::update_world_transform(child);
         }
     }
 
-    // get final world transform for rendering
+    pub fn add_child(parent: &Rc<RefCell<Self>>, child: Rc<RefCell<SceneNode>>) {
+        // Set up parent-child relationship
+        child.borrow_mut().parent = Rc::downgrade(parent);
+
+        // Update transforms
+        Self::update_world_transform(&child);
+
+        // Add to children list
+        parent.borrow_mut().children.push(child);
+    }
+
     pub fn get_world_transform(&self) -> Mat4x4 {
-        // Multiply entire stack
-        self.transform_stack
-            .iter()
-            .fold(Mat4x4::identity(), |acc, transform| acc.mul_mat(*transform))
+        self.world_transform
+    }
+
+    pub fn get_local_transform(&self) -> Mat4x4 {
+        self.local_transform
     }
 }

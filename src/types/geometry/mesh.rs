@@ -93,7 +93,7 @@ impl Mesh {
                 let v0_idx = self.triangle_indices[triangle_index * 3] as usize;
                 let v1_idx = self.triangle_indices[triangle_index * 3 + 1] as usize;
                 let v2_idx = self.triangle_indices[triangle_index * 3 + 2] as usize;
-                
+
                 // Get the current vertex we're calculating normal for
                 let current_vertex = &self.vertices[vertex_index];
 
@@ -160,7 +160,7 @@ impl Mesh {
             let vertex = Vertex {
                 position: [chunk[0], chunk[1], chunk[2]],
                 normal: [0.0, 0.0, 0.0], // will be calculated later
-                color, 
+                color,
             };
             mesh.vertices.push(vertex);
         }
@@ -189,7 +189,7 @@ impl Mesh {
             let vertex = Vertex {
                 position: [chunk[0], chunk[1], chunk[2]],
                 normal: [0.0, 0.0, 0.0], // will be calculated later
-                color, 
+                color,
             };
             mesh.vertices.push(vertex);
         }
@@ -218,7 +218,7 @@ impl Mesh {
             let vertex = Vertex {
                 position: [chunk[0], chunk[1], chunk[2]],
                 normal: [0.0, 0.0, 0.0], // will be calculated later
-                color, 
+                color,
             };
             mesh.vertices.push(vertex);
         }
