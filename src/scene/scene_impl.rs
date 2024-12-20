@@ -4,8 +4,10 @@ use crate::types::camera::Camera;
 use crate::types::color::ColorRGB;
 use crate::types::geometry::Mesh;
 use crate::types::light::PointLight;
-use crate::types::math::{Mat4x4, Point3D, Vector3D};
-use crate::types::primitives::Vertex;
+use crate::types::{
+    math::{Point3D, Vector3D},
+    primitives::Vertex,
+};
 
 pub struct Scene {
     pub root_node: SceneNode,
@@ -61,18 +63,14 @@ impl Scene {
         let mut triangle_index_buffer: Vec<u32> = Vec::new();
         let mut draw_command_buffer: Vec<DrawCommand> = Vec::new();
 
-        // Helper function to traverse tree recursively
-        fn collect_node(
-            node: &mut SceneNode,
-            vertex_buffer: &mut Vec<Vertex>,
-            triangle_index_buffer: &mut Vec<u32>,
-            draw_command_buffer: &mut Vec<DrawCommand>,
-            parent_transform: Mat4x4,
-        ) {
+        let mut node_queue: Vec<&mut SceneNode> = vec![&mut self.root_node];
+
+        // Keep processing until queue is empty
+        while let Some(node) = node_queue.pop() {
             let world_transform = node.get_world_transform();
 
             if let Some(mesh) = &mut node.mesh {
-                let vertex_offset = vertex_buffer.len();  // Store current vertex buffer length
+                let vertex_offset = vertex_buffer.len(); // Store current vertex buffer length
 
                 draw_command_buffer.push(DrawCommand {
                     first_vertex_offset: vertex_buffer.len(), // Start index in vertex buffer (current length before adding new vertices)
@@ -91,27 +89,11 @@ impl Scene {
                 );
             }
 
-            // Recursively process children
+            // Add references to all children to queue
             for child in &mut node.children {
-                collect_node(
-                    child,
-                    vertex_buffer,
-                    triangle_index_buffer,
-                    draw_command_buffer,
-                    world_transform,
-                );
+                node_queue.push(child);
             }
         }
-
-        // Start collection from root
-        collect_node(
-            &mut self.root_node,
-            &mut vertex_buffer,
-            &mut triangle_index_buffer,
-            &mut draw_command_buffer,
-            Mat4x4::identity(),
-        );
-
         (vertex_buffer, triangle_index_buffer, draw_command_buffer)
     }
 }
