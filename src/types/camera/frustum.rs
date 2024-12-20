@@ -43,7 +43,7 @@ impl Frustum {
     }
 
     // Create frustum from view-projection matrix
-    pub fn from_matrix(matrix: &Mat4x4) -> Self {
+    pub fn from_matrix(proj_look_at_matrix: &Mat4x4) -> Self {
         // howto construct frustum
 
         // create cube corners as  Point3D in -1 , 1 in xyz and w = 1
@@ -58,9 +58,9 @@ impl Frustum {
         let p110 = Point3D::new(1.0, 1.0, -1.0);
         let p111 = Point3D::new(1.0, 1.0, 1.0);
 
-        // multiply all corners by invevrse frustum matrix to map from NDC to world space. This will result in frustum corners in worldspace
+        // multiply all corners by invevrse frustum (projection * look_at) matrix to map from NDC to world space. This will result in frustum corners in worldspace
 
-        let inverse_matrix = matrix.inverse();
+        let inverse_matrix = proj_look_at_matrix.inverse();
 
         let mut frustum_p000 = inverse_matrix.mul_point(p000);
         let mut frustum_p001 = inverse_matrix.mul_point(p001);

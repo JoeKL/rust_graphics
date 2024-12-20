@@ -1,4 +1,4 @@
-use super::{DrawCommand, Fragment, Frustum, Rasterizer};
+use super::{DrawCommand, Fragment, Rasterizer};
 use crate::{
     scene::Scene,
     types::{
@@ -36,7 +36,6 @@ pub struct Renderer {
     viewport_matrix: Mat4x4,
 
     frustum_matrix: Mat4x4,
-    view_frustum: Frustum,
 
     pub rasterizer: Rasterizer,
     pub shader: FlatShader,
@@ -57,9 +56,7 @@ impl Renderer {
         let look_at_matrix: Mat4x4 = Mat4x4::identity();
         let projection_matrix: Mat4x4 = Mat4x4::identity();
         let viewport_matrix: Mat4x4 = Mat4x4::identity();
-
         let frustum_matrix: Mat4x4 = Mat4x4::identity();
-        let view_frustum: Frustum = Frustum::new();
 
         // let frame_buffer: Vec<Vec<Color>>= Vec::new();
         Self {
@@ -78,7 +75,6 @@ impl Renderer {
             viewport_matrix,
 
             frustum_matrix,
-            view_frustum,
 
             rasterizer: Rasterizer::new(window_width, window_height),
             shader: FlatShader,
@@ -303,9 +299,6 @@ impl Renderer {
         self.projection_matrix = scene.camera.get_projection_matrix();
         self.viewport_matrix = self.rasterizer.viewport.get_matrix();
         self.frustum_matrix = scene.camera.get_frustum_matrix();
-
-        // Create frustum from frusutm matrix
-        self.view_frustum = Frustum::from_matrix(&self.frustum_matrix);
 
         //create material cache
         self.material_cache = Material::MATERIAL_ARRAY.to_vec();

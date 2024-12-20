@@ -1,16 +1,15 @@
 #![allow(dead_code)]
-mod buffer;     // Frame/pixel buffer management
-mod rasterizer; // Drawing algorithms
-mod viewport;   //Screen space transformations and mapping
+mod buffer; // Frame/pixel buffer management
 mod core;
-mod frustum;
 mod draw_command;
 mod fragment;
+mod rasterizer; // Drawing algorithms
+mod viewport; //Screen space transformations and mapping
 
-pub use viewport::Viewport;
 pub use buffer::FrameBuffer;
-pub use rasterizer::Rasterizer;
 pub use core::Renderer;
-pub use frustum::Frustum;
 pub use draw_command::DrawCommand;
 pub use fragment::Fragment;
+pub use rasterizer::Rasterizer;
+pub use viewport::Viewport;
+

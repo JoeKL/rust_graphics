@@ -10,7 +10,7 @@ pub struct SceneNode {
     rotation: Mat4x4,   // current rotation
     scale: Vector3D,    // current scale
 
-    has_dirty_locals: bool,
+    has_dirty_transform_mat: bool,
 
     pub mesh: Option<Mesh>, // Not all nodes need meshes (empty groups/pivots)
     pub children: Vec<SceneNode>, // Vector of child nodes
@@ -24,7 +24,7 @@ impl SceneNode {
         let rotation = Mat4x4::identity();
         let scale = Vector3D::new(1.0, 1.0, 1.0);
 
-        let has_dirty_locals = false;
+        let has_dirty_transform_mat = false;
 
         let mesh: Option<Mesh> = None;
         let children: Vec<SceneNode> = Vec::new();
@@ -34,7 +34,7 @@ impl SceneNode {
             position,
             rotation,
             scale,
-            has_dirty_locals,
+            has_dirty_transform_mat,
             mesh,
             children,
             transform_stack,
@@ -44,35 +44,35 @@ impl SceneNode {
     //overwrites the current local position
     pub fn set_position(&mut self, pos: Vector3D) {
         self.position = pos;
-        self.has_dirty_locals = true;
+        self.has_dirty_transform_mat = true;
         self.update_local_transform();
     }
 
     //overwrites the current local rotation
     pub fn set_rotation(&mut self, rot: Mat4x4) {
         self.rotation = rot;
-        self.has_dirty_locals = true;
+        self.has_dirty_transform_mat = true;
         self.update_local_transform();
     }
 
     //overwrites the current local scale
     pub fn set_scale(&mut self, scale: Vector3D) {
         self.scale = scale;
-        self.has_dirty_locals = true;
+        self.has_dirty_transform_mat = true;
         self.update_local_transform();
     }
 
     //adds a delta to local position
     pub fn translate(&mut self, delta: Vector3D) {
         self.position = self.position.add(delta);
-        self.has_dirty_locals = true;
+        self.has_dirty_transform_mat = true;
         self.update_local_transform();
     }
 
     //adds a delta to local rotation
     pub fn rotate(&mut self, delta_rot: Mat4x4) {
         self.rotation = delta_rot.mul_mat(self.rotation);
-        self.has_dirty_locals = true;
+        self.has_dirty_transform_mat = true;
         self.update_local_transform();
     }
 
@@ -83,7 +83,7 @@ impl SceneNode {
             self.scale.y * delta_scale.y,
             self.scale.z * delta_scale.z,
         );
-        self.has_dirty_locals = true;
+        self.has_dirty_transform_mat = true;
         self.update_local_transform();
     }
 
@@ -114,7 +114,7 @@ impl SceneNode {
         // Apply scale and rotation
         let transform = Mat4x4::from_scale(self.scale).mul_mat(self.rotation);
         // Translate back
-        let from_origin = Mat4x4::from_translation(self.position); 
+        let from_origin = Mat4x4::from_translation(self.position);
 
         // Order: translate back * (scale * rotate) * translate to origin
         from_origin.mul_mat(transform).mul_mat(to_origin)
@@ -130,7 +130,7 @@ impl SceneNode {
         self.transform_stack.push(updated_local_transform);
 
         //reset because locals now updated
-        self.has_dirty_locals = false;
+        self.has_dirty_transform_mat = false;
 
         // propagate changes of parents locals to children
         self.update_children_stacks();
@@ -139,11 +139,11 @@ impl SceneNode {
     // update children's stacks recursively
     fn update_children_stacks(&mut self) {
         for child in &mut self.children {
-
-            let child_local = match child.has_dirty_locals {
+            let child_local = match child.has_dirty_transform_mat {
                 false => {
                     // If locals are dirty, try to reuse existing transform or recalculate
-                    child.transform_stack
+                    child
+                        .transform_stack
                         .pop()
                         .unwrap_or_else(|| child.calculate_local_transform())
                 }
@@ -174,8 +174,6 @@ impl SceneNode {
         // Multiply entire stack
         self.transform_stack
             .iter()
-            .fold(Mat4x4::identity(), |acc, transform| {
-                acc.mul_mat(*transform)
-            })
+            .fold(Mat4x4::identity(), |acc, transform| acc.mul_mat(*transform))
     }
 }

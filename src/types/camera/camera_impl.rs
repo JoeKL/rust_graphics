@@ -1,4 +1,6 @@
-use crate::types::math::{Point3D, Vector3D,Mat4x4};
+use crate::types::math::{Mat4x4, Point3D, Vector3D};
+
+use super::frustum::Frustum;
 
 pub struct Camera {
     // positional parameters
@@ -12,6 +14,8 @@ pub struct Camera {
     pub aspect_ratio: f32,
     pub near: f32,
     pub far: f32,
+
+    pub frustum: Frustum,
 
     // Cache matrices to avoid recomputing when nothing changes
     look_at_matrix: Mat4x4,
@@ -28,6 +32,8 @@ impl Camera {
         let right = direction.cross(up).normalize();
         let up = right.cross(direction).normalize();
 
+        let frustum = Frustum::new();
+
         let mut camera = Self {
             position,
             direction,
@@ -37,6 +43,7 @@ impl Camera {
             aspect_ratio: 16.0 / 9.0,
             near: 0.1,
             far: 1000.0,
+            frustum,
             look_at_matrix: Mat4x4::identity(),
             projection_matrix: Mat4x4::identity(),
             frustum_matrix: Mat4x4::identity(),
@@ -108,7 +115,7 @@ impl Camera {
         };
 
         let fov_in_radians = self.fov_in_degrees.to_radians();
-        let f = 1.0 / (fov_in_radians / 2.0).tan(); 
+        let f = 1.0 / (fov_in_radians / 2.0).tan();
         self.projection_matrix = Mat4x4 {
             mat: [
                 [f / self.aspect_ratio, 0.0, 0.0, 0.0],
@@ -125,15 +132,16 @@ impl Camera {
 
         // Combine view and projection matrices
         self.frustum_matrix = self.projection_matrix.mul_mat(self.look_at_matrix);
+        self.frustum = Frustum::from_matrix(&self.frustum_matrix);
         self.needs_update = false;
     }
 
-    pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f32){
+    pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f32) {
         self.fov_in_degrees = fov_in_degrees;
         self.needs_update = true;
     }
 
-    pub fn get_fov_in_degrees(&self) -> f32{
+    pub fn get_fov_in_degrees(&self) -> f32 {
         self.fov_in_degrees
     }
 
@@ -142,7 +150,7 @@ impl Camera {
         self.update_matrices();
         self.look_at_matrix
     }
-    
+
     #[allow(dead_code)]
     pub fn get_projection_matrix(&mut self) -> Mat4x4 {
         self.update_matrices();
