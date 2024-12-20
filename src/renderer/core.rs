@@ -2,7 +2,12 @@ use super::{DrawCommand, Fragment, Frustum, Rasterizer};
 use crate::{
     scene::Scene,
     types::{
-        color::ColorRGB, display::ScreenPoint, light::PointLight, math::{Mat4x4, Point3D}, primitives::Vertex, shader::{FlatShader, Material, ShadingModel}
+        color::ColorRGB,
+        display::ScreenPoint,
+        light::PointLight,
+        math::{Mat4x4, Point3D},
+        primitives::Vertex,
+        shader::{FlatShader, Material, ShadingModel},
     },
 };
 
@@ -43,7 +48,7 @@ impl Renderer {
         let triangle_index_buffer: Vec<u32> = Vec::new();
         let draw_commands: Vec<DrawCommand> = Vec::new();
 
-        let transformed_vertices: Vec<Vertex> = Vec::new();       
+        let transformed_vertices: Vec<Vertex> = Vec::new();
 
         let fragment_buffer: Vec<Fragment> = Vec::new();
         let z_buffer: Vec<f32> = Vec::new();
@@ -80,31 +85,6 @@ impl Renderer {
         }
     }
 
-    fn calculate_barycentric(
-        x: f32,
-        y: f32,
-        v0: &[f32; 2],
-        v1: &[f32; 2],
-        v2: &[f32; 2],
-    ) -> (f32, f32, f32) {
-        // Compute vectors
-        let v0_to_v1 = [v1[0] - v0[0], v1[1] - v0[1]];
-        let v0_to_v2 = [v2[0] - v0[0], v2[1] - v0[1]];
-
-        // Compute denominator once
-        let denominator = v0_to_v1[0] * v0_to_v2[1] - v0_to_v2[0] * v0_to_v1[1];
-
-        // Point to v0 vector
-        let p_to_v0 = [x - v0[0], y - v0[1]];
-
-        // Calculate barycentric coordinates
-        let beta = (p_to_v0[0] * v0_to_v2[1] - v0_to_v2[0] * p_to_v0[1]) / denominator;
-        let gamma = (v0_to_v1[0] * p_to_v0[1] - p_to_v0[0] * v0_to_v1[1]) / denominator;
-        let alpha = 1.0 - beta - gamma;
-
-        (alpha, beta, gamma)
-    }
-
     /// Command Stream - Collect and prepare draw calls
     fn process_commands(&mut self, scene: &mut Scene) {
         // - Set up vertex/index buffer ranges
@@ -118,58 +98,59 @@ impl Renderer {
         // at some point materials from the resource manager
         // build the depth buffer (this could also be done earlier)
 
-        (self.vertex_buffer, self.triangle_index_buffer, self.draw_commands) = scene.collect();
+        (
+            self.vertex_buffer,
+            self.triangle_index_buffer,
+            self.draw_commands,
+        ) = scene.collect();
+
+        //clone vertices so we can still access original vertices
         self.transformed_vertices = self.vertex_buffer.clone();
     }
 
     /// Vertex Processing Stage
     fn process_vertices(&mut self, scene: &Scene) {
-        for draw_command in &self.draw_commands {
-            for vertex_idx in 0..draw_command.vertex_count {
-                // 1. Local to World transform
-                self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx]
-                    .transform(draw_command.transform);              
-            }
+        let mut transformed_lights: Vec<PointLight> = Vec::new();
+        for light in &scene.lights {
+            transformed_lights.push(PointLight::new_transformed_light(
+                light,
+                self.look_at_matrix,
+            ))
         }
 
         for draw_command in &self.draw_commands {
-            for vertex_idx in 0..draw_command.vertex_count {       
-                // 2. World to look_at transform (camera space)
+            for vertex_idx in 0..draw_command.vertex_count {
+                // 1. Model to World transform (Model space -> World space)
+                self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx]
+                    .transform(draw_command.transform);
+
+                // 2. World to look_at transform (world space -> view/camera space)
                 self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx]
                     .transform(self.look_at_matrix);
-            }
-        }
-        let mut transformed_lights: Vec<PointLight> = Vec::new();
-        for light in &scene.lights{
-            transformed_lights.push(PointLight::new_transformed_light(light, self.look_at_matrix))
-        }
 
-        for draw_command in &self.draw_commands {
-            // 3. Lighting calculations (in view space)
-            for vertex_idx in 0..draw_command.vertex_count {
-                let vertex = &mut self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx];
-                    vertex.color = self.shader.calc_color(
+                // 3. Lighting calculations (in view space)
+                let vertex =
+                    &mut self.transformed_vertices[draw_command.first_vertex_offset + vertex_idx];
+
+                vertex.color = self.shader.calc_color(
                     &vertex.position_to_point(),
                     &vertex.normal_to_vector(),
                     &vertex.color,
                     &scene.camera.direction.normalize(),
                     &self.material_cache[draw_command.material_id],
                     &transformed_lights,
-                )
+                );
+
+                // 4. Projection transform (View space -> Clip space)
+                let mut vertex_pos = self.projection_matrix.mul_point(vertex.position_to_point());
+
+                // 5. Homogeneous divide (w)
+                vertex_pos.dehomogen();
+
+                //6. Viewport transformation (Clip Space -> Screen space)
+                vertex_pos = self.viewport_matrix.mul_point(vertex_pos);
+                vertex.position = [vertex_pos.x, vertex_pos.y, vertex_pos.z]
             }
-        
-        }
-
-        for vertex in &mut self.transformed_vertices {
-            // 4. Projection transform
-            let mut vertex_pos = self.projection_matrix.mul_point(vertex.position_to_point());
-
-            // 5. Homogeneous divide (w)
-            vertex_pos.dehomogen();
-
-            //6. Viewport transformation (Clip Space -> Screen Space)
-            vertex_pos = self.viewport_matrix.mul_point(vertex_pos);
-            vertex.position = [vertex_pos.x, vertex_pos.y, vertex_pos.z]
         }
     }
 
@@ -181,7 +162,6 @@ impl Renderer {
 
         // For each draw command/mesh
         for draw_command in &self.draw_commands {
-
             let index_start = draw_command.first_triangle_index_offset;
             let index_length = draw_command.triangle_index_count;
             let index_end = index_length + index_start;
@@ -198,55 +178,27 @@ impl Renderer {
                 let v1 = &self.transformed_vertices[i1 as usize];
                 let v2 = &self.transformed_vertices[i2 as usize];
 
-                // Check if triangle is completely outside screen (change to || to if only one is enough)
-                if !self
-                    .rasterizer
-                    .framebuffer
-                    .is_in_bounds(v0.position[0] as i32, v0.position[1] as i32)
-                    && !self
-                        .rasterizer
-                        .framebuffer
-                        .is_in_bounds(v1.position[0] as i32, v1.position[1] as i32)
-                    && !self
-                        .rasterizer
-                        .framebuffer
-                        .is_in_bounds(v2.position[0] as i32, v2.position[1] as i32)
-                {
+                // Check if triangle is partly on screen
+                // if only all vertices are offscreen goto next triangle
+                if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
                     continue;
                 }
 
-                // Triangle setup (bounding box)
-                //calculate bounding box
-                // 50.min(60).min(40) -> 50.min(40) -> 40
-                let mut bounds_min_x = v0.position[0]
-                    .min(v1.position[0])
-                    .min(v2.position[0])
-                    .floor() as i32;
-                let mut bounds_max_x = v0.position[0]
-                    .max(v1.position[0])
-                    .max(v2.position[0])
-                    .ceil() as i32;
-                let mut bounds_min_y = v0.position[1]
-                    .min(v1.position[1])
-                    .min(v2.position[1])
-                    .floor() as i32;
-                let mut bounds_max_y = v0.position[1]
-                    .max(v1.position[1])
-                    .max(v2.position[1])
-                    .ceil() as i32;
+                let bounds_min_x: i32;
+                let bounds_min_y: i32;
+                let bounds_max_x: i32;
+                let bounds_max_y: i32;
 
-                // Clamp to screen boundaries before the loops
-                bounds_min_x = bounds_min_x.max(0);
-                bounds_max_x = bounds_max_x.min(self.rasterizer.framebuffer.get_width() as i32);
-
-                bounds_min_y = bounds_min_y.max(0);
-                bounds_max_y = bounds_max_y.min(self.rasterizer.framebuffer.get_height() as i32);
+                // create boundingbox from v0, v1, v2
+                (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
+                    self.rasterizer.calculate_bounding_box(&v0, &v1, &v2);
 
                 // For each pixel in triangle's bounding box:
-                for y in (bounds_min_y)..=(bounds_max_y) {
-                    for x in (bounds_min_x)..=(bounds_max_x) {
+                // traverse the bounding box in scanline
+                for y in (bounds_min_y)..(bounds_max_y) {
+                    for x in (bounds_min_x)..(bounds_max_x) {
                         //   - Calculate barycentric coordinates
-                        let (alpha, beta, gamma) = Renderer::calculate_barycentric(
+                        let (alpha, beta, gamma) = Rasterizer::calculate_barycentric(
                             x as f32,
                             y as f32,
                             &[v0.position[0], v0.position[1]],
@@ -270,20 +222,20 @@ impl Renderer {
                                 alpha * v0.color[2] + beta * v1.color[2] + gamma * v2.color[2],
                             ];
 
+                            let interpolated_normal = [
+                                alpha * v0.normal[0] + beta * v1.normal[0] + gamma * v2.normal[0],
+                                alpha * v0.normal[1] + beta * v1.normal[1] + gamma * v2.normal[1],
+                                alpha * v0.normal[2] + beta * v1.normal[2] + gamma * v2.normal[2],
+                            ];
+
+                            //setup z index to access right place in buffer
                             let z_buffer_idx =
                                 y as usize * self.rasterizer.framebuffer.get_width() + x as usize;
-
-                            if z_buffer_idx
-                                >= self.rasterizer.framebuffer.get_width()
-                                    * self.rasterizer.framebuffer.get_height()
-                            {
-                                continue;
-                            }
 
                             //   - Create and store fragment if Z-test passes
                             // Z-test before creating fragment
                             if interpolated_z < self.z_buffer[z_buffer_idx] {
-                                // Only if closer than what's already there
+                                // Only if closer than what's in zbuffer at coordinates
                                 self.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
 
                                 self.fragment_buffer.push(Fragment {
@@ -291,6 +243,7 @@ impl Renderer {
                                     y,
                                     z: interpolated_z,
                                     color: interpolated_color,
+                                    normal: interpolated_normal,
                                     material_id: draw_command.material_id,
                                 });
                             }
@@ -304,23 +257,23 @@ impl Renderer {
     /// Fragment Processing Stage
     fn process_fragments(&mut self) {
         // Process each fragment in the fragment buffer
-        // for fragment in &self.fragment_buffer {
+        //
         //     // Apply any per-fragment effects
         //     // Could include:
         //     // - Alpha testing
         //     // - Additional material effects
         //     // - Special effects
-
-        // }
     }
+
     /// Blending Stage
     fn blend(&mut self) {
+        //nothing to do so far, since transparency is not added yet
+        //
         // - Color blending
         // - Final color output
         // - Framebuffer updates
 
         // Write final color to framebuffer
-
         for fragment in &self.fragment_buffer {
             self.rasterizer.framebuffer.set_pixel(
                 fragment.x,
