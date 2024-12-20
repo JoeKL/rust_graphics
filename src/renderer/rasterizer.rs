@@ -1,6 +1,7 @@
 use crate::renderer::{FrameBuffer, Viewport};
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
+use crate::types::primitives::Vertex;
 
 pub struct Rasterizer {
     pub framebuffer: FrameBuffer,
@@ -22,7 +23,7 @@ impl Rasterizer {
     /// * `p1` - Ending point of the line
     /// * `color` - Color value to draw the line with (32-bit RGB/RGBA)
     ///
-    /// 
+    ///
     /// ### Example
     ///
     /// ```
@@ -36,12 +37,7 @@ impl Rasterizer {
     ///
     /// * The points are taken as mutable because they may be swapped internally
     /// * Works with both shallow and steep line angles
-    pub fn draw_line(
-        &mut self,
-        mut p0: ScreenPoint,
-        mut p1: ScreenPoint,
-        color: ColorRGB,
-    ) {
+    pub fn draw_line(&mut self, mut p0: ScreenPoint, mut p1: ScreenPoint, color: ColorRGB) {
         // Handle vertical lines specially
         if p1.x == p0.x {
             let (start_y, end_y) = if p0.y > p1.y {
@@ -81,7 +77,7 @@ impl Rasterizer {
 
         let slope_m = (p1.y - p0.y) as f32 / (p1.x - p0.x) as f32;
         let steep = slope_m.abs() > 1.0;
-        
+
         if steep {
             // Swap x and y coordinates if slope is steep
             std::mem::swap(&mut p0.x, &mut p0.y);
@@ -106,4 +102,77 @@ impl Rasterizer {
         }
     }
 
+    pub fn calculate_bounding_box(
+        &self,
+        v0: &Vertex,
+        v1: &Vertex,
+        v2: &Vertex,
+    ) -> (i32, i32, i32, i32) {
+        // Triangle setup (bounding box)
+        //calculate bounding box
+        // 50.min(60).min(40) -> 50.min(40) -> 40
+        let mut bounds_min_x = v0.position[0]
+            .min(v1.position[0])
+            .min(v2.position[0])
+            .floor() as i32;
+        let mut bounds_max_x = v0.position[0]
+            .max(v1.position[0])
+            .max(v2.position[0])
+            .ceil() as i32;
+        let mut bounds_min_y = v0.position[1]
+            .min(v1.position[1])
+            .min(v2.position[1])
+            .floor() as i32;
+        let mut bounds_max_y = v0.position[1]
+            .max(v1.position[1])
+            .max(v2.position[1])
+            .ceil() as i32;
+
+        // Clamp to screen boundaries before the loops
+        bounds_min_x = bounds_min_x.max(0);
+        bounds_max_x = bounds_max_x.min(self.framebuffer.get_width() as i32);
+
+        bounds_min_y = bounds_min_y.max(0);
+        bounds_max_y = bounds_max_y.min(self.framebuffer.get_height() as i32);
+
+        (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y)
+    }
+
+    pub fn is_triangle_on_screen(&self, v0: &Vertex, v1: &Vertex, v2: &Vertex) -> bool {
+        // this returns true when one of the vertices is on screen
+        // and false if all are off
+        self.framebuffer
+            .is_in_bounds(v0.position[0] as i32, v0.position[1] as i32)
+            || self
+                .framebuffer
+                .is_in_bounds(v1.position[0] as i32, v1.position[1] as i32)
+            || self
+                .framebuffer
+                .is_in_bounds(v2.position[0] as i32, v2.position[1] as i32)
+    }
+
+    pub fn calculate_barycentric(
+        x: f32,
+        y: f32,
+        v0: &[f32; 2],
+        v1: &[f32; 2],
+        v2: &[f32; 2],
+    ) -> (f32, f32, f32) {
+        // Compute vectors
+        let v0_to_v1 = [v1[0] - v0[0], v1[1] - v0[1]];
+        let v0_to_v2 = [v2[0] - v0[0], v2[1] - v0[1]];
+
+        // Compute denominator once
+        let denominator = v0_to_v1[0] * v0_to_v2[1] - v0_to_v2[0] * v0_to_v1[1];
+
+        // Point to v0 vector
+        let p_to_v0 = [x - v0[0], y - v0[1]];
+
+        // Calculate barycentric coordinates
+        let beta = (p_to_v0[0] * v0_to_v2[1] - v0_to_v2[0] * p_to_v0[1]) / denominator;
+        let gamma = (v0_to_v1[0] * p_to_v0[1] - p_to_v0[0] * v0_to_v1[1]) / denominator;
+        let alpha = 1.0 - beta - gamma;
+
+        (alpha, beta, gamma)
+    }
 }
