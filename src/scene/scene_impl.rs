@@ -58,6 +58,7 @@ impl Scene {
         }
     }
 
+    // depth first traversal of scene tree and return vertices, triangle_indices and draw commands
     pub fn collect(&mut self) -> (Vec<Vertex>, Vec<u32>, Vec<DrawCommand>) {
         let mut vertex_buffer: Vec<Vertex> = Vec::new();
         let mut triangle_index_buffer: Vec<u32> = Vec::new();
