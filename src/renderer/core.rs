@@ -285,12 +285,6 @@ impl Renderer {
                 ),
             );
         }
-
-        // clear buffer afterwards
-        self.fragment_buffer.clear();
-        self.vertex_buffer.clear();
-        self.transformed_vertices.clear();
-        self.draw_commands.clear();
     }
 
     pub fn render_scene(&mut self, scene: &mut Scene) {
@@ -320,6 +314,12 @@ impl Renderer {
         self.rasterize();
         self.process_fragments();
         self.blend();
+
+        // clear buffer afterwards
+        self.fragment_buffer.clear();
+        self.vertex_buffer.clear();
+        self.transformed_vertices.clear();
+        self.draw_commands.clear();
     }
 
     pub fn render_axis(&mut self, scene: &mut Scene) {
