@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use crate::types::math::{Mat4x4, Point3D, Vector3D};
 use crate::types::primitives::Vertex;
+use std::env;
+use std::fs;
 use std::sync::atomic::Ordering;
 
 use crate::models::*;
@@ -15,6 +17,7 @@ pub struct Mesh {
     pub material_indices: Vec<u32>, // each index in this array represents one triangle in triangle_indices
     pub vertex_triangle_adj_list: Vec<Vec<usize>>, // 1:[721, 733, 744] //vertex_index:[triangle_index, triangle_index, triangle_index]
 }
+
 impl Mesh {
     pub fn new() -> Self {
         let id = MESH_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
@@ -236,6 +239,83 @@ impl Mesh {
         }
         mesh.build_adj_list();
         mesh.calculate_vertex_normals();
+        mesh
+    }
+
+    pub fn load_obj(obj_path: &str, material_id: u32, color: [f32; 3]) -> Self {
+        let mut mesh = Mesh::new();
+
+        let contents = fs::read_to_string(obj_path).expect("Couldnt parse obj file {0}");
+
+        let vertices: Vec<f32> = contents
+            .lines()
+            .filter(|line| line.starts_with("v"))
+            .flat_map(|vertex_line| {
+                vertex_line
+                    .split(' ')
+                    .skip(1)
+                    .filter(|s| !s.is_empty())
+                    .take(3)
+                    .map(|s| s.parse::<f32>().expect("Failed to parse coordinate as f32"))
+            })
+            .collect();
+
+        let vertex_normals: Vec<f32> = contents
+            .lines()
+            .filter(|line| line.starts_with("vn"))
+            .flat_map(|vertex_line| {
+                vertex_line
+                    .split(' ')
+                    .skip(1)
+                    .filter(|s| !s.is_empty())
+                    .take(3)
+                    .map(|s| s.parse::<f32>().expect("Failed to parse coordinate as f32"))
+            })
+            .collect();
+
+        let faces: Vec<u32> = contents
+            .lines()
+            .filter(|line| line.starts_with("f"))
+            .flat_map(|vertex_line| {
+                vertex_line
+                    .split(' ')
+                    .skip(1)
+                    .filter(|s| !s.is_empty())
+                    .take(3)
+                    .map(|s| s.parse::<u32>().expect("Failed to parse coordinate as u32"))
+            })
+            .collect();
+
+        let position_chunks = vertices.chunks_exact(3);
+
+        let normal_chunks = vertex_normals.chunks_exact(3);
+
+        let face_chunks = faces.chunks_exact(3);
+
+        for (pos_slice, normal_slice) in position_chunks.zip(normal_chunks) {
+            let position: [f32; 3] = pos_slice.try_into().expect("Position data error");
+
+            let normal: [f32; 3] = normal_slice.try_into().expect("Normal data error");
+
+            let vertex = Vertex {
+                position,
+                normal,
+                color,
+            };
+
+            mesh.vertices.push(vertex);
+        }
+
+        // process triangle indices to triangles
+        for face_slice in face_chunks {
+            let indices = [face_slice[0] - 1, face_slice[1] - 1, face_slice[2] - 1];
+
+            // Add triangle with default material (say, 0)
+            mesh.add_triangle(indices, material_id);
+        }
+
+        mesh.build_adj_list();
+
         mesh
     }
 }

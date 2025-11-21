@@ -90,8 +90,8 @@ impl Engine {
         let mut x_rot: f32 = 0.00;
         let mut y_rot: f32 = 0.00;
 
-        let x_rot_delta = 0.1;
-        let y_rot_delta = 0.1;
+        let x_rot_delta = 0.05;
+        let y_rot_delta = 0.05;
 
         if input_handler.is_key_down(minifb::Key::W) {
             x_rot += x_rot_delta;
@@ -139,8 +139,10 @@ impl Engine {
             let dist_center_threshhold = 50.0;
 
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -= (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
-            mouse_pos_relative_center.y -= (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
+            mouse_pos_relative_center.x -=
+                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+            mouse_pos_relative_center.y -=
+                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
 
             let rotation_factor = 25000.0;
 
@@ -172,7 +174,6 @@ impl Engine {
                 [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
                 [0.0, 0.0, 0.0, 1.0],
             ]);
-
 
             let focus_segment = match self.augmentation_segment {
                 0 => &mut self.scene.root_node.children[0],
@@ -235,7 +236,6 @@ impl Engine {
             scale += scale_delta;
         }
 
-
         let focus_segment = match self.augmentation_segment {
             0 => &mut self.scene.root_node.children[0],
             1 => &mut self.scene.root_node.children[0].children[0],
@@ -270,8 +270,10 @@ impl Engine {
                 (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32,
             );
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -= (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
-            mouse_pos_relative_center.y -= (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
+            mouse_pos_relative_center.x -=
+                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+            mouse_pos_relative_center.y -=
+                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
             let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
 
             let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);

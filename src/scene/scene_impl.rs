@@ -38,14 +38,23 @@ impl Scene {
         let mut child_ball_node = SceneNode::new();
         let mut grandchild_ball_node = SceneNode::new();
 
-        ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
+        // ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
+        // child_ball_node.set_mesh(Mesh::create_ball(1, [0.78, 0.42, 0.0]));
+        // grandchild_ball_node.set_mesh(Mesh::create_ball(2, [0.78, 0.0, 0.6]));
 
-        //  ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
-        child_ball_node.set_mesh(Mesh::create_ball(1, [0.78, 0.42, 0.0]));
-        grandchild_ball_node.set_mesh(Mesh::create_ball(2, [0.78, 0.0, 0.6]));
+        ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 0, [0.0, 1.0, 0.8]));
+        child_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 1, [0.78, 0.42, 0.0]));
+        grandchild_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 2, [0.78, 0.0, 0.6]));
 
-        child_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
-        grandchild_ball_node.set_position(Vector3D::new(2.5, 0.0, 0.0));
+        ball_node.set_scale(Vector3D {
+            x: (0.015),
+            y: (0.015),
+            z: (0.015),
+            w: (1),
+        });
+
+        child_ball_node.set_position(Vector3D::new(2.5 * 100.0, 0.0, 0.0));
+        grandchild_ball_node.set_position(Vector3D::new(2.5 * 100.0, 0.0, 0.0));
 
         child_ball_node.add_child(grandchild_ball_node);
         ball_node.add_child(child_ball_node);

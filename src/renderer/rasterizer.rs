@@ -138,9 +138,13 @@ impl Rasterizer {
         (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y)
     }
 
+    /// takes 3 Points and checks of all of them are on screen
+    ///
+    ///
     pub fn is_triangle_on_screen(&self, v0: &Vertex, v1: &Vertex, v2: &Vertex) -> bool {
         // this returns true when one of the vertices is on screen
         // and false if all are off
+        // cool effect if changed to &&. it then only draws if ALL of them are on screen
         self.framebuffer
             .is_in_bounds(v0.position[0] as i32, v0.position[1] as i32)
             || self

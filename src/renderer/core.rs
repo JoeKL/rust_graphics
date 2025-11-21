@@ -179,7 +179,6 @@ impl Renderer {
                 let v2 = &self.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                // if only all vertices are offscreen goto next triangle
                 if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
                     continue;
                 }
@@ -273,6 +272,15 @@ impl Renderer {
         // - Final color output
         // - Framebuffer updates
 
+        // get highest z value
+        let mut max_z: f32 = 0.0;
+
+        for fragment in &self.fragment_buffer {
+            if fragment.z > max_z {
+                max_z = fragment.z;
+            }
+        }
+
         // Write final color to framebuffer
         for fragment in &self.fragment_buffer {
             self.rasterizer.framebuffer.set_pixel(
@@ -283,6 +291,11 @@ impl Renderer {
                     ColorRGB::f32_to_color_component(fragment.color[1]),
                     ColorRGB::f32_to_color_component(fragment.color[2]),
                 ),
+                // ColorRGB::from_rgb(
+                //     ((max_z - fragment.z) * 2550.0) as u8,
+                //     ((max_z - fragment.z) * 2550.0) as u8,
+                //     ((max_z - fragment.z) * 2550.0) as u8,
+                // ),
             );
         }
     }

@@ -114,7 +114,7 @@ impl SceneNode {
         // Apply scale and rotation
         let transform = Mat4x4::from_scale(self.scale).mul_mat(self.rotation);
         // Translate back
-        let from_origin = Mat4x4::from_translation(self.position); 
+        let from_origin = Mat4x4::from_translation(self.position);
 
         // Order: translate back * (scale * rotate) * translate to origin
         from_origin.mul_mat(transform).mul_mat(to_origin)
@@ -139,16 +139,14 @@ impl SceneNode {
     // update children's stacks recursively
     fn update_children_stacks(&mut self) {
         for child in &mut self.children {
-
             let child_local = match child.has_dirty_locals {
-                false => {
-                    // If locals are dirty, try to reuse existing transform or recalculate
-                    child.transform_stack
-                        .pop()
-                        .unwrap_or_else(|| child.calculate_local_transform())
-                }
+                // If locals arent dirty, try to reuse existing transform or recalculate
+                false => child
+                    .transform_stack
+                    .pop()
+                    .unwrap_or_else(|| child.calculate_local_transform()),
                 true => {
-                    // If locals aren't dirty, just recalculate
+                    // If locals are dirty, just recalculate
                     child.calculate_local_transform()
                 }
             };
@@ -174,8 +172,6 @@ impl SceneNode {
         // Multiply entire stack
         self.transform_stack
             .iter()
-            .fold(Mat4x4::identity(), |acc, transform| {
-                acc.mul_mat(*transform)
-            })
+            .fold(Mat4x4::identity(), |acc, transform| acc.mul_mat(*transform))
     }
 }
