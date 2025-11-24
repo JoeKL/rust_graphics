@@ -41,6 +41,7 @@ impl Engine {
             scene,
             frame,
             augmentation_segment,
+
             draw_axis,
             draw_lights,
             draw_ball_line,
@@ -48,12 +49,12 @@ impl Engine {
     }
 
     fn process_input(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_key_pressed(minifb::Key::Space) {
-            self.augmentation_segment += 1;
-            if self.augmentation_segment > 2 {
-                self.augmentation_segment = 0;
-            }
-        }
+        // if input_handler.is_key_pressed(minifb::Key::Space) {
+        //     self.augmentation_segment += 1;
+        //     if self.augmentation_segment > 2 {
+        //         self.augmentation_segment = 0;
+        //     }
+        // }
 
         if input_handler.is_key_pressed(minifb::Key::K) {
             // toggles draw_axis
@@ -63,6 +64,31 @@ impl Engine {
         if input_handler.is_key_pressed(minifb::Key::L) {
             //toggle draw_lights
             self.draw_lights = !self.draw_lights;
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::Z) {
+            //toggle draw_vertex
+            self.renderer.draw_z_buffer = !self.renderer.draw_z_buffer;
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::C) {
+            //toggle draw_vertex
+            self.renderer.draw_vertex = !self.renderer.draw_vertex;
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::V) {
+            //toggle draw_vertex_normals
+            self.renderer.draw_vertex_normals = !self.renderer.draw_vertex_normals;
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::B) {
+            //next render mode
+            self.renderer.draw_face_normals = !self.renderer.draw_face_normals;
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::X) {
+            //next render mode
+            self.renderer.draw_wireframe = !self.renderer.draw_wireframe;
         }
 
         self.change_camera_fov(input_handler);
@@ -264,6 +290,7 @@ impl Engine {
         if self.draw_lights {
             self.renderer.render_light_vectors(&mut self.scene);
         }
+
         if self.draw_ball_line {
             let screen_center = Point2D::new(
                 (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32,

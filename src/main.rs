@@ -1,18 +1,17 @@
-
-mod types;
-mod scene;
-mod models;
 mod engine;
 mod input;
+mod models;
 mod renderer;
+mod scene;
+mod types;
 
-use minifb::{Key, Window, WindowOptions};
 use engine::Engine;
 use input::InputHandler;
+use minifb::{Key, Window, WindowOptions};
 use std::time::Instant;
 
-static WINDOW_WIDTH: usize = 1280;
-static WINDOW_HEIGHT: usize = 720;
+static WINDOW_WIDTH: usize = 1920;
+static WINDOW_HEIGHT: usize = 1080;
 
 fn main() {
     let mut window = Window::new(
@@ -38,7 +37,6 @@ fn main() {
     let mut frame_count = 0;
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-
         //increase frames_count
         frame_count += 1;
 
@@ -54,7 +52,11 @@ fn main() {
         input_handler.update(&window);
 
         window
-            .update_with_buffer(render_engine.run(&input_handler), WINDOW_WIDTH, WINDOW_HEIGHT)
+            .update_with_buffer(
+                render_engine.run(&input_handler),
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT,
+            )
             .unwrap();
     }
 }

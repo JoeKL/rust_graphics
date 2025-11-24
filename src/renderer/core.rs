@@ -1,4 +1,4 @@
-use super::{DrawCommand, Fragment, Frustum, Rasterizer};
+use super::{fragment, DrawCommand, Fragment, Frustum, Rasterizer};
 use crate::{
     scene::Scene,
     types::{
@@ -40,6 +40,12 @@ pub struct Renderer {
 
     pub rasterizer: Rasterizer,
     pub shader: FlatShader,
+
+    pub draw_z_buffer: bool,
+    pub draw_wireframe: bool,
+    pub draw_vertex: bool,
+    pub draw_vertex_normals: bool,
+    pub draw_face_normals: bool,
 }
 
 impl Renderer {
@@ -62,6 +68,13 @@ impl Renderer {
         let view_frustum: Frustum = Frustum::new();
 
         // let frame_buffer: Vec<Vec<Color>>= Vec::new();
+
+        let draw_z_buffer = false;
+        let draw_wireframe = false;
+        let draw_vertex = false;
+        let draw_vertex_normals = false;
+        let draw_face_normals = false;
+
         Self {
             vertex_buffer,
             triangle_index_buffer,
@@ -82,6 +95,12 @@ impl Renderer {
 
             rasterizer: Rasterizer::new(window_width, window_height),
             shader: FlatShader,
+
+            draw_z_buffer,
+            draw_wireframe,
+            draw_vertex,
+            draw_vertex_normals,
+            draw_face_normals,
         }
     }
 
@@ -160,91 +179,201 @@ impl Renderer {
         // - Generate fragments
         // - Interpolate vertex attributes
 
-        // For each draw command/mesh
-        for draw_command in &self.draw_commands {
-            let index_start = draw_command.first_triangle_index_offset;
-            let index_length = draw_command.triangle_index_count;
-            let index_end = index_length + index_start;
+        if self.draw_vertex {
+            // only draw vertices as dots
 
-            // Process indices in groups of 3 to form triangles
-            for i in (index_start..index_end).step_by(3) {
-                // Get vertex indices
-                let i0 = self.triangle_index_buffer[i];
-                let i1 = self.triangle_index_buffer[i + 1];
-                let i2 = self.triangle_index_buffer[i + 2];
+            // For each draw command/mesh
+            for draw_command in &self.draw_commands {
+                let index_start = draw_command.first_triangle_index_offset;
+                let index_length = draw_command.triangle_index_count;
+                let index_end = index_length + index_start;
 
-                // Get transformed vertices
-                let v0: &Vertex = &self.transformed_vertices[i0 as usize];
-                let v1 = &self.transformed_vertices[i1 as usize];
-                let v2 = &self.transformed_vertices[i2 as usize];
+                // Process indices in groups of 3 to form triangles
+                for i in (index_start..index_end).step_by(3) {
+                    // Get vertex indices
+                    let i0 = self.triangle_index_buffer[i];
+                    let i1 = self.triangle_index_buffer[i + 1];
+                    let i2 = self.triangle_index_buffer[i + 2];
 
-                // Check if triangle is partly on screen
-                if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
-                    continue;
+                    // Get transformed vertices
+                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                    let v1 = &self.transformed_vertices[i1 as usize];
+                    let v2 = &self.transformed_vertices[i2 as usize];
+
+                    // Check if triangle is partly on screen
+                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                        continue;
+                    }
+
+                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+
+                    fragment_storage.extend([
+                        [v0.position[0] as i32, v0.position[1] as i32],
+                        [v1.position[0] as i32, v1.position[1] as i32],
+                        [v2.position[0] as i32, v2.position[1] as i32],
+                    ]);
+
+                    for fragment_chunk in fragment_storage {
+                        self.fragment_buffer.push(Fragment {
+                            x: fragment_chunk[0],
+                            y: fragment_chunk[1],
+                            z: 0.0,
+                            color: [1.0, 1.0, 1.0],
+                            normal: [0.0, 0.0, 0.0],
+                            material_id: 0,
+                        });
+                    }
                 }
+            }
+        } else if self.draw_wireframe {
+            // only draw wireframe
 
-                let bounds_min_x: i32;
-                let bounds_min_y: i32;
-                let bounds_max_x: i32;
-                let bounds_max_y: i32;
+            // For each draw command/mesh
+            for draw_command in &self.draw_commands {
+                let index_start = draw_command.first_triangle_index_offset;
+                let index_length = draw_command.triangle_index_count;
+                let index_end = index_length + index_start;
 
-                // create boundingbox from v0, v1, v2
-                (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
-                    self.rasterizer.calculate_bounding_box(&v0, &v1, &v2);
+                // Process indices in groups of 3 to form triangles
+                for i in (index_start..index_end).step_by(3) {
+                    // Get vertex indices
+                    let i0 = self.triangle_index_buffer[i];
+                    let i1 = self.triangle_index_buffer[i + 1];
+                    let i2 = self.triangle_index_buffer[i + 2];
 
-                // For each pixel in triangle's bounding box:
-                // traverse the bounding box in scanline
-                for y in (bounds_min_y)..(bounds_max_y) {
-                    for x in (bounds_min_x)..(bounds_max_x) {
-                        //   - Calculate barycentric coordinates
-                        let (alpha, beta, gamma) = Rasterizer::calculate_barycentric(
-                            x as f32,
-                            y as f32,
-                            &[v0.position[0], v0.position[1]],
-                            &[v1.position[0], v1.position[1]],
-                            &[v2.position[0], v2.position[1]],
-                        );
+                    // Get transformed vertices
+                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                    let v1 = &self.transformed_vertices[i1 as usize];
+                    let v2 = &self.transformed_vertices[i2 as usize];
 
-                        //   - Test if pixel is inside triangle
-                        if (0.0..=1.0).contains(&alpha)
-                            && (0.0..=1.0).contains(&beta)
-                            && (0.0..=1.0).contains(&gamma)
-                        {
-                            //   - Interpolate Z, color, normal using barycentric
-                            let interpolated_z = alpha * v0.position[2]
-                                + beta * v1.position[2]
-                                + gamma * v2.position[2];
+                    // Check if triangle is partly on screen
+                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                        continue;
+                    }
 
-                            let interpolated_color = [
-                                alpha * v0.color[0] + beta * v1.color[0] + gamma * v2.color[0],
-                                alpha * v0.color[1] + beta * v1.color[1] + gamma * v2.color[1],
-                                alpha * v0.color[2] + beta * v1.color[2] + gamma * v2.color[2],
-                            ];
+                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
 
-                            let interpolated_normal = [
-                                alpha * v0.normal[0] + beta * v1.normal[0] + gamma * v2.normal[0],
-                                alpha * v0.normal[1] + beta * v1.normal[1] + gamma * v2.normal[1],
-                                alpha * v0.normal[2] + beta * v1.normal[2] + gamma * v2.normal[2],
-                            ];
+                    fragment_storage.extend(self.rasterizer.calculate_line(
+                        [v0.position[0] as i32, v0.position[1] as i32],
+                        [v1.position[0] as i32, v1.position[1] as i32],
+                    ));
 
-                            //setup z index to access right place in buffer
-                            let z_buffer_idx =
-                                y as usize * self.rasterizer.framebuffer.get_width() + x as usize;
+                    fragment_storage.extend(self.rasterizer.calculate_line(
+                        [v1.position[0] as i32, v1.position[1] as i32],
+                        [v2.position[0] as i32, v2.position[1] as i32],
+                    ));
 
-                            //   - Create and store fragment if Z-test passes
-                            // Z-test before creating fragment
-                            if interpolated_z < self.z_buffer[z_buffer_idx] {
-                                // Only if closer than what's in zbuffer at coordinates
-                                self.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
+                    fragment_storage.extend(self.rasterizer.calculate_line(
+                        [v0.position[0] as i32, v0.position[1] as i32],
+                        [v2.position[0] as i32, v2.position[1] as i32],
+                    ));
 
-                                self.fragment_buffer.push(Fragment {
-                                    x,
-                                    y,
-                                    z: interpolated_z,
-                                    color: interpolated_color,
-                                    normal: interpolated_normal,
-                                    material_id: draw_command.material_id,
-                                });
+                    for fragment_chunk in fragment_storage {
+                        self.fragment_buffer.push(Fragment {
+                            x: fragment_chunk[0],
+                            y: fragment_chunk[1],
+                            z: 0.0,
+                            color: [1.0, 1.0, 1.0],
+                            normal: [0.0, 0.0, 0.0],
+                            material_id: 0,
+                        });
+                    }
+                }
+            }
+        } else {
+            // For each draw command/mesh
+            for draw_command in &self.draw_commands {
+                let index_start = draw_command.first_triangle_index_offset;
+                let index_length = draw_command.triangle_index_count;
+                let index_end = index_length + index_start;
+
+                // Process indices in groups of 3 to form triangles
+                for i in (index_start..index_end).step_by(3) {
+                    // Get vertex indices
+                    let i0 = self.triangle_index_buffer[i];
+                    let i1 = self.triangle_index_buffer[i + 1];
+                    let i2 = self.triangle_index_buffer[i + 2];
+
+                    // Get transformed vertices
+                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                    let v1 = &self.transformed_vertices[i1 as usize];
+                    let v2 = &self.transformed_vertices[i2 as usize];
+
+                    // Check if triangle is partly on screen
+                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                        continue;
+                    }
+
+                    let bounds_min_x: i32;
+                    let bounds_min_y: i32;
+                    let bounds_max_x: i32;
+                    let bounds_max_y: i32;
+
+                    // create boundingbox from v0, v1, v2
+                    (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
+                        self.rasterizer.calculate_bounding_box(&v0, &v1, &v2);
+
+                    // For each pixel in triangle's bounding box:
+                    // traverse the bounding box in scanline
+                    for y in (bounds_min_y)..(bounds_max_y) {
+                        for x in (bounds_min_x)..(bounds_max_x) {
+                            //   - Calculate barycentric coordinates
+                            let (alpha, beta, gamma) = Rasterizer::calculate_barycentric(
+                                x as f32,
+                                y as f32,
+                                &[v0.position[0], v0.position[1]],
+                                &[v1.position[0], v1.position[1]],
+                                &[v2.position[0], v2.position[1]],
+                            );
+
+                            // Test if pixel is inside triangle
+                            if (0.0..=1.0).contains(&alpha)
+                                && (0.0..=1.0).contains(&beta)
+                                && (0.0..=1.0).contains(&gamma)
+                            {
+                                // Interpolate Z, color, normal using barycentric
+                                let interpolated_z = alpha * v0.position[2]
+                                    + beta * v1.position[2]
+                                    + gamma * v2.position[2];
+
+                                let interpolated_color = [
+                                    alpha * v0.color[0] + beta * v1.color[0] + gamma * v2.color[0],
+                                    alpha * v0.color[1] + beta * v1.color[1] + gamma * v2.color[1],
+                                    alpha * v0.color[2] + beta * v1.color[2] + gamma * v2.color[2],
+                                ];
+
+                                let interpolated_normal = [
+                                    alpha * v0.normal[0]
+                                        + beta * v1.normal[0]
+                                        + gamma * v2.normal[0],
+                                    alpha * v0.normal[1]
+                                        + beta * v1.normal[1]
+                                        + gamma * v2.normal[1],
+                                    alpha * v0.normal[2]
+                                        + beta * v1.normal[2]
+                                        + gamma * v2.normal[2],
+                                ];
+
+                                // setup z index to access right place in buffer
+                                let z_buffer_idx = y as usize
+                                    * self.rasterizer.framebuffer.get_width()
+                                    + x as usize;
+
+                                // Create and store fragment if Z-test passes
+                                // Z-test before creating fragment
+                                if interpolated_z < self.z_buffer[z_buffer_idx] {
+                                    // Only if closer than what's in zbuffer at coordinates
+                                    self.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
+
+                                    self.fragment_buffer.push(Fragment {
+                                        x,
+                                        y,
+                                        z: interpolated_z,
+                                        color: interpolated_color,
+                                        normal: interpolated_normal,
+                                        material_id: draw_command.material_id,
+                                    });
+                                }
                             }
                         }
                     }
@@ -272,31 +401,39 @@ impl Renderer {
         // - Final color output
         // - Framebuffer updates
 
-        // get highest z value
-        let mut max_z: f32 = 0.0;
+        // get z value range
+        let mut z_near: f32 = 0.0;
+        let mut z_far: f32 = f32::INFINITY;
 
         for fragment in &self.fragment_buffer {
-            if fragment.z > max_z {
-                max_z = fragment.z;
+            if fragment.z < z_far {
+                z_far = fragment.z;
+            }
+            if fragment.z > z_near {
+                z_near = fragment.z;
             }
         }
 
+        let z_range = z_far - z_near; // Pre-calculate the denominator
+
         // Write final color to framebuffer
         for fragment in &self.fragment_buffer {
-            self.rasterizer.framebuffer.set_pixel(
-                fragment.x,
-                fragment.y,
+            let final_color = if self.draw_z_buffer {
+                let z_norm = (fragment.z - z_near) / z_range;
+                let color_u8 = (z_norm.clamp(0.0, 1.0) * 255.0) as u8;
+                ColorRGB::from_rgb(color_u8, color_u8, color_u8)
+            } else {
+                // Standard fragment color calculation
                 ColorRGB::from_rgb(
                     ColorRGB::f32_to_color_component(fragment.color[0]),
                     ColorRGB::f32_to_color_component(fragment.color[1]),
                     ColorRGB::f32_to_color_component(fragment.color[2]),
-                ),
-                // ColorRGB::from_rgb(
-                //     ((max_z - fragment.z) * 2550.0) as u8,
-                //     ((max_z - fragment.z) * 2550.0) as u8,
-                //     ((max_z - fragment.z) * 2550.0) as u8,
-                // ),
-            );
+                )
+            };
+
+            self.rasterizer
+                .framebuffer
+                .set_pixel(fragment.x, fragment.y, final_color);
         }
     }
 

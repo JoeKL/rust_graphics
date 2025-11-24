@@ -91,6 +91,8 @@ impl Mesh {
             let mut weighted_normal: [f32; 3] = [0.0, 0.0, 0.0];
 
             //https://github.com/vijaiaeroastro/HalfMesh/tree/master/include ?? :(
+            //wtf am i even doing with that comment. probably need to implement halfmeshes but its
+            //so long ago wtf
 
             for triangle_index in vertex_entry {
                 let v0_idx = self.triangle_indices[triangle_index * 3] as usize;
@@ -273,49 +275,100 @@ impl Mesh {
             })
             .collect();
 
+        // f 11250//11250 4406//4406 31248//31248
+        //
         let faces: Vec<u32> = contents
             .lines()
             .filter(|line| line.starts_with("f"))
             .flat_map(|vertex_line| {
-                vertex_line
+                // 1. Collect all raw vertex indices from the line
+                let vertex_indices: Vec<u32> = vertex_line
                     .split(' ')
                     .skip(1)
-                    .filter(|s| !s.is_empty())
-                    .take(3)
-                    .map(|s| s.parse::<u32>().expect("Failed to parse coordinate as u32"))
+                    .filter_map(|index_tuple| {
+                        index_tuple
+                            .split(['/', '\\'])
+                            .next()
+                            .and_then(|s| s.parse::<u32>().ok())
+                    })
+                    .collect();
+
+                // 2. Perform Triangulation (Fan Method)
+                let vertex_count = vertex_indices.len();
+                let mut final_indices = Vec::new();
+
+                if vertex_count >= 3 {
+                    let pivot = vertex_indices[0]; // V1 is the pivot
+
+                    // Generate N-2 triangles: (V1, Vi, Vi+1)
+                    for i in 1..vertex_count - 1 {
+                        let v_b = vertex_indices[i];
+                        let v_c = vertex_indices[i + 1];
+
+                        // Push the three indices of the new triangle
+                        final_indices.push(pivot);
+                        final_indices.push(v_b);
+                        final_indices.push(v_c);
+                    }
+                }
+
+                // 3. IMPORTANT: Return the iterator over the generated indices
+                final_indices
             })
             .collect();
 
         let position_chunks = vertices.chunks_exact(3);
 
-        let normal_chunks = vertex_normals.chunks_exact(3);
-
         let face_chunks = faces.chunks_exact(3);
 
-        for (pos_slice, normal_slice) in position_chunks.zip(normal_chunks) {
-            let position: [f32; 3] = pos_slice.try_into().expect("Position data error");
+        if vertex_normals.len() != 0 {
+            let normal_chunks = vertex_normals.chunks_exact(3);
 
-            let normal: [f32; 3] = normal_slice.try_into().expect("Normal data error");
+            for (pos_slice, normal_slice) in position_chunks.zip(normal_chunks) {
+                let position: [f32; 3] = pos_slice.try_into().expect("Position data error");
 
-            let vertex = Vertex {
-                position,
-                normal,
-                color,
-            };
+                let normal: [f32; 3] = normal_slice.try_into().expect("Normal data error");
 
-            mesh.vertices.push(vertex);
+                let vertex = Vertex {
+                    position,
+                    normal,
+                    color,
+                };
+
+                mesh.vertices.push(vertex);
+            }
+        } else {
+            println!("{:?} has no vertex normals", obj_path);
+            for pos_slice in position_chunks {
+                let position: [f32; 3] = pos_slice.try_into().expect("Position data error");
+
+                let vertex = Vertex {
+                    position,
+
+                    normal: [0.0, 0.0, 0.0], // will be calculated later
+
+                    color,
+                };
+
+                mesh.vertices.push(vertex);
+            }
+            println!("calculating normals for {:?}", obj_path);
         }
 
         // process triangle indices to triangles
         for face_slice in face_chunks {
             let indices = [face_slice[0] - 1, face_slice[1] - 1, face_slice[2] - 1];
 
-            // Add triangle with default material (say, 0)
             mesh.add_triangle(indices, material_id);
         }
 
-        mesh.build_adj_list();
+        println!("obj: {:?}", obj_path);
+        println!("vertices {:?}", vertices.len() / 3);
+        println!("vertex normals {:?}", vertex_normals.len() / 3);
+        println!("faces {:?}\n", faces.len() / 3);
 
+        mesh.calculate_vertex_normals();
+        mesh.build_adj_list();
         mesh
     }
 }

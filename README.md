@@ -79,3 +79,7 @@ This is an educational project, but contributions are welcome!
 ## 📄 License
 
 Distributed under the MIT License. See `LICENSE` for more information.
+
+## Model Source
+
+https://github.com/alecjacobson/common-3d-test-models
