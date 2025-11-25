@@ -242,24 +242,31 @@ impl Mesh {
             let indices = [start_index, start_index + 1, start_index + 2];
 
             for vertex in face {
-                let v_idx_obj = vertex[0].unwrap() - 1;
-                let vn_idx_obj = vertex[2].unwrap() - 1;
+                let v_idx_obj = vertex[0].expect("Error: Face missing vertex index");
+                // let vt_idx_obj = vertex[1].expect("Error: Face missing normal index") - 1;
+                let vn_idx_obj = vertex[2].unwrap_or(v_idx_obj);
+
+                let v_idx = (v_idx_obj - 1) as usize;
+                let vn_idx = (vn_idx_obj - 1) as usize;
 
                 // Calculate the "Stride" (Jump 3 floats per vertex)
-                let v_idx = (v_idx_obj * 3) as usize;
-                let vn_idx = (vn_idx_obj * 3) as usize;
-
+                let pos_stride = v_idx * 3;
                 let position: [f32; 3] = [
-                    vertices[v_idx + 0],
-                    vertices[v_idx + 1],
-                    vertices[v_idx + 2],
+                    vertices[pos_stride],
+                    vertices[pos_stride + 1],
+                    vertices[pos_stride + 2],
                 ];
 
-                let normal: [f32; 3] = [
-                    vertex_normals[vn_idx + 0],
-                    vertex_normals[vn_idx + 1],
-                    vertex_normals[vn_idx + 2],
-                ];
+                let normal_stride = vn_idx * 3;
+                let normal: [f32; 3] = if normal_stride < vertex_normals.len() {
+                    [
+                        vertex_normals[normal_stride],
+                        vertex_normals[normal_stride + 1],
+                        vertex_normals[normal_stride + 2],
+                    ]
+                } else {
+                    [0.0, 0.0, 0.0] // Fallback if file has NO normals provided
+                };
 
                 let vertex = Vertex {
                     position,
