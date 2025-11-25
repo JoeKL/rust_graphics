@@ -1,5 +1,4 @@
-
-use crate::types::math::{Vector2D,Vector3D};
+use crate::types::math::{Vector2D, Vector3D};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point2D {
@@ -30,7 +29,6 @@ impl Point2D {
         Vector2D::new(self.x + p.x, self.y + p.y)
     }
 
-
     pub fn to_vector(self) -> Vector2D {
         let w = 0;
         Vector2D {
@@ -55,7 +53,7 @@ impl Point3D {
         Self { x, y, z, w }
     }
 
-    pub fn from_array(array: [f32; 3]) -> Point3D{
+    pub fn from_array(array: [f32; 3]) -> Point3D {
         Point3D::new(array[0], array[1], array[2])
     }
 
@@ -72,6 +70,10 @@ impl Point3D {
 
     pub fn sub_v(&self, v: Vector3D) -> Vector3D {
         Vector3D::new(self.x - v.x, self.y - v.y, self.z - v.z)
+    }
+
+    pub fn add_v(&self, v: Vector3D) -> Point3D {
+        Point3D::new(self.x + v.x, self.y + v.y, self.z + v.z)
     }
 
     pub fn sub_p(&self, p: Point3D) -> Vector3D {

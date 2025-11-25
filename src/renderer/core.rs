@@ -19,6 +19,7 @@ pub struct Renderer {
 
     // Transformed data
     transformed_vertices: Vec<Vertex>, // After vertex processing
+    debug_lines: Vec<[i32; 4]>,
 
     // Rasterization/Fragment data
     fragment_buffer: Vec<Fragment>, // Output of rasterization
@@ -55,6 +56,7 @@ impl Renderer {
         let draw_commands: Vec<DrawCommand> = Vec::new();
 
         let transformed_vertices: Vec<Vertex> = Vec::new();
+        let debug_lines: Vec<[i32; 4]> = Vec::new();
 
         let fragment_buffer: Vec<Fragment> = Vec::new();
         let z_buffer: Vec<f32> = Vec::new();
@@ -81,6 +83,7 @@ impl Renderer {
             draw_commands,
 
             transformed_vertices,
+            debug_lines,
 
             fragment_buffer,
             z_buffer,
@@ -160,6 +163,30 @@ impl Renderer {
                     &transformed_lights,
                 );
 
+                if self.draw_vertex_normals {
+                    let line_len = 0.05;
+
+                    let start_point_view: Point3D = vertex.position_to_point();
+
+                    let end_point_view: Point3D =
+                        start_point_view.add_v(vertex.normal_to_vector().mul(line_len));
+
+                    let mut start_screen = self.projection_matrix.mul_point(start_point_view);
+                    start_screen.dehomogen();
+                    start_screen = self.viewport_matrix.mul_point(start_screen);
+
+                    let mut end_screen = self.projection_matrix.mul_point(end_point_view);
+                    end_screen.dehomogen();
+                    end_screen = self.viewport_matrix.mul_point(end_screen);
+
+                    self.debug_lines.push([
+                        start_screen.x as i32,
+                        start_screen.y as i32,
+                        end_screen.x as i32,
+                        end_screen.y as i32,
+                    ]);
+                }
+
                 // 4. Projection transform (View space -> Clip space)
                 let mut vertex_pos = self.projection_matrix.mul_point(vertex.position_to_point());
 
@@ -168,7 +195,7 @@ impl Renderer {
 
                 //6. Viewport transformation (Clip Space -> Screen space)
                 vertex_pos = self.viewport_matrix.mul_point(vertex_pos);
-                vertex.position = [vertex_pos.x, vertex_pos.y, vertex_pos.z]
+                vertex.position = [vertex_pos.x, vertex_pos.y, vertex_pos.z];
             }
         }
     }
@@ -279,6 +306,25 @@ impl Renderer {
                         });
                     }
                 }
+            }
+        } else if self.draw_vertex_normals {
+            // For each draw command/mesh
+            let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+
+            for [x1, y1, x2, y2] in self.debug_lines.drain(..) {
+                let points = self.rasterizer.calculate_line([x1, y1], [x2, y2]);
+                fragment_storage.extend(points);
+            }
+
+            for fragment_chunk in fragment_storage {
+                self.fragment_buffer.push(Fragment {
+                    x: fragment_chunk[0],
+                    y: fragment_chunk[1],
+                    z: 0.0,
+                    color: [1.0, 1.0, 1.0],
+                    normal: [0.0, 0.0, 0.0],
+                    material_id: 0,
+                });
             }
         } else {
             // For each draw command/mesh
