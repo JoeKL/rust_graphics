@@ -1,6 +1,5 @@
 mod engine;
 mod input;
-mod models;
 mod renderer;
 mod scene;
 mod types;

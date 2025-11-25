@@ -4,8 +4,6 @@ use crate::types::primitives::Vertex;
 use std::fs;
 use std::sync::atomic::Ordering;
 
-use crate::models::*;
-
 use super::MESH_ID_COUNTER;
 
 #[derive(Debug, Clone)]
@@ -154,93 +152,6 @@ impl Mesh {
             self.vertices[vertex_index].normal = [v_normal_vec.x, v_normal_vec.y, v_normal_vec.z];
             // v_normal = normalize(Σ(area_i * theta_i * face_normal_i))
         }
-    }
-
-    pub fn create_ball(material_id: u32, color: [f32; 3]) -> Self {
-        let mut mesh = Mesh::new();
-
-        // convert raw vertex positions into vertex chunks
-        for chunk in BALL_V.chunks(3) {
-            let vertex = Vertex {
-                position: [chunk[0], chunk[1], chunk[2]],
-                normal: [0.0, 0.0, 0.0], // will be calculated later
-                color,
-            };
-            mesh.vertices.push(vertex);
-        }
-
-        // process triangle indices to triangles
-        for triangle_indices in BALL_F.chunks(3) {
-            let indices = [
-                triangle_indices[0] as u32,
-                triangle_indices[1] as u32,
-                triangle_indices[2] as u32,
-            ];
-
-            // Add triangle with default material (say, 0)
-            mesh.add_triangle(indices, material_id);
-        }
-        mesh.build_adj_list();
-        mesh.calculate_vertex_normals();
-        mesh
-    }
-
-    pub fn create_cube(material_id: u32, color: [f32; 3]) -> Self {
-        let mut mesh = Mesh::new();
-
-        // convert raw vertex positions into vertex chunks
-        for chunk in CUBE_V.chunks(3) {
-            let vertex = Vertex {
-                position: [chunk[0], chunk[1], chunk[2]],
-                normal: [0.0, 0.0, 0.0], // will be calculated later
-                color,
-            };
-            mesh.vertices.push(vertex);
-        }
-
-        // process triangle indices to triangles
-        for triangle_indices in CUBE_F.chunks(3) {
-            let indices = [
-                triangle_indices[0] as u32,
-                triangle_indices[1] as u32,
-                triangle_indices[2] as u32,
-            ];
-
-            // Add triangle with default material (say, 0)
-            mesh.add_triangle(indices, material_id);
-        }
-        mesh.build_adj_list();
-        mesh.calculate_vertex_normals();
-        mesh
-    }
-
-    pub fn create_plane(material_id: u32, color: [f32; 3]) -> Self {
-        let mut mesh = Mesh::new();
-
-        // convert raw vertex positions into vertex chunks
-        for chunk in PLANE_V.chunks(3) {
-            let vertex = Vertex {
-                position: [chunk[0], chunk[1], chunk[2]],
-                normal: [0.0, 0.0, 0.0], // will be calculated later
-                color,
-            };
-            mesh.vertices.push(vertex);
-        }
-
-        // process triangle indices to triangles
-        for triangle_indices in PLANE_F.chunks(3) {
-            let indices = [
-                triangle_indices[0] as u32,
-                triangle_indices[1] as u32,
-                triangle_indices[2] as u32,
-            ];
-
-            // Add triangle with default material (say, 0)
-            mesh.add_triangle(indices, material_id);
-        }
-        mesh.build_adj_list();
-        mesh.calculate_vertex_normals();
-        mesh
     }
 
     pub fn load_obj(obj_path: &str, material_id: u32, color: [f32; 3]) -> Self {
