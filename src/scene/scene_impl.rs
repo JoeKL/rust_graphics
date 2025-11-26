@@ -30,7 +30,7 @@ impl Scene {
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
         //light sources
-        let light = PointLight::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE, 1.0);
+        let light = PointLight::new(Point3D::new(0.0, 3.0, -3.0), ColorRGB::WHITE, 1.0);
         let lights: Vec<PointLight> = vec![light];
 
         let mut model_node = SceneNode::new();

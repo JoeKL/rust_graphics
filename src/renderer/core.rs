@@ -48,7 +48,7 @@ pub struct Renderer {
     pub draw_wireframe: bool,
     pub draw_vertex: bool,
     pub draw_vertex_normals: bool,
-    pub draw_face_normals: bool,
+    pub draw_faces: bool,
 }
 
 impl Renderer {
@@ -77,7 +77,7 @@ impl Renderer {
         let draw_wireframe = false;
         let draw_vertex = false;
         let draw_vertex_normals = false;
-        let draw_face_normals = false;
+        let draw_faces = true;
 
         Self {
             vertex_buffer,
@@ -105,7 +105,7 @@ impl Renderer {
             draw_wireframe,
             draw_vertex,
             draw_vertex_normals,
-            draw_face_normals,
+            draw_faces,
         }
     }
 
@@ -208,127 +208,7 @@ impl Renderer {
         // - Generate fragments
         // - Interpolate vertex attributes
 
-        if self.draw_vertex {
-            // only draw vertices as dots
-
-            // For each draw command/mesh
-            for draw_command in &self.draw_commands {
-                let index_start = draw_command.first_triangle_index_offset;
-                let index_length = draw_command.triangle_index_count;
-                let index_end = index_length + index_start;
-
-                // Process indices in groups of 3 to form triangles
-                for i in (index_start..index_end).step_by(3) {
-                    // Get vertex indices
-                    let i0 = self.triangle_index_buffer[i];
-                    let i1 = self.triangle_index_buffer[i + 1];
-                    let i2 = self.triangle_index_buffer[i + 2];
-
-                    // Get transformed vertices
-                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
-                    let v1 = &self.transformed_vertices[i1 as usize];
-                    let v2 = &self.transformed_vertices[i2 as usize];
-
-                    // Check if triangle is partly on screen
-                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
-                        continue;
-                    }
-
-                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
-
-                    fragment_storage.extend([
-                        [v0.position[0] as i32, v0.position[1] as i32],
-                        [v1.position[0] as i32, v1.position[1] as i32],
-                        [v2.position[0] as i32, v2.position[1] as i32],
-                    ]);
-
-                    for fragment_chunk in fragment_storage {
-                        self.fragment_buffer.push(Fragment {
-                            x: fragment_chunk[0],
-                            y: fragment_chunk[1],
-                            z: 0.0,
-                            color: [1.0, 1.0, 1.0],
-                            normal: [0.0, 0.0, 0.0],
-                            material_id: 0,
-                        });
-                    }
-                }
-            }
-        } else if self.draw_wireframe {
-            // only draw wireframe
-
-            // For each draw command/mesh
-            for draw_command in &self.draw_commands {
-                let index_start = draw_command.first_triangle_index_offset;
-                let index_length = draw_command.triangle_index_count;
-                let index_end = index_length + index_start;
-
-                // Process indices in groups of 3 to form triangles
-                for i in (index_start..index_end).step_by(3) {
-                    // Get vertex indices
-                    let i0 = self.triangle_index_buffer[i];
-                    let i1 = self.triangle_index_buffer[i + 1];
-                    let i2 = self.triangle_index_buffer[i + 2];
-
-                    // Get transformed vertices
-                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
-                    let v1 = &self.transformed_vertices[i1 as usize];
-                    let v2 = &self.transformed_vertices[i2 as usize];
-
-                    // Check if triangle is partly on screen
-                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
-                        continue;
-                    }
-
-                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
-
-                    fragment_storage.extend(self.rasterizer.calculate_line(
-                        [v0.position[0] as i32, v0.position[1] as i32],
-                        [v1.position[0] as i32, v1.position[1] as i32],
-                    ));
-
-                    fragment_storage.extend(self.rasterizer.calculate_line(
-                        [v1.position[0] as i32, v1.position[1] as i32],
-                        [v2.position[0] as i32, v2.position[1] as i32],
-                    ));
-
-                    fragment_storage.extend(self.rasterizer.calculate_line(
-                        [v0.position[0] as i32, v0.position[1] as i32],
-                        [v2.position[0] as i32, v2.position[1] as i32],
-                    ));
-
-                    for fragment_chunk in fragment_storage {
-                        self.fragment_buffer.push(Fragment {
-                            x: fragment_chunk[0],
-                            y: fragment_chunk[1],
-                            z: 0.0,
-                            color: [1.0, 1.0, 1.0],
-                            normal: [0.0, 0.0, 0.0],
-                            material_id: 0,
-                        });
-                    }
-                }
-            }
-        } else if self.draw_vertex_normals {
-            // For each draw command/mesh
-            let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
-
-            for [x1, y1, x2, y2] in self.debug_lines.drain(..) {
-                let points = self.rasterizer.calculate_line([x1, y1], [x2, y2]);
-                fragment_storage.extend(points);
-            }
-
-            for fragment_chunk in fragment_storage {
-                self.fragment_buffer.push(Fragment {
-                    x: fragment_chunk[0],
-                    y: fragment_chunk[1],
-                    z: 0.0,
-                    color: [1.0, 1.0, 1.0],
-                    normal: [0.0, 0.0, 0.0],
-                    material_id: 0,
-                });
-            }
-        } else {
+        if self.draw_faces {
             // For each draw command/mesh
             for draw_command in &self.draw_commands {
                 let index_start = draw_command.first_triangle_index_offset;
@@ -426,6 +306,129 @@ impl Renderer {
                         }
                     }
                 }
+            }
+        }
+        if self.draw_vertex {
+            // only draw vertices as dots
+
+            // For each draw command/mesh
+            for draw_command in &self.draw_commands {
+                let index_start = draw_command.first_triangle_index_offset;
+                let index_length = draw_command.triangle_index_count;
+                let index_end = index_length + index_start;
+
+                // Process indices in groups of 3 to form triangles
+                for i in (index_start..index_end).step_by(3) {
+                    // Get vertex indices
+                    let i0 = self.triangle_index_buffer[i];
+                    let i1 = self.triangle_index_buffer[i + 1];
+                    let i2 = self.triangle_index_buffer[i + 2];
+
+                    // Get transformed vertices
+                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                    let v1 = &self.transformed_vertices[i1 as usize];
+                    let v2 = &self.transformed_vertices[i2 as usize];
+
+                    // Check if triangle is partly on screen
+                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                        continue;
+                    }
+
+                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+
+                    fragment_storage.extend([
+                        [v0.position[0] as i32, v0.position[1] as i32],
+                        [v1.position[0] as i32, v1.position[1] as i32],
+                        [v2.position[0] as i32, v2.position[1] as i32],
+                    ]);
+
+                    for fragment_chunk in fragment_storage {
+                        self.fragment_buffer.push(Fragment {
+                            x: fragment_chunk[0],
+                            y: fragment_chunk[1],
+                            z: 0.0,
+                            color: [1.0, 1.0, 1.0],
+                            normal: [0.0, 0.0, 0.0],
+                            material_id: 0,
+                        });
+                    }
+                }
+            }
+        }
+        if self.draw_wireframe {
+            // only draw wireframe
+
+            // For each draw command/mesh
+            for draw_command in &self.draw_commands {
+                let index_start = draw_command.first_triangle_index_offset;
+                let index_length = draw_command.triangle_index_count;
+                let index_end = index_length + index_start;
+
+                // Process indices in groups of 3 to form triangles
+                for i in (index_start..index_end).step_by(3) {
+                    // Get vertex indices
+                    let i0 = self.triangle_index_buffer[i];
+                    let i1 = self.triangle_index_buffer[i + 1];
+                    let i2 = self.triangle_index_buffer[i + 2];
+
+                    // Get transformed vertices
+                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                    let v1 = &self.transformed_vertices[i1 as usize];
+                    let v2 = &self.transformed_vertices[i2 as usize];
+
+                    // Check if triangle is partly on screen
+                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                        continue;
+                    }
+
+                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+
+                    fragment_storage.extend(self.rasterizer.calculate_line(
+                        [v0.position[0] as i32, v0.position[1] as i32],
+                        [v1.position[0] as i32, v1.position[1] as i32],
+                    ));
+
+                    fragment_storage.extend(self.rasterizer.calculate_line(
+                        [v1.position[0] as i32, v1.position[1] as i32],
+                        [v2.position[0] as i32, v2.position[1] as i32],
+                    ));
+
+                    fragment_storage.extend(self.rasterizer.calculate_line(
+                        [v0.position[0] as i32, v0.position[1] as i32],
+                        [v2.position[0] as i32, v2.position[1] as i32],
+                    ));
+
+                    for fragment_chunk in fragment_storage {
+                        self.fragment_buffer.push(Fragment {
+                            x: fragment_chunk[0],
+                            y: fragment_chunk[1],
+                            z: 0.0,
+                            color: [0.6, 0.6, 0.6],
+                            normal: [0.0, 0.0, 0.0],
+                            material_id: 0,
+                        });
+                    }
+                }
+            }
+        }
+        if self.draw_vertex_normals {
+            // For each draw command/mesh
+            let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+
+            for [x1, y1, x2, y2] in self.debug_lines.drain(..) {
+                let points = self.rasterizer.calculate_line([x1, y1], [x2, y2]);
+                fragment_storage.extend(points);
+            }
+
+            for fragment_chunk in fragment_storage {
+                self.fragment_buffer.push(Fragment {
+                    x: fragment_chunk[0],
+                    y: fragment_chunk[1],
+                    z: 0.0,
+                    color: [1.0, 1.0, 1.0],
+                    normal: [0.0, 0.0, 0.0],
+                    material_id: 0,
+                });
             }
         }
     }

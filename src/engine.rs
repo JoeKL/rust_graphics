@@ -81,6 +81,11 @@ impl Engine {
             self.draw_grid = !self.draw_grid;
         }
 
+        if input_handler.is_key_pressed(minifb::Key::H) {
+            // toggles draw_faces
+            self.renderer.draw_faces = !self.renderer.draw_faces;
+        }
+
         if input_handler.is_key_pressed(minifb::Key::L) {
             //toggle draw_lights
             self.draw_lights = !self.draw_lights;
@@ -99,11 +104,6 @@ impl Engine {
         if input_handler.is_key_pressed(minifb::Key::V) {
             //toggle draw_vertex_normals
             self.renderer.draw_vertex_normals = !self.renderer.draw_vertex_normals;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::B) {
-            //next render mode
-            self.renderer.draw_face_normals = !self.renderer.draw_face_normals;
         }
 
         if input_handler.is_key_pressed(minifb::Key::X) {
@@ -252,7 +252,7 @@ impl Engine {
             };
             let distance = current_position.sub_p(target).length();
 
-            let dist_center_threshhold = 50.0;
+            let dist_center_threshhold = 25.0;
 
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
             mouse_pos_relative_center.x -=
@@ -263,17 +263,17 @@ impl Engine {
             let rotation_factor = 0.005;
 
             if mouse_pos_relative_center.x > dist_center_threshhold {
-                self.orbit_yaw -= mouse_pos_relative_center.x * rotation_factor;
+                self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
             }
             if mouse_pos_relative_center.x < -dist_center_threshhold {
-                self.orbit_yaw -= mouse_pos_relative_center.x * rotation_factor;
+                self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
             }
 
             if mouse_pos_relative_center.y > dist_center_threshhold {
-                self.orbit_pitch += mouse_pos_relative_center.y * rotation_factor;
+                self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
             }
             if mouse_pos_relative_center.y < -dist_center_threshhold {
-                self.orbit_pitch += mouse_pos_relative_center.y * rotation_factor;
+                self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
             }
 
             self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
