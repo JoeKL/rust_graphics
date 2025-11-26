@@ -163,7 +163,7 @@ impl Renderer {
                     &transformed_lights,
                 );
 
-                if self.draw_vertex_normals {
+                if self.draw_vertex_normals && vertex.has_normal() {
                     let line_len = 0.05;
 
                     let start_point_view: Point3D = vertex.position_to_point();

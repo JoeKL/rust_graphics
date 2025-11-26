@@ -30,6 +30,10 @@ impl Vertex {
         Point3D::new(self.normal[0], self.normal[1], self.normal[2])
     }
 
+    pub fn has_normal(self) -> bool {
+        self.normal[0].is_normal() || self.normal[1].is_normal() || self.normal[2].is_normal()
+    }
+
     pub fn transform(&mut self, transform_mat: Mat4x4) {
         let transformed_position = transform_mat.mul_point(Point3D::new(
             self.position[0],
@@ -56,4 +60,3 @@ impl Vertex {
         ];
     }
 }
-
