@@ -1,4 +1,4 @@
-use crate::types::math::{Point3D, Vector3D,Mat4x4};
+use crate::types::math::{Mat4x4, Point3D, Vector3D};
 
 pub struct Camera {
     // positional parameters
@@ -58,9 +58,23 @@ impl Camera {
 
     pub fn look_at(&mut self, target: Point3D) {
         self.direction = target.sub_p(self.position).normalize();
-        self.right = self.direction.cross(self.up).normalize();
+        let world_up = Vector3D {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+            w: 1,
+        }; // Or Vector3D
+        self.right = self.direction.cross(world_up).normalize();
         self.up = self.right.cross(self.direction).normalize();
         self.needs_update = true;
+    }
+
+    pub fn get_pitch_radiants(&self) -> f32 {
+        self.direction.y.asin()
+    }
+
+    pub fn get_yaw_radiants(&self) -> f32 {
+        self.direction.x.atan2(self.direction.z)
     }
 
     pub fn set_projection_params(
@@ -108,7 +122,7 @@ impl Camera {
         };
 
         let fov_in_radians = self.fov_in_degrees.to_radians();
-        let f = 1.0 / (fov_in_radians / 2.0).tan(); 
+        let f = 1.0 / (fov_in_radians / 2.0).tan();
         self.projection_matrix = Mat4x4 {
             mat: [
                 [f / self.aspect_ratio, 0.0, 0.0, 0.0],
@@ -128,12 +142,12 @@ impl Camera {
         self.needs_update = false;
     }
 
-    pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f32){
+    pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f32) {
         self.fov_in_degrees = fov_in_degrees;
         self.needs_update = true;
     }
 
-    pub fn get_fov_in_degrees(&self) -> f32{
+    pub fn get_fov_in_degrees(&self) -> f32 {
         self.fov_in_degrees
     }
 
@@ -142,7 +156,7 @@ impl Camera {
         self.update_matrices();
         self.look_at_matrix
     }
-    
+
     #[allow(dead_code)]
     pub fn get_projection_matrix(&mut self) -> Mat4x4 {
         self.update_matrices();

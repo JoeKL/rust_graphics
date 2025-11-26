@@ -26,7 +26,7 @@ impl Scene {
 
         let mut camera: Camera = Camera::new(pos, target, up);
 
-        camera.set_position(Point3D::new(0.0, 0.0, -20.0));
+        camera.set_position(Point3D::new(0.0, 2.0, -10.0));
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
         //light sources
@@ -42,21 +42,17 @@ impl Scene {
         // child_ball_node.set_mesh(Mesh::create_ball(1, [0.78, 0.42, 0.0]));
         // grandchild_ball_node.set_mesh(Mesh::create_ball(2, [0.78, 0.0, 0.6]));
 
-        ball_node.set_mesh(Mesh::load_obj(
-            "models/xyzrgb_dragon.obj".into(),
-            0,
-            [0.0, 1.0, 0.8],
-        ));
+        ball_node.set_mesh(Mesh::load_obj("models/f-16.obj".into(), 0, [0.0, 1.0, 0.8]));
 
         // child_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 1, [0.78, 0.42, 0.0]));
         // grandchild_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 2, [0.78, 0.0, 0.6]));
 
-        ball_node.set_scale(Vector3D {
-            x: (0.015),
-            y: (0.015),
-            z: (0.015),
-            w: (1),
-        });
+        // ball_node.set_scale(Vector3D {
+        //     x: (0.015),
+        //     y: (0.015),
+        //     z: (0.015),
+        //     w: (1),
+        // });
 
         // child_ball_node.set_position(Vector3D::new(2.5 * 100.0, 0.0, 0.0));
         // grandchild_ball_node.set_position(Vector3D::new(2.5 * 100.0, 0.0, 0.0));

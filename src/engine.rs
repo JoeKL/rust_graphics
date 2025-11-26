@@ -3,7 +3,7 @@ use crate::renderer::Renderer;
 use crate::scene::Scene;
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
-use crate::types::math::{Mat4x4, Point2D, Vector3D};
+use crate::types::math::{Mat4x4, Point2D, Point3D, Vector3D};
 
 pub struct Engine {
     renderer: Renderer,
@@ -13,6 +13,8 @@ pub struct Engine {
     draw_axis: bool,
     draw_lights: bool,
     draw_ball_line: bool,
+    orbit_yaw: f32,
+    orbit_pitch: f32,
 }
 
 impl Engine {
@@ -32,7 +34,10 @@ impl Engine {
 
         let augmentation_segment = 0;
 
-        let draw_axis = false;
+        let orbit_yaw = 150.0;
+        let orbit_pitch = 10.0;
+
+        let draw_axis = true;
         let draw_lights = false;
         let draw_ball_line = false;
 
@@ -45,6 +50,8 @@ impl Engine {
             draw_axis,
             draw_lights,
             draw_ball_line,
+            orbit_yaw,
+            orbit_pitch,
         }
     }
 
@@ -95,7 +102,7 @@ impl Engine {
         self.rotate_lightsources(input_handler);
 
         self.rotate_ball_with_mouse(input_handler);
-        self.move_ball(input_handler);
+        self.orbit_camera(input_handler);
         self.iso_scale_ball(input_handler);
     }
 
@@ -217,37 +224,45 @@ impl Engine {
         }
     }
 
-    fn move_ball(&mut self, input_handler: &InputHandler) {
-        let mut x_move: f32 = 0.0;
-        let mut z_move: f32 = 0.0;
+    fn orbit_camera(&mut self, input_handler: &InputHandler) {
+        let mut current_position = self.scene.camera.get_position();
 
-        let x_move_delta = 0.1;
-        let z_move_delta = 0.1;
-
-        if input_handler.is_key_down(minifb::Key::Up) {
-            z_move -= z_move_delta;
-        }
-        if input_handler.is_key_down(minifb::Key::Down) {
-            z_move += z_move_delta;
-        }
-
-        if input_handler.is_key_down(minifb::Key::Left) {
-            x_move += x_move_delta;
-        }
-        if input_handler.is_key_down(minifb::Key::Right) {
-            x_move -= x_move_delta;
-        }
-
-        let focus_segment = match self.augmentation_segment {
-            0 => &mut self.scene.root_node.children[0],
-            1 => &mut self.scene.root_node.children[0].children[0],
-            2 => &mut self.scene.root_node.children[0].children[0].children[0],
-            _ => return, // Or handle other cases
+        let rot_speed = 1.0;
+        let target = Point3D {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 1.0,
         };
 
-        if x_move != 0.0 || z_move != 0.0 {
-            focus_segment.translate(Vector3D::new(x_move, 0.0, z_move));
+        let distance = current_position.sub_p(target).length();
+
+        if input_handler.is_key_down(minifb::Key::Left) {
+            self.orbit_yaw += rot_speed;
         }
+        if input_handler.is_key_down(minifb::Key::Right) {
+            self.orbit_yaw -= rot_speed;
+        }
+        if input_handler.is_key_down(minifb::Key::Up) {
+            self.orbit_pitch += rot_speed;
+        }
+        if input_handler.is_key_down(minifb::Key::Down) {
+            self.orbit_pitch -= rot_speed;
+        }
+
+        self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
+
+        let pitch_rad = self.orbit_pitch.to_radians();
+        let yaw_rad = self.orbit_yaw.to_radians();
+
+        let h_distance = distance * pitch_rad.cos();
+        let x = h_distance * yaw_rad.sin();
+        let y = distance * pitch_rad.sin();
+        let z = h_distance * yaw_rad.cos();
+
+        self.scene.camera.set_position(Point3D { x, y, z, w: 1.0 });
+
+        self.scene.camera.look_at(target);
     }
 
     fn iso_scale_ball(&mut self, input_handler: &InputHandler) {
