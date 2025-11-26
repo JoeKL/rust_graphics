@@ -31,10 +31,9 @@ impl Scene {
 
         //light sources
         let light = PointLight::new(Point3D::new(0.0, 5.0, -5.0), ColorRGB::WHITE, 1.0);
-
         let lights: Vec<PointLight> = vec![light];
 
-        let mut ball_node = SceneNode::new();
+        let mut model_node = SceneNode::new();
         // let mut child_ball_node = SceneNode::new();
         // let mut grandchild_ball_node = SceneNode::new();
 
@@ -42,12 +41,12 @@ impl Scene {
         // child_ball_node.set_mesh(Mesh::create_ball(1, [0.78, 0.42, 0.0]));
         // grandchild_ball_node.set_mesh(Mesh::create_ball(2, [0.78, 0.0, 0.6]));
 
-        ball_node.set_mesh(Mesh::load_obj("models/f-16.obj".into(), 0, [0.0, 1.0, 0.8]));
+        model_node.set_mesh(Mesh::load_obj("models/f-16.obj".into(), 0, [0.0, 1.0, 0.8]));
 
         // child_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 1, [0.78, 0.42, 0.0]));
         // grandchild_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 2, [0.78, 0.0, 0.6]));
 
-        // ball_node.set_scale(Vector3D {
+        // model_node.set_scale(Vector3D {
         //     x: (0.015),
         //     y: (0.015),
         //     z: (0.015),
@@ -59,7 +58,7 @@ impl Scene {
 
         // child_ball_node.add_child(grandchild_ball_node);
         // ball_node.add_child(child_ball_node);
-        root_node.add_child(ball_node);
+        root_node.add_child(model_node);
 
         Scene {
             root_node,

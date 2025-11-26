@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use super::{fragment, DrawCommand, Fragment, Frustum, Rasterizer};
 use crate::{
     scene::Scene,
@@ -483,11 +485,13 @@ impl Renderer {
         }
     }
 
-    pub fn render_scene(&mut self, scene: &mut Scene) {
+    pub fn draw_background_on_framebuffer(&mut self) {
         self.rasterizer
             .framebuffer
             .fill(ColorRGB::from_u32(0x101010));
+    }
 
+    pub fn render_scene(&mut self, scene: &mut Scene) {
         // Get camera matrices once
         self.look_at_matrix = scene.camera.get_look_at_matrix();
         self.projection_matrix = scene.camera.get_projection_matrix();
@@ -523,15 +527,85 @@ impl Renderer {
         let viewport_matrix = self.rasterizer.viewport.get_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
-        let x_end = Point3D::new(5.0, 0.0, 0.0); // X axis in red
-        let y_end = Point3D::new(0.0, 5.0, 0.0); // Y axis in green
-        let z_end = Point3D::new(0.0, 0.0, 5.0); // Z axis in blue
+        let x_end = Point3D::new(1.0, 0.0, 0.0); // X axis in red
+        let y_end = Point3D::new(0.0, 1.0, 0.0); // Y axis in green
+        let z_end = Point3D::new(0.0, 0.0, 1.0); // Z axis in blue
 
         let axes = [
             (origin, x_end, ColorRGB::RED),   // X axis - red
             (origin, y_end, ColorRGB::GREEN), // Y axis - green
             (origin, z_end, ColorRGB::BLUE),  // Z axis - blue
         ];
+
+        for (start, end, color) in axes {
+            let mut start_point = start;
+            let mut end_point = end;
+
+            start_point = frustum_matrix.mul_point(start_point);
+            end_point = frustum_matrix.mul_point(end_point);
+
+            start_point.dehomogen();
+            end_point.dehomogen();
+
+            start_point = viewport_matrix.mul_point(start_point);
+            end_point = viewport_matrix.mul_point(end_point);
+
+            let screen_start = ScreenPoint {
+                x: start_point.x as i32,
+                y: start_point.y as i32,
+            };
+            let screen_end = ScreenPoint {
+                x: end_point.x as i32,
+                y: end_point.y as i32,
+            };
+
+            self.rasterizer.draw_line(screen_start, screen_end, color);
+        }
+    }
+
+    pub fn render_grid(&mut self, scene: &mut Scene) {
+        let frustum_matrix = scene.camera.get_frustum_matrix();
+        let viewport_matrix = self.rasterizer.viewport.get_matrix();
+
+        let line_color = ColorRGB::from_rgb(32, 32, 32);
+        let start_dist = 5.0;
+        let grid_lines = 6;
+        let y_offset = -0.25;
+
+        let mut axes: Vec<(Point3D, Point3D, ColorRGB)> = Vec::new();
+        axes.push((
+            Point3D::new(start_dist, y_offset, 0.0),
+            Point3D::new(-start_dist, y_offset, 0.0),
+            line_color,
+        ));
+        axes.push((
+            Point3D::new(0.0, y_offset, start_dist),
+            Point3D::new(0.0, y_offset, -start_dist),
+            line_color,
+        ));
+
+        for i in 1..grid_lines {
+            axes.push((
+                Point3D::new(start_dist, y_offset, i as f32),
+                Point3D::new(-start_dist, y_offset, i as f32),
+                line_color,
+            ));
+            axes.push((
+                Point3D::new(start_dist, y_offset, -i as f32),
+                Point3D::new(-start_dist, y_offset, -i as f32),
+                line_color,
+            ));
+            axes.push((
+                Point3D::new(i as f32, y_offset, start_dist),
+                Point3D::new(i as f32, y_offset, -start_dist),
+                line_color,
+            ));
+            axes.push((
+                Point3D::new(-i as f32, y_offset, start_dist),
+                Point3D::new(-i as f32, y_offset, -start_dist),
+                line_color,
+            ));
+        }
 
         for (start, end, color) in axes {
             let mut start_point = start;
