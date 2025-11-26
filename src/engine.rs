@@ -3,16 +3,21 @@ use crate::renderer::Renderer;
 use crate::scene::Scene;
 use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
-use crate::types::math::{Mat4x4, Point2D, Vector3D};
+use crate::types::math::{Mat4x4, Point2D, Point3D, Vector3D};
 
 pub struct Engine {
     renderer: Renderer,
     scene: Scene,
     frame: u32,
     augmentation_segment: i32,
+
     draw_axis: bool,
+    draw_grid: bool,
     draw_lights: bool,
-    draw_ball_line: bool,
+    draw_mouse_line: bool,
+
+    orbit_yaw: f32,
+    orbit_pitch: f32,
 }
 
 impl Engine {
@@ -22,19 +27,25 @@ impl Engine {
 
         let far: f32 = 75.0;
         let near: f32 = 1.0;
+
         scene.camera.set_projection_params(
             30.0, // 60 degree FOV
             window_width as f32 / window_height as f32,
             near,
             far,
         );
+
         let frame = 0;
 
         let augmentation_segment = 0;
 
-        let draw_axis = false;
+        let orbit_yaw = 150.0;
+        let orbit_pitch = 10.0;
+
+        let draw_axis = true;
+        let draw_grid = true;
         let draw_lights = false;
-        let draw_ball_line = false;
+        let draw_mouse_line = false;
 
         Engine {
             renderer,
@@ -43,8 +54,12 @@ impl Engine {
             augmentation_segment,
 
             draw_axis,
+            draw_grid,
             draw_lights,
-            draw_ball_line,
+            draw_mouse_line,
+
+            orbit_yaw,
+            orbit_pitch,
         }
     }
 
@@ -59,6 +74,16 @@ impl Engine {
         if input_handler.is_key_pressed(minifb::Key::K) {
             // toggles draw_axis
             self.draw_axis = !self.draw_axis;
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::G) {
+            // toggles draw_grid
+            self.draw_grid = !self.draw_grid;
+        }
+
+        if input_handler.is_key_pressed(minifb::Key::H) {
+            // toggles draw_faces
+            self.renderer.draw_faces = !self.renderer.draw_faces;
         }
 
         if input_handler.is_key_pressed(minifb::Key::L) {
@@ -81,11 +106,6 @@ impl Engine {
             self.renderer.draw_vertex_normals = !self.renderer.draw_vertex_normals;
         }
 
-        if input_handler.is_key_pressed(minifb::Key::B) {
-            //next render mode
-            self.renderer.draw_face_normals = !self.renderer.draw_face_normals;
-        }
-
         if input_handler.is_key_pressed(minifb::Key::X) {
             //next render mode
             self.renderer.draw_wireframe = !self.renderer.draw_wireframe;
@@ -94,9 +114,11 @@ impl Engine {
         self.change_camera_fov(input_handler);
         self.rotate_lightsources(input_handler);
 
-        self.rotate_ball_with_mouse(input_handler);
-        self.move_ball(input_handler);
-        self.iso_scale_ball(input_handler);
+        self.rotate_model_with_mouse(input_handler);
+        self.orbit_camera_with_mouse(input_handler);
+
+        self.orbit_camera(input_handler);
+        self.iso_scale_model(input_handler);
     }
 
     fn change_camera_fov(&mut self, input_handler: &InputHandler) {
@@ -157,8 +179,8 @@ impl Engine {
         }
     }
 
-    fn rotate_ball_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(0) {
+    fn rotate_model_with_mouse(&mut self, input_handler: &InputHandler) {
+        if input_handler.is_mouse_button_down(1) {
             let mut x_rot: f32 = 0.00;
             let mut y_rot: f32 = 0.00;
 
@@ -211,46 +233,111 @@ impl Engine {
             let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
             focus_segment.rotate(combined_rot);
 
-            self.draw_ball_line = true;
+            self.draw_mouse_line = true;
         } else {
-            self.draw_ball_line = false
+            self.draw_mouse_line = false
         }
     }
 
-    fn move_ball(&mut self, input_handler: &InputHandler) {
-        let mut x_move: f32 = 0.0;
-        let mut z_move: f32 = 0.0;
+    fn orbit_camera_with_mouse(&mut self, input_handler: &InputHandler) {
+        if input_handler.is_mouse_button_down(0) {
+            let mut current_position = self.scene.camera.get_position();
 
-        let x_move_delta = 0.1;
-        let z_move_delta = 0.1;
+            let rot_speed = 1.0;
+            let target = Point3D {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                w: 1.0,
+            };
+            let distance = current_position.sub_p(target).length();
 
-        if input_handler.is_key_down(minifb::Key::Up) {
-            z_move -= z_move_delta;
-        }
-        if input_handler.is_key_down(minifb::Key::Down) {
-            z_move += z_move_delta;
-        }
+            let dist_center_threshhold = 25.0;
 
-        if input_handler.is_key_down(minifb::Key::Left) {
-            x_move += x_move_delta;
-        }
-        if input_handler.is_key_down(minifb::Key::Right) {
-            x_move -= x_move_delta;
-        }
+            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
+            mouse_pos_relative_center.x -=
+                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+            mouse_pos_relative_center.y -=
+                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
 
-        let focus_segment = match self.augmentation_segment {
-            0 => &mut self.scene.root_node.children[0],
-            1 => &mut self.scene.root_node.children[0].children[0],
-            2 => &mut self.scene.root_node.children[0].children[0].children[0],
-            _ => return, // Or handle other cases
+            let rotation_factor = 0.005;
+
+            if mouse_pos_relative_center.x > dist_center_threshhold {
+                self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
+            }
+            if mouse_pos_relative_center.x < -dist_center_threshhold {
+                self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
+            }
+
+            if mouse_pos_relative_center.y > dist_center_threshhold {
+                self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
+            }
+            if mouse_pos_relative_center.y < -dist_center_threshhold {
+                self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
+            }
+
+            self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
+
+            let pitch_rad = self.orbit_pitch.to_radians();
+            let yaw_rad = self.orbit_yaw.to_radians();
+
+            let h_distance = distance * pitch_rad.cos();
+            let x = h_distance * yaw_rad.sin();
+            let y = distance * pitch_rad.sin();
+            let z = h_distance * yaw_rad.cos();
+
+            self.scene.camera.set_position(Point3D { x, y, z, w: 1.0 });
+
+            self.scene.camera.look_at(target);
+
+            self.draw_mouse_line = true;
+        } else {
+            self.draw_mouse_line = false
+        }
+    }
+
+    fn orbit_camera(&mut self, input_handler: &InputHandler) {
+        let mut current_position = self.scene.camera.get_position();
+
+        let rot_speed = 1.0;
+        let target = Point3D {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 1.0,
         };
 
-        if x_move != 0.0 || z_move != 0.0 {
-            focus_segment.translate(Vector3D::new(x_move, 0.0, z_move));
+        let distance = current_position.sub_p(target).length();
+
+        if input_handler.is_key_down(minifb::Key::Left) {
+            self.orbit_yaw -= rot_speed;
         }
+        if input_handler.is_key_down(minifb::Key::Right) {
+            self.orbit_yaw += rot_speed;
+        }
+        if input_handler.is_key_down(minifb::Key::Up) {
+            self.orbit_pitch += rot_speed;
+        }
+        if input_handler.is_key_down(minifb::Key::Down) {
+            self.orbit_pitch -= rot_speed;
+        }
+
+        self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
+
+        let pitch_rad = self.orbit_pitch.to_radians();
+        let yaw_rad = self.orbit_yaw.to_radians();
+
+        let h_distance = distance * pitch_rad.cos();
+        let x = h_distance * yaw_rad.sin();
+        let y = distance * pitch_rad.sin();
+        let z = h_distance * yaw_rad.cos();
+
+        self.scene.camera.set_position(Point3D { x, y, z, w: 1.0 });
+
+        self.scene.camera.look_at(target);
     }
 
-    fn iso_scale_ball(&mut self, input_handler: &InputHandler) {
+    fn iso_scale_model(&mut self, input_handler: &InputHandler) {
         let mut scale: f32 = 1.0;
 
         let scale_delta = 0.01;
@@ -280,6 +367,12 @@ impl Engine {
         // Handle input
         self.process_input(input_handler);
 
+        self.renderer.draw_background_on_framebuffer();
+
+        if self.draw_grid {
+            self.renderer.render_grid(&mut self.scene);
+        }
+
         // Render
         self.renderer.render_scene(&mut self.scene);
 
@@ -291,7 +384,7 @@ impl Engine {
             self.renderer.render_light_vectors(&mut self.scene);
         }
 
-        if self.draw_ball_line {
+        if self.draw_mouse_line {
             let screen_center = Point2D::new(
                 (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32,
                 (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32,
