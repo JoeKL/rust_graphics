@@ -1,7 +1,7 @@
 use std::fs::File;
+use std::io;
 use std::io::{Read, Seek, SeekFrom};
 use std::str;
-use std::{char, io};
 
 use crate::types::color::ColorRGB;
 
@@ -14,6 +14,7 @@ pub struct BMP {
 }
 
 impl BMP {
+    #[allow(dead_code)]
     pub fn new(width: i32, height: i32, data: Vec<u8>, channels: u32) -> Self {
         Self {
             width,

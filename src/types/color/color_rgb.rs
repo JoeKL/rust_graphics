@@ -89,6 +89,7 @@ impl ColorRGB {
         )
     }
 
+    #[allow(dead_code)]
     pub fn from_vector(vec: &Vector3D) -> Self {
         ColorRGB::from_rgb(
             Self::f32_to_color_component(vec.x),

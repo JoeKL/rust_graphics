@@ -15,4 +15,3 @@ pub use fragment::Fragment;
 pub use frustum::Frustum;
 pub use rasterizer::Rasterizer;
 pub use viewport::Viewport;
-pub use font_provider::FontProvider;

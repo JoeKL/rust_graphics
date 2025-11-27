@@ -69,10 +69,12 @@ impl Camera {
         self.needs_update = true;
     }
 
+    #[allow(dead_code)]
     pub fn get_pitch_radiants(&self) -> f32 {
         self.direction.y.asin()
     }
 
+    #[allow(dead_code)]
     pub fn get_yaw_radiants(&self) -> f32 {
         self.direction.x.atan2(self.direction.z)
     }

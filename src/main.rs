@@ -8,7 +8,6 @@ mod utils;
 use engine::Engine;
 use input::InputHandler;
 use minifb::{Key, Window, WindowOptions};
-use std::time::Instant;
 
 static WINDOW_WIDTH: usize = 1920;
 static WINDOW_HEIGHT: usize = 1080;
@@ -33,22 +32,7 @@ fn main() {
 
     let mut render_engine = Engine::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
 
-    let mut time_since_title_update = Instant::now();
-    let mut frame_count = 0;
-
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        //increase frames_count
-        frame_count += 1;
-
-        if time_since_title_update.elapsed().as_secs() >= 1 {
-            //set title to how many frames were generated since last check
-            window.set_title(&format!("Rust Graphics - FPS: {}", frame_count));
-            //reset frame_count
-            frame_count = 0;
-            //reset time since last update
-            time_since_title_update = Instant::now();
-        }
-
         input_handler.update(&window);
 
         window

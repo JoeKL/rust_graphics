@@ -1,9 +1,4 @@
-use std::ops::Range;
-
-use super::{
-    font_provider::{self, FontProvider},
-    fragment, DrawCommand, Fragment, Frustum, Rasterizer,
-};
+use super::{font_provider::FontProvider, DrawCommand, Fragment, Frustum, Rasterizer};
 use crate::{
     scene::Scene,
     types::{
@@ -14,7 +9,7 @@ use crate::{
         primitives::Vertex,
         shader::{FlatShader, Material, ShadingModel},
     },
-    utils::bmp::{read_bmp, BMP},
+    utils::bmp::BMP,
 };
 
 pub struct Renderer {
