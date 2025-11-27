@@ -1,6 +1,4 @@
-use std::ops::Range;
-
-use super::{fragment, DrawCommand, Fragment, Frustum, Rasterizer};
+use super::{font_provider::FontProvider, DrawCommand, Fragment, Frustum, Rasterizer};
 use crate::{
     scene::Scene,
     types::{
@@ -11,6 +9,7 @@ use crate::{
         primitives::Vertex,
         shader::{FlatShader, Material, ShadingModel},
     },
+    utils::bmp::BMP,
 };
 
 pub struct Renderer {
@@ -44,6 +43,8 @@ pub struct Renderer {
     pub rasterizer: Rasterizer,
     pub shader: FlatShader,
 
+    pub font_provider: FontProvider,
+
     pub draw_z_buffer: bool,
     pub draw_wireframe: bool,
     pub draw_vertex: bool,
@@ -71,7 +72,8 @@ impl Renderer {
         let frustum_matrix: Mat4x4 = Mat4x4::identity();
         let view_frustum: Frustum = Frustum::new();
 
-        // let frame_buffer: Vec<Vec<Color>>= Vec::new();
+        // let frame_buffer: Vec<Vec<Color>>= Vec::new()
+        let font_provider: FontProvider = FontProvider::new("fonts/monogram.bmp", 3, 6, 12);
 
         let draw_z_buffer = false;
         let draw_wireframe = false;
@@ -100,6 +102,8 @@ impl Renderer {
 
             rasterizer: Rasterizer::new(window_width, window_height),
             shader: FlatShader,
+
+            font_provider,
 
             draw_z_buffer,
             draw_wireframe,
@@ -403,7 +407,7 @@ impl Renderer {
                             x: fragment_chunk[0],
                             y: fragment_chunk[1],
                             z: 0.0,
-                            color: [0.6, 0.6, 0.6],
+                            color: [1.0, 1.0, 1.0],
                             normal: [0.0, 0.0, 0.0],
                             material_id: 0,
                         });
@@ -666,6 +670,31 @@ impl Renderer {
 
             self.rasterizer
                 .draw_line(screen_start, screen_end, ColorRGB::YELLOW);
+        }
+    }
+
+    pub fn render_text(&mut self, text: &str, x_pos: i32, y_pos: i32, color: ColorRGB, scale: u32) {
+        let mut x_current = x_pos;
+
+        for char in text.chars() {
+            let char_cords = self.font_provider.get_glyph_grid_pos(char);
+
+            let mut character_bmp: BMP = self
+                .font_provider
+                .get_character(char_cords.0, char_cords.1)
+                .scale_up(scale);
+
+            character_bmp.highlight_bmp(ColorRGB::WHITE);
+
+            self.font_provider.draw_as_character(
+                &character_bmp,
+                &mut self.rasterizer.framebuffer,
+                x_current,
+                y_pos,
+                color,
+            );
+
+            x_current += character_bmp.width;
         }
     }
 }

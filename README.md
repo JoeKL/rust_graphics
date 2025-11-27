@@ -9,6 +9,100 @@ A 3D software rendering engine built from scratch in Rust. Implements a custom g
 
 Based on concepts from *Computer Graphics from Scratch* by Gabriel Gambetta and university course materials.
 
+## 🖼️ Gallery & Render Modes
+
+Click on any image to view the full-resolution version.
+
+### F-16 Render Modes
+Comparison of different pipeline stages and rendering modes implemented in the engine.
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="screenshots/f-16wireframe%20mode.jpeg">
+        <img src="screenshots/f-16wireframe%20mode.jpeg" width="200" alt="Wireframe Mode" />
+      </a>
+      <br />
+      <sub>Wireframe</sub>
+    </td>
+    <td align="center">
+      <a href="screenshots/f-16%20vertex%20mode.jpeg">
+        <img src="screenshots/f-16%20vertex%20mode.jpeg" width="200" alt="Vertex Mode" />
+      </a>
+      <br />
+      <sub>Vertex Plot</sub>
+    </td>
+    <td align="center">
+      <a href="screenshots/f-16%20vertex%20normal%20mode.jpeg">
+        <img src="screenshots/f-16%20vertex%20normal%20mode.jpeg" width="200" alt="Vertex Normal Mode" />
+      </a>
+      <br />
+      <sub>Vertex Normals</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="screenshots/f-16%20face%20mode.jpeg">
+        <img src="screenshots/f-16%20face%20mode.jpeg" width="200" alt="Face Mode" />
+      </a>
+      <br />
+      <sub>Face Rendering</sub>
+    </td>
+    <td align="center">
+      <a href="screenshots/f-16%20zbuffer%20mode.jpeg">
+        <img src="screenshots/f-16%20zbuffer%20mode.jpeg" width="200" alt="Z-Buffer Mode" />
+      </a>
+      <br />
+      <sub>Z-Buffer Visualization</sub>
+    </td>
+    <td align="center">
+      </td>
+  </tr>
+</table>
+
+### Model Showcase & GUI
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="screenshots/armadillo.jpeg">
+        <img src="screenshots/armadillo.jpeg" width="250" alt="Armadillo" />
+      </a>
+      <br />
+      <sub>Armadillo</sub>
+    </td>
+    <td align="center">
+      <a href="screenshots/dragon%20zbuffer%20mode.png">
+        <img src="screenshots/dragon%20zbuffer%20mode.png" width="250" alt="Dragon Z-Buffer" />
+      </a>
+      <br />
+      <sub>Dragon (Z-Buffer)</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="screenshots/suzanne%20face%20mode.jpeg">
+        <img src="screenshots/suzanne%20face%20mode.jpeg" width="250" alt="Suzanne" />
+      </a>
+      <br />
+      <sub>Suzanne (Face Mode)</sub>
+    </td>
+    <td align="center">
+      <a href="screenshots/tyra%20vertex%20mode.jpeg">
+        <img src="screenshots/tyra%20vertex%20mode.jpeg" width="250" alt="Tyra Vertex" />
+      </a>
+      <br />
+      <sub>Tyra (Vertex Mode)</sub>
+    </td>
+  </tr>
+</table>
+
+**User Interface**
+
+<a href="screenshots/gui.png">
+  <img src="screenshots/gui.png" width="600" alt="Engine GUI" />
+</a>
+
 ## ✨ Features
 
 * **Software Rasterization**: Custom implementation of the graphics pipeline (`src/renderer/rasterizer.rs`) handling triangle projection and pixel drawing.
@@ -26,7 +120,6 @@ Based on concepts from *Computer Graphics from Scratch* by Gabriel Gambetta and 
     * `frustum.rs`: Handles view culling.
 * **`src/types/math/`**: Linear algebra library (Matrices, Vectors, Points).
 * **`src/scene/`**: Manages objects in the world, bounding boxes, and scene nodes.
-* **`src/models/`**: Procedural geometry for testing (Cube, Ball, Plane).
 
 ## 🚀 Getting Started
 
@@ -37,7 +130,7 @@ Based on concepts from *Computer Graphics from Scratch* by Gabriel Gambetta and 
 
 1.  Clone the repository:
     ```bash
-    git clone https://github.com/JoeKL/rust_graphics.git
+    git clone [https://github.com/JoeKL/rust_graphics.git](https://github.com/JoeKL/rust_graphics.git)
     cd rust_graphics
     ```
 
@@ -46,25 +139,6 @@ Based on concepts from *Computer Graphics from Scratch* by Gabriel Gambetta and 
     cargo run --release
     ```
     > **Note:** The `--release` flag is highly recommended. Since this is a software renderer doing heavy math on the CPU, debug builds may be significantly slower.
-
-## 🎮 Controls
-
-The engine operates as a model viewer. Instead of moving the camera, you manipulate the scene and lighting.
-
-| Input / Key | Category | Action | Logic / Details |
-| :--- | :--- | :--- | :--- |
-| **Space** | **Selection** | **Cycle Object Focus** | Cycles focus between Root, Child, or Grandchild node. |
-| **Arrow Up / Down** | **Transform** | **Move Object (Z-Axis)** | Translates the currently focused object along the Z-axis. |
-| **Arrow Left / Right** | **Transform** | **Move Object (X-Axis)** | Translates the currently focused object along the X-axis. |
-| **Mouse Drag (Left)** | **Transform** | **Rotate Object** | Rotates the focused object based on mouse distance from screen center (Virtual Trackball). |
-| **N** | **Transform** | **Scale Down** | Decreases the isotropic scale of the focused object. |
-| **M** | **Transform** | **Scale Up** | Increases the isotropic scale of the focused object. |
-| **W / S** | **Lighting** | **Rotate Lights (X)** | Rotates all light sources around the X-axis. |
-| **A / D** | **Lighting** | **Rotate Lights (Y)** | Rotates all light sources around the Y-axis. |
-| **O** | **Camera** | **Increase FOV** | Widens the camera Field of View (+0.5° per frame). |
-| **P** | **Camera** | **Decrease FOV** | Narrows the camera Field of View (-0.5° per frame). |
-| **K** | **Debug** | **Toggle Axis** | Toggles drawing of the coordinate system axis. |
-| **L** | **Debug** | **Toggle Light Vecs** | Toggles visualization of light direction vectors. |
 
 ## 🤝 Contributing
 
