@@ -11,6 +11,7 @@ pub struct Engine {
     frame: u32,
     augmentation_segment: i32,
 
+    draw_keybinds: bool,
     draw_axis: bool,
     draw_grid: bool,
     draw_lights: bool,
@@ -42,6 +43,7 @@ impl Engine {
         let orbit_yaw = 150.0;
         let orbit_pitch = 10.0;
 
+        let draw_keybinds = false;
         let draw_axis = true;
         let draw_grid = true;
         let draw_lights = false;
@@ -53,6 +55,7 @@ impl Engine {
             frame,
             augmentation_segment,
 
+            draw_keybinds,
             draw_axis,
             draw_grid,
             draw_lights,
@@ -70,6 +73,11 @@ impl Engine {
         //         self.augmentation_segment = 0;
         //     }
         // }
+
+        if input_handler.is_key_pressed(minifb::Key::F1) {
+            // toggles draw_axis
+            self.draw_keybinds = !self.draw_keybinds;
+        }
 
         if input_handler.is_key_pressed(minifb::Key::K) {
             // toggles draw_axis
@@ -406,6 +414,172 @@ impl Engine {
                 .rasterizer
                 .draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
         }
+
+        let keybind_hud_pos = (0, 0);
+        if !self.draw_keybinds {
+            self.renderer.render_text(
+                "[F1] Keybinds",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0,
+                ColorRGB::GRAY_MEDIUM,
+                2,
+            );
+        } else {
+            self.renderer.render_text(
+                "[F1] Keybinds",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0,
+                ColorRGB::WHITE,
+                2,
+            );
+
+            self.renderer.render_text(
+                "[G] Grid",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 20,
+                if self.draw_grid {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[H] Faces",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 40,
+                if self.renderer.draw_faces {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[K] Axis",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 60,
+                if self.draw_axis {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[L] Light Vectors",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 80,
+                if self.draw_lights {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[Z] Z-Buffer",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 100,
+                if self.renderer.draw_z_buffer {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[X] Wireframe",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 120,
+                if self.renderer.draw_wireframe {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[C] Vertices",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 140,
+                if self.renderer.draw_vertex {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[V] Vertex Normals",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 160,
+                if self.renderer.draw_vertex_normals {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
+                2,
+            );
+
+            self.renderer.render_text(
+                "[Arrow Keys] Move Camera",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 200,
+                ColorRGB::WHITE,
+                2,
+            );
+
+            self.renderer.render_text(
+                "[Mouse 1] Move Camera",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 220,
+                ColorRGB::WHITE,
+                2,
+            );
+
+            self.renderer.render_text(
+                "[W,A,S,D] Move Light Vectors",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 240,
+                ColorRGB::WHITE,
+                2,
+            );
+
+            self.renderer.render_text(
+                "[O/P] Change FOV",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 280,
+                ColorRGB::WHITE,
+                2,
+            );
+
+            self.renderer.render_text(
+                "[N/M] Change Scale",
+                keybind_hud_pos.0,
+                keybind_hud_pos.0 + 300,
+                ColorRGB::WHITE,
+                2,
+            );
+
+            // self.renderer.render_text(
+            //     "[Space] Change Augmentation",
+            //     keybind_hud_pos.0,
+            //     keybind_hud_pos.0 + 320,
+            //     ColorRGB::GRAY_VERY_DARK,
+            //     2,
+            // );
+        }
+
+        self.renderer
+            .render_text("Niko Tepe - 2025", 0, 980, ColorRGB::WHITE, 2);
 
         self.renderer.rasterizer.framebuffer.get_buffer()
     }

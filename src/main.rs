@@ -3,6 +3,7 @@ mod input;
 mod renderer;
 mod scene;
 mod types;
+mod utils;
 
 use engine::Engine;
 use input::InputHandler;
