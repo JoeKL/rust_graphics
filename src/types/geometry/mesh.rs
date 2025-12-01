@@ -172,6 +172,19 @@ impl Mesh {
             })
             .collect();
 
+        let vertex_uv_cords: Vec<f32> = contents
+            .lines()
+            .filter(|line| line.starts_with("vt "))
+            .flat_map(|vertex_line| {
+                vertex_line
+                    .split(' ')
+                    .skip(1)
+                    .filter(|s| !s.is_empty())
+                    .take(3)
+                    .map(|s| s.parse::<f32>().expect("Failed to parse coordinate as f32"))
+            })
+            .collect();
+
         let vertex_normals: Vec<f32> = contents
             .lines()
             .filter(|line| line.starts_with("vn "))
@@ -270,6 +283,7 @@ impl Mesh {
 
                 let vertex = Vertex {
                     position,
+                    uv: [0.0, 0.0],
                     normal,
                     color,
                 };
@@ -283,6 +297,7 @@ impl Mesh {
         println!("obj: {:?}", obj_path);
         println!("vertices {:?}", vertices.len() / 3);
         println!("vertex normals {:?}", vertex_normals.len() / 3);
+        println!("vertex uv cords {:?}", vertex_uv_cords.len() / 3);
         println!("raw faces {:?}", raw_faces.len());
         println!("triangulated faces {:?}\n", faces.len() / 3);
 

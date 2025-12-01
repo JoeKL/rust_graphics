@@ -203,7 +203,7 @@ impl Engine {
     }
 
     fn rotate_model_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(1) {
+        if input_handler.is_mouse_button_down(0) {
             let mut x_rot: f32 = 0.00;
             let mut y_rot: f32 = 0.00;
 
@@ -263,7 +263,7 @@ impl Engine {
     }
 
     fn orbit_camera_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(0) {
+        if input_handler.is_mouse_button_down(1) {
             let current_position = self.scene.camera.get_position();
 
             let target = Point3D {
@@ -392,13 +392,10 @@ impl Engine {
         self.renderer
             .render_text("Niko Tepe - 2025", 0, 980, ColorRGB::WHITE, 2);
 
-        self.renderer.render_text(
-            format!("FPS: {}", self.current_fps).as_str(),
-            0,
-            960,
-            ColorRGB::WHITE,
-            2,
-        );
+        let fps_test = format!("FPS: {}", &self.current_fps);
+
+        self.renderer
+            .render_text(fps_test.as_str(), 0, 960, ColorRGB::WHITE, 2);
 
         if !self.draw_keybinds {
             self.renderer.render_text(
