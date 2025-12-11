@@ -3,6 +3,11 @@ use crate::types::color::ColorRGB;
 use crate::types::display::ScreenPoint;
 use crate::types::primitives::Vertex;
 
+//  To avoid potential confusion, let me define "rasterization":
+//  For our present purposes, it's the process of determining which pixels are inside a triangle, and nothing more.
+//
+//  - Michael Abrash, 2009.
+
 pub struct Rasterizer {
     pub framebuffer: FrameBuffer,
     pub viewport: Viewport,

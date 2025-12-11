@@ -25,9 +25,7 @@ pub struct Renderer {
     // Rasterization/Fragment data
     fragment_buffer: Vec<Fragment>, // Output of rasterization
     z_buffer: Vec<f32>,             // Z-buffer for depth testing
-
-    // // Output
-    // framebuffer: Vec<ColorRGB>,  // Final color buffer
+    framebuffer: Vec<ColorRGB>,     // Final color buffer
 
     // Pipeline state
     material_cache: Vec<Material>,
@@ -72,7 +70,7 @@ impl Renderer {
         let frustum_matrix: Mat4x4 = Mat4x4::identity();
         let view_frustum: Frustum = Frustum::new();
 
-        // let frame_buffer: Vec<Vec<Color>>= Vec::new()
+        let framebuffer: Vec<ColorRGB> = Vec::new();
         let font_provider: FontProvider = FontProvider::new("fonts/monogram.bmp", 3, 6, 12);
 
         let draw_z_buffer = false;
@@ -91,6 +89,8 @@ impl Renderer {
 
             fragment_buffer,
             z_buffer,
+            framebuffer,
+
             material_cache,
 
             look_at_matrix,
@@ -121,7 +121,7 @@ impl Renderer {
 
         // collection stage: here we need to collect
         // - vetices in the self.vertex_buffer
-        // - triangle indices in the self.index_buffer
+        // - triangle indices in the self.triangle_index_buffer
         // - draw calls in the self.draw_commands vector
         // at some point materials from the resource manager
         // build the depth buffer (this could also be done earlier)
@@ -170,7 +170,7 @@ impl Renderer {
                 );
 
                 if self.draw_vertex_normals && vertex.has_normal() {
-                    let line_len = 0.05;
+                    let line_len = 0.075;
 
                     let start_point_view: Point3D = vertex.position_to_point();
 
@@ -245,18 +245,46 @@ impl Renderer {
                     (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
                         self.rasterizer.calculate_bounding_box(&v0, &v1, &v2);
 
+                    // 1. PRE-CALCULATION
+                    // Create aliases for positions to make math cleaner (p = position)
+                    let p0 = &v0.position;
+                    let p1 = &v1.position;
+                    let p2 = &v2.position;
+
+                    // Calculate triangle vectors
+                    let v0_to_v1_x = p1[0] - p0[0];
+                    let v0_to_v1_y = p1[1] - p0[1];
+                    let v0_to_v2_x = p2[0] - p0[0];
+                    let v0_to_v2_y = p2[1] - p0[1];
+
+                    // Calculate denominator once (cross product Z component)
+                    let denominator = v0_to_v1_x * v0_to_v2_y - v0_to_v2_x * v0_to_v1_y;
+
+                    // OPTIMIZATION: Skip degenerate triangles (zero area)
+                    if denominator.abs() < f32::EPSILON {
+                        continue;
+                    }
+
+                    // Calculate inverse once to replace division with multiplication
+                    let inv_denominator = 1.0 / denominator;
+
                     // For each pixel in triangle's bounding box:
                     // traverse the bounding box in scanline
                     for y in (bounds_min_y)..(bounds_max_y) {
                         for x in (bounds_min_x)..(bounds_max_x) {
-                            //   - Calculate barycentric coordinates
-                            let (alpha, beta, gamma) = Rasterizer::calculate_barycentric(
-                                x as f32,
-                                y as f32,
-                                &[v0.position[0], v0.position[1]],
-                                &[v1.position[0], v1.position[1]],
-                                &[v2.position[0], v2.position[1]],
-                            );
+                            let fx = x as f32;
+                            let fy = y as f32;
+
+                            // Vector from Point to p0
+                            let p_to_v0_x = fx - p0[0];
+                            let p_to_v0_y = fy - p0[1];
+
+                            // Calculate Beta and Gamma using Multiplications
+                            let beta =
+                                (p_to_v0_x * v0_to_v2_y - v0_to_v2_x * p_to_v0_y) * inv_denominator;
+                            let gamma =
+                                (v0_to_v1_x * p_to_v0_y - p_to_v0_x * v0_to_v1_y) * inv_denominator;
+                            let alpha = 1.0 - beta - gamma;
 
                             // Test if pixel is inside triangle
                             if (0.0..=1.0).contains(&alpha)
