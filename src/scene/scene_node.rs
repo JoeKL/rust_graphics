@@ -151,15 +151,8 @@ impl SceneNode {
                 }
             };
 
-            // Give child a copy of transformation_stack except its last is empty
-            child.transform_stack = self.transform_stack[..self.transform_stack.len() - 1].to_vec();
-
-            // Add updated local transform of childs parent
-            child
-                .transform_stack
-                .push(*self.transform_stack.last().unwrap());
-
-            // add child's local transform
+            // Copy parent's transformation stack and append child's local transform
+            child.transform_stack = self.transform_stack.clone();
             child.transform_stack.push(child_local);
 
             // Recurse
