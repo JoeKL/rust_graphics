@@ -37,11 +37,8 @@ impl Vertex {
     }
 
     pub fn transform(&mut self, transform_mat: Mat4x4) {
-        let transformed_position = transform_mat.mul_point(Point3D::new(
-            self.position[0],
-            self.position[1],
-            self.position[2],
-        ));
+        let transformed_position =
+            transform_mat * Point3D::new(self.position[0], self.position[1], self.position[2]);
         let transformed_normal = transform_mat
             .mul_vec(Vector3D::new(
                 self.normal[0],

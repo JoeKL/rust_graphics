@@ -42,7 +42,7 @@ impl PointLight {
     }
 
     pub fn get_direction(&self, surface_point: &Point3D) -> Vector3D {
-        self.position.sub_p(*surface_point).normalize()
+        (self.position - *surface_point).normalize()
     }
 
     pub fn get_color_as_vector(&self) -> Vector3D {
@@ -54,11 +54,11 @@ impl PointLight {
     }
 
     pub fn transform_light(&mut self, projection_mat: Mat4x4) {
-        self.set_position(projection_mat.mul_point(self.get_position()))
+        self.set_position(projection_mat * self.get_position())
     }
 
     pub fn new_transformed_light(light: &PointLight, loot_at_mat: Mat4x4) -> PointLight {
-        let new_light_pos = loot_at_mat.mul_point(light.get_position());
+        let new_light_pos = loot_at_mat * light.get_position();
         PointLight::new(new_light_pos, light.get_color(), light.get_intensity())
     }
 }

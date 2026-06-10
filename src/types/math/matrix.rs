@@ -257,3 +257,19 @@ impl Mat4x4 {
         result
     }
 }
+
+impl std::ops::Mul<Mat4x4> for Mat4x4 {
+    type Output = Mat4x4;
+
+    fn mul(self, other: Mat4x4) -> Self::Output {
+        self.mul_mat(other)
+    }
+}
+
+impl std::ops::Mul<Point3D> for Mat4x4 {
+    type Output = Point3D;
+
+    fn mul(self, other: Point3D) -> Self::Output {
+        self.mul_point(other)
+    }
+}

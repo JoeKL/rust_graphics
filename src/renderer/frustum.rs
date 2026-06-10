@@ -10,8 +10,8 @@ pub struct Plane {
 
 impl Plane {
     pub fn new(p0: Point3D, p1: Point3D, p2: Point3D) -> Self {
-        let p01 = p1.sub_p(p0);
-        let p02 = p2.sub_p(p0);
+        let p01 = p1 - p0;
+        let p02 = p2 - p0;
         let plane_normal = p01.cross(p02);
 
         Self {
@@ -28,7 +28,7 @@ impl Plane {
         // if return value is -1, its behind the plane
         // if return value is 1, its infront the plane
         // if return value is 0, its on the plane
-        self.normal.dot(p0.sub_p(self.point))
+        self.normal.dot(p0 - self.point)
     }
 }
 
@@ -62,15 +62,15 @@ impl Frustum {
 
         let inverse_matrix = matrix.inverse();
 
-        let mut frustum_p000 = inverse_matrix.mul_point(p000);
-        let mut frustum_p001 = inverse_matrix.mul_point(p001);
-        let mut frustum_p010 = inverse_matrix.mul_point(p010);
-        let mut frustum_p011 = inverse_matrix.mul_point(p011);
+        let mut frustum_p000 = inverse_matrix * p000;
+        let mut frustum_p001 = inverse_matrix * p001;
+        let mut frustum_p010 = inverse_matrix * p010;
+        let mut frustum_p011 = inverse_matrix * p011;
 
-        let mut frustum_p100 = inverse_matrix.mul_point(p100);
-        let mut frustum_p101 = inverse_matrix.mul_point(p101);
-        let mut frustum_p110 = inverse_matrix.mul_point(p110);
-        let mut frustum_p111 = inverse_matrix.mul_point(p111);
+        let mut frustum_p100 = inverse_matrix * p100;
+        let mut frustum_p101 = inverse_matrix * p101;
+        let mut frustum_p110 = inverse_matrix * p110;
+        let mut frustum_p111 = inverse_matrix * p111;
 
         frustum_p000.dehomogen();
         frustum_p001.dehomogen();

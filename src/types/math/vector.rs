@@ -1,6 +1,7 @@
 use crate::types::math::{Point2D, Point3D};
+use std::ops::{Add, Mul, Neg, Sub};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector2D {
     pub x: f32,
     pub y: f32,
@@ -18,11 +19,11 @@ impl Vector2D {
     }
 
     pub fn add(&self, v: Vector2D) -> Vector2D {
-        Vector2D::new(self.x + v.x, self.y + v.y)
+        *self + v
     }
 
     pub fn mul(&self, s: f32) -> Vector2D {
-        Vector2D::new(self.x * s, self.y * s)
+        *self * s
     }
 
     pub fn mul_vec(&self, v: Vector2D) -> Vector2D {
@@ -39,7 +40,7 @@ impl Vector2D {
     }
 
     pub fn sub_v(&self, v: Vector2D) -> Vector2D {
-        Vector2D::new(self.x - v.x, self.y - v.y)
+        *self - v
     }
 
     pub fn sub_p(&self, p: Point2D) -> Vector2D {
@@ -47,7 +48,31 @@ impl Vector2D {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+impl Add<Vector2D> for Vector2D {
+    type Output = Vector2D;
+
+    fn add(self, other: Vector2D) -> Self::Output {
+        Vector2D::new(self.x + other.x, self.y + other.y)
+    }
+}
+
+impl Sub<Vector2D> for Vector2D {
+    type Output = Vector2D;
+
+    fn sub(self, other: Vector2D) -> Self::Output {
+        Vector2D::new(self.x - other.x, self.y - other.y)
+    }
+}
+
+impl Mul<f32> for Vector2D {
+    type Output = Vector2D;
+
+    fn mul(self, scalar: f32) -> Self::Output {
+        Vector2D::new(self.x * scalar, self.y * scalar)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector3D {
     pub x: f32,
     pub y: f32,
@@ -70,11 +95,11 @@ impl Vector3D {
     }
 
     pub fn add(&self, v: Vector3D) -> Vector3D {
-        Vector3D::new(self.x + v.x, self.y + v.y, self.z + v.z)
+        *self + v
     }
 
     pub fn mul(&self, s: f32) -> Vector3D {
-        Vector3D::new(self.x * s, self.y * s, self.z * s)
+        *self * s
     }
 
     pub fn mul_vec(&self, v: Vector3D) -> Vector3D {
@@ -98,7 +123,7 @@ impl Vector3D {
     }
 
     pub fn sub_v(&self, v: Vector3D) -> Vector3D {
-        Vector3D::new(self.x - v.x, self.y - v.y, self.z - v.z)
+        *self - v
     }
 
     pub fn sub_p(&self, p: Point3D) -> Vector3D {
@@ -114,16 +139,48 @@ impl Vector3D {
         }
     }
 
-    pub(crate) fn negate(&self) -> Vector3D {
-        Vector3D {
-            x: self.x * -1.0,
-            y: self.y * -1.0,
-            z: self.z * -1.0,
-            w: self.w,
-        }
+    pub fn negate(&self) -> Vector3D {
+        -*self
     }
 
     pub fn length(&self) -> f32 {
         (self.x.powf(2.0) + self.y.powf(2.0) + self.z.powf(2.0)).sqrt()
+    }
+}
+
+impl Add<Vector3D> for Vector3D {
+    type Output = Vector3D;
+
+    fn add(self, other: Vector3D) -> Self::Output {
+        Vector3D::new(self.x + other.x, self.y + other.y, self.z + other.z)
+    }
+}
+
+impl Sub<Vector3D> for Vector3D {
+    type Output = Vector3D;
+
+    fn sub(self, other: Vector3D) -> Self::Output {
+        Vector3D::new(self.x - other.x, self.y - other.y, self.z - other.z)
+    }
+}
+
+impl Mul<f32> for Vector3D {
+    type Output = Vector3D;
+
+    fn mul(self, scalar: f32) -> Self::Output {
+        Vector3D::new(self.x * scalar, self.y * scalar, self.z * scalar)
+    }
+}
+
+impl Neg for Vector3D {
+    type Output = Vector3D;
+
+    fn neg(self) -> Self::Output {
+        Vector3D {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: self.w,
+        }
     }
 }

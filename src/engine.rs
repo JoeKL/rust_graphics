@@ -195,8 +195,8 @@ impl Engine {
 
             for light in &mut self.scene.lights {
                 let current_light_pos = light.get_position();
-                let mut new_light_pos = rot_x_mat.mul_point(current_light_pos);
-                new_light_pos = rot_y_mat.mul_point(new_light_pos);
+                let mut new_light_pos = rot_x_mat * current_light_pos;
+                new_light_pos = rot_y_mat * new_light_pos;
                 light.set_position(new_light_pos);
             }
         }
@@ -253,7 +253,7 @@ impl Engine {
                 _ => return, // Or handle other cases
             };
 
-            let combined_rot = rot_x_mat.mul_mat(rot_y_mat);
+            let combined_rot = rot_x_mat * rot_y_mat;
             focus_segment.rotate(combined_rot);
 
             self.draw_mouse_line = true;

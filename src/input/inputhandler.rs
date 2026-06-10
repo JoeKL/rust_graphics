@@ -93,7 +93,7 @@ impl InputHandler {
 
     // Movement since last frame
     pub fn get_mouse_delta(&self) -> Vector2D {
-        self.get_mouse_position().sub_p(self.get_mouse_position())
+        self.mouse_position.sub_p(self.previous_mouse_position)
     }
 
     // For instant checks (single frame)

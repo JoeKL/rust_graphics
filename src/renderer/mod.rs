@@ -6,6 +6,7 @@ mod font_provider;
 mod fragment;
 mod frustum;
 mod hud;
+mod passes;
 mod rasterizer; // Drawing algorithms
 mod viewport; //Screen space transformations and mapping
 
@@ -15,5 +16,6 @@ pub use draw_command::DrawCommand;
 pub use fragment::Fragment;
 pub use frustum::Frustum;
 pub use hud::Hud;
+pub use passes::{FacePass, RenderPass, VertexNormalPass, VertexPass, WireframePass};
 pub use rasterizer::Rasterizer;
 pub use viewport::Viewport;

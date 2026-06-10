@@ -19,8 +19,8 @@ impl Triangle {
     }
 
     pub fn calc_normal(&self) -> Vector3D {
-        let edge_1 = self.b.sub_p(self.a);
-        let edge_2 = self.c.sub_p(self.a);
+        let edge_1 = self.b - self.a;
+        let edge_2 = self.c - self.a;
         edge_1.cross(edge_2).normalize()
     }
 
