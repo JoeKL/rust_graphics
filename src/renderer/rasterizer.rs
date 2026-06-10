@@ -74,64 +74,32 @@ impl Rasterizer {
         Self::for_each_line_point_impl(p0, p1, f);
     }
 
-    fn for_each_line_point_impl<F>(mut p0: ScreenPoint, mut p1: ScreenPoint, mut f: F)
+    fn for_each_line_point_impl<F>(p0: ScreenPoint, p1: ScreenPoint, mut f: F)
     where
         F: FnMut(i32, i32),
     {
-        // Handle vertical lines specially
-        if p1.x == p0.x {
-            let (start_y, end_y) = if p0.y > p1.y {
-                (p1.y, p0.y)
-            } else {
-                (p0.y, p1.y)
-            };
-            for y in start_y..=end_y {
-                f(p0.x, y);
+        let dx = (p1.x - p0.x).abs();
+        let dy = -(p1.y - p0.y).abs();
+        let sx = if p0.x < p1.x { 1 } else { -1 };
+        let sy = if p0.y < p1.y { 1 } else { -1 };
+        let mut err = dx + dy;
+
+        let mut x = p0.x;
+        let mut y = p0.y;
+
+        loop {
+            f(x, y);
+            if x == p1.x && y == p1.y {
+                break;
             }
-            return;
-        }
-
-        // Handle horizontal lines specially
-        if p1.y == p0.y {
-            let (start_x, end_x) = if p0.x > p1.x {
-                (p1.x, p0.x)
-            } else {
-                (p0.x, p1.x)
-            };
-            for x in start_x..=end_x {
-                f(x, p0.y);
+            let e2 = 2 * err;
+            if e2 >= dy {
+                err += dy;
+                x += sx;
             }
-            return;
-        }
-
-        // Ensure we're always drawing left to right
-        if p1.x < p0.x {
-            std::mem::swap(&mut p0, &mut p1);
-        }
-
-        let slope_m = (p1.y - p0.y) as f32 / (p1.x - p0.x) as f32;
-        let steep = slope_m.abs() > 1.0;
-
-        if steep {
-            // Swap x and y coordinates if slope is steep
-            std::mem::swap(&mut p0.x, &mut p0.y);
-            std::mem::swap(&mut p1.x, &mut p1.y);
-        }
-
-        // Ensure left-to-right again after possible x/y swap
-        if p1.x < p0.x {
-            std::mem::swap(&mut p0, &mut p1);
-        }
-
-        let slope_m = (p1.y - p0.y) as f32 / (p1.x - p0.x) as f32;
-        let t = p0.y as f32 - (slope_m * p0.x as f32);
-
-        for x in p0.x..=p1.x {
-            let pixel_y = (slope_m * x as f32 + t).round() as i32;
-            if steep {
-                f(pixel_y, x);
-            } else {
-                f(x, pixel_y);
+            if e2 <= dx {
+                err += dx;
+                y += sy;
             }
         }
     }
@@ -212,5 +180,55 @@ impl Rasterizer {
         let alpha = 1.0 - beta - gamma;
 
         (alpha, beta, gamma)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_horizontal_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(5, 0);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)]);
+    }
+
+    #[test]
+    fn test_vertical_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(0, 5);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5)]);
+    }
+
+    #[test]
+    fn test_diagonal_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(3, 3);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (1, 1), (2, 2), (3, 3)]);
+    }
+
+    #[test]
+    fn test_steep_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(2, 5);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (0, 1), (1, 2), (1, 3), (2, 4), (2, 5)]);
+    }
+
+    #[test]
+    fn test_single_point() {
+        let p0 = ScreenPoint::new(2, 2);
+        let p1 = ScreenPoint::new(2, 2);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(2, 2)]);
     }
 }
