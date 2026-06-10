@@ -71,7 +71,7 @@ impl SceneNode {
 
     //adds a delta to local rotation
     pub fn rotate(&mut self, delta_rot: Mat4x4) {
-        self.rotation = delta_rot.mul_mat(self.rotation);
+        self.rotation = delta_rot * self.rotation;
         self.has_dirty_locals = true;
         self.update_local_transform();
     }
@@ -112,12 +112,12 @@ impl SceneNode {
         // First translate to origin
         let to_origin = Mat4x4::from_translation(Vector3D::new(0.0, 0.0, 0.0));
         // Apply scale and rotation
-        let transform = Mat4x4::from_scale(self.scale).mul_mat(self.rotation);
+        let transform = Mat4x4::from_scale(self.scale) * self.rotation;
         // Translate back
         let from_origin = Mat4x4::from_translation(self.position);
 
         // Order: translate back * (scale * rotate) * translate to origin
-        from_origin.mul_mat(transform).mul_mat(to_origin)
+        from_origin * transform * to_origin
     }
 
     // updates local transformation
@@ -165,6 +165,6 @@ impl SceneNode {
         // Multiply entire stack
         self.transform_stack
             .iter()
-            .fold(Mat4x4::identity(), |acc, transform| acc.mul_mat(*transform))
+            .fold(Mat4x4::identity(), |acc, transform| acc * *transform)
     }
 }

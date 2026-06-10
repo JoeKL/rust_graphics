@@ -69,7 +69,7 @@ impl Mesh {
             let vertex_point =
                 Point3D::new(vertex.position[0], vertex.position[1], vertex.position[2]);
 
-            let transformed = transform.mul_point(vertex_point);
+            let transformed = transform * vertex_point;
 
             vertex.position = [transformed.x, transformed.y, transformed.z];
         }

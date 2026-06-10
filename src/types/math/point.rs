@@ -1,6 +1,7 @@
 use crate::types::math::{Vector2D, Vector3D};
+use std::ops::{Add, Sub};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point2D {
     pub x: f32,
     pub y: f32,
@@ -13,20 +14,20 @@ impl Point2D {
         Self { x, y, w }
     }
 
-    pub fn sub_v(&self, v: Vector2D) -> Vector2D {
-        Vector2D::new(self.x - v.x, self.y - v.y)
+    pub fn sub_v(&self, v: Vector2D) -> Point2D {
+        *self - v
     }
 
     pub fn sub_p(&self, p: Point2D) -> Vector2D {
-        Vector2D::new(self.x - p.x, self.y - p.y)
+        *self - p
     }
 
-    pub fn add_v(&self, v: Vector2D) -> Vector2D {
-        Vector2D::new(self.x + v.x, self.y + v.y)
+    pub fn add_v(&self, v: Vector2D) -> Point2D {
+        *self + v
     }
 
-    pub fn add_p(&self, p: Point2D) -> Vector2D {
-        Vector2D::new(self.x + p.x, self.y + p.y)
+    pub fn add_p(&self, p: Point2D) -> Point2D {
+        Point2D::new(self.x + p.x, self.y + p.y)
     }
 
     pub fn to_vector(self) -> Vector2D {
@@ -39,7 +40,31 @@ impl Point2D {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+impl Add<Vector2D> for Point2D {
+    type Output = Point2D;
+
+    fn add(self, other: Vector2D) -> Self::Output {
+        Point2D::new(self.x + other.x, self.y + other.y)
+    }
+}
+
+impl Sub<Vector2D> for Point2D {
+    type Output = Point2D;
+
+    fn sub(self, other: Vector2D) -> Self::Output {
+        Point2D::new(self.x - other.x, self.y - other.y)
+    }
+}
+
+impl Sub<Point2D> for Point2D {
+    type Output = Vector2D;
+
+    fn sub(self, other: Point2D) -> Self::Output {
+        Vector2D::new(self.x - other.x, self.y - other.y)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point3D {
     pub x: f32,
     pub y: f32,
@@ -68,16 +93,16 @@ impl Point3D {
         self.w = 1.0;
     }
 
-    pub fn sub_v(&self, v: Vector3D) -> Vector3D {
-        Vector3D::new(self.x - v.x, self.y - v.y, self.z - v.z)
+    pub fn sub_v(&self, v: Vector3D) -> Point3D {
+        *self - v
     }
 
     pub fn add_v(&self, v: Vector3D) -> Point3D {
-        Point3D::new(self.x + v.x, self.y + v.y, self.z + v.z)
+        *self + v
     }
 
     pub fn sub_p(&self, p: Point3D) -> Vector3D {
-        Vector3D::new(self.x - p.x, self.y - p.y, self.z - p.z)
+        *self - p
     }
 
     pub fn to_vector(self) -> Vector3D {
@@ -88,5 +113,29 @@ impl Point3D {
             z: self.z,
             w,
         }
+    }
+}
+
+impl Add<Vector3D> for Point3D {
+    type Output = Point3D;
+
+    fn add(self, other: Vector3D) -> Self::Output {
+        Point3D::new(self.x + other.x, self.y + other.y, self.z + other.z)
+    }
+}
+
+impl Sub<Vector3D> for Point3D {
+    type Output = Point3D;
+
+    fn sub(self, other: Vector3D) -> Self::Output {
+        Point3D::new(self.x - other.x, self.y - other.y, self.z - other.z)
+    }
+}
+
+impl Sub<Point3D> for Point3D {
+    type Output = Vector3D;
+
+    fn sub(self, other: Point3D) -> Self::Output {
+        Vector3D::new(self.x - other.x, self.y - other.y, self.z - other.z)
     }
 }

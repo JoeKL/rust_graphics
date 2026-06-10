@@ -117,9 +117,9 @@ impl Renderer {
     }
 
     fn project_point(point: Point3D, matrix: &Mat4x4, viewport_matrix: &Mat4x4) -> ScreenPoint {
-        let mut projected = matrix.mul_point(point);
+        let mut projected = *matrix * point;
         projected.dehomogen();
-        projected = viewport_matrix.mul_point(projected);
+        projected = *viewport_matrix * projected;
         ScreenPoint {
             x: projected.x as i32,
             y: projected.y as i32,
@@ -188,7 +188,7 @@ impl Renderer {
                     let start_point_view: Point3D = vertex.position_to_point();
 
                     let end_point_view: Point3D =
-                        start_point_view.add_v(vertex.normal_to_vector().mul(line_len));
+                        start_point_view + vertex.normal_to_vector() * line_len;
 
                     let start_screen = Self::project_point(
                         start_point_view,
@@ -210,13 +210,13 @@ impl Renderer {
                 }
 
                 // 4. Projection transform (View space -> Clip space)
-                let mut vertex_pos = self.projection_matrix.mul_point(vertex.position_to_point());
+                let mut vertex_pos = self.projection_matrix * vertex.position_to_point();
 
                 // 5. Homogeneous divide (w)
                 vertex_pos.dehomogen();
 
                 //6. Viewport transformation (Clip Space -> Screen space)
-                vertex_pos = self.viewport_matrix.mul_point(vertex_pos);
+                vertex_pos = self.viewport_matrix * vertex_pos;
                 vertex.position = [vertex_pos.x, vertex_pos.y, vertex_pos.z];
             }
         }

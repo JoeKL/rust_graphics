@@ -24,7 +24,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(position: Point3D, target: Point3D, up: Vector3D) -> Camera {
-        let direction = target.sub_p(position).normalize();
+        let direction = (target - position).normalize();
         let right = direction.cross(up).normalize();
         let up = right.cross(direction).normalize();
 
@@ -57,7 +57,7 @@ impl Camera {
     }
 
     pub fn look_at(&mut self, target: Point3D) {
-        self.direction = target.sub_p(self.position).normalize();
+        self.direction = (target - self.position).normalize();
         let world_up = Vector3D {
             x: 0.0,
             y: 1.0,
