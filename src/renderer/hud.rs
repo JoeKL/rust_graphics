@@ -152,15 +152,19 @@ impl Hud {
             );
 
             renderer.render_text(
-                "|",
+                "|- [B] Backface Culling",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 220,
-                ColorRGB::WHITE,
+                if renderer.backface_culling {
+                    ColorRGB::WHITE
+                } else {
+                    ColorRGB::GRAY_MEDIUM
+                },
                 2,
             );
 
             renderer.render_text(
-                "|- [Arrow Keys] Move Camera",
+                "|",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 240,
                 ColorRGB::WHITE,
@@ -168,7 +172,7 @@ impl Hud {
             );
 
             renderer.render_text(
-                "|- [Mouse 1]    Move Camera",
+                "|- [Arrow Keys] Move Camera",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 260,
                 ColorRGB::WHITE,
@@ -176,7 +180,7 @@ impl Hud {
             );
 
             renderer.render_text(
-                "|- [W, A, S, D] Move Light Vectors",
+                "|- [Mouse 1]    Move Camera",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 280,
                 ColorRGB::WHITE,
@@ -184,7 +188,7 @@ impl Hud {
             );
 
             renderer.render_text(
-                "|",
+                "|- [W, A, S, D] Move Light Vectors",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 300,
                 ColorRGB::WHITE,
@@ -192,7 +196,7 @@ impl Hud {
             );
 
             renderer.render_text(
-                "|- [O/P] Change FOV",
+                "|",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 320,
                 ColorRGB::WHITE,
@@ -200,9 +204,17 @@ impl Hud {
             );
 
             renderer.render_text(
-                "|- [N/M] Change Scale",
+                "|- [O/P] Change FOV",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 340,
+                ColorRGB::WHITE,
+                2,
+            );
+
+            renderer.render_text(
+                "|- [N/M] Change Scale",
+                keybind_hud_pos.0,
+                keybind_hud_pos.1 + 360,
                 ColorRGB::WHITE,
                 2,
             );
