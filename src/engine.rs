@@ -251,11 +251,9 @@ impl Engine {
                 [0.0, 0.0, 0.0, 1.0],
             ]);
 
-            let focus_segment = match self.augmentation_segment {
-                0 => &mut self.scene.root_node.children[0],
-                1 => &mut self.scene.root_node.children[0].children[0],
-                2 => &mut self.scene.root_node.children[0].children[0].children[0],
-                _ => return, // Or handle other cases
+            let focus_segment = match self.scene.root_node.get_nested_child_mut(self.augmentation_segment as usize + 1) {
+                Some(node) => node,
+                None => return,
             };
 
             let combined_rot = rot_x_mat * rot_y_mat;
@@ -376,11 +374,9 @@ impl Engine {
             scale += scale_delta;
         }
 
-        let focus_segment = match self.augmentation_segment {
-            0 => &mut self.scene.root_node.children[0],
-            1 => &mut self.scene.root_node.children[0].children[0],
-            2 => &mut self.scene.root_node.children[0].children[0].children[0],
-            _ => return, // Or handle other cases
+        let focus_segment = match self.scene.root_node.get_nested_child_mut(self.augmentation_segment as usize + 1) {
+            Some(node) => node,
+            None => return,
         };
 
         if scale != 1.0 {

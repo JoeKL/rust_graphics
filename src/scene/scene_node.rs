@@ -167,4 +167,13 @@ impl SceneNode {
             .iter()
             .fold(Mat4x4::identity(), |acc, transform| acc * *transform)
     }
+
+    /// Safely retrieves a nested child node at a specific depth by following the first child path.
+    pub fn get_nested_child_mut(&mut self, depth: usize) -> Option<&mut SceneNode> {
+        let mut current = self;
+        for _ in 0..depth {
+            current = current.children.get_mut(0)?;
+        }
+        Some(current)
+    }
 }
