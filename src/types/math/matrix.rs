@@ -222,7 +222,7 @@ impl Mat4x4 {
 
     // Calculate cofactor
     fn get_cofactor(&self, row: usize, col: usize) -> f32 {
-        let sign = if (row + col) % 2 == 0 { 1.0 } else { -1.0 };
+        let sign = if (row + col).is_multiple_of(2) { 1.0 } else { -1.0 };
         sign * self.get_minor(row, col)
     }
 

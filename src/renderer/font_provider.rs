@@ -1,12 +1,12 @@
 use crate::{
     types::color::ColorRGB,
-    utils::bmp::{read_bmp, BMP},
+    utils::bmp::{read_bmp, Bmp},
 };
 
 use super::FrameBuffer;
 
 pub struct FontProvider {
-    pub font_file: BMP,
+    pub font_file: Bmp,
     pub letter_width: u32,
     pub letter_height: u32,
 }
@@ -35,7 +35,7 @@ impl FontProvider {
         }
     }
 
-    pub fn draw_bmp(&mut self, bmp: &BMP, framebuffer: &mut FrameBuffer, x_pos: i32, y_pos: i32) {
+    pub fn draw_bmp(&mut self, bmp: &Bmp, framebuffer: &mut FrameBuffer, x_pos: i32, y_pos: i32) {
         for y in (0..bmp.height).rev() {
             for x in 0..bmp.width {
                 let index = ((y * bmp.width + x) * 3) as usize;
@@ -51,7 +51,7 @@ impl FontProvider {
 
     pub fn draw_as_character(
         &mut self,
-        bmp: &BMP,
+        bmp: &Bmp,
         framebuffer: &mut FrameBuffer,
         x_pos: i32,
         y_pos: i32,
@@ -71,7 +71,7 @@ impl FontProvider {
         }
     }
 
-    pub fn get_character(&mut self, x_idx: u32, y_idx: u32) -> BMP {
+    pub fn get_character(&mut self, x_idx: u32, y_idx: u32) -> Bmp {
         let lw = self.letter_width as usize;
         let lh = self.letter_height as usize;
         let atlas_w = self.font_file.width as usize;
@@ -97,7 +97,7 @@ impl FontProvider {
             }
         }
 
-        BMP {
+        Bmp {
             width: self.letter_width as i32,
             height: self.letter_height as i32,
             data: letter_data,

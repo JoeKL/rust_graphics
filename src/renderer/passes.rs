@@ -41,7 +41,7 @@ impl RenderPass for FacePass {
 
                 // create boundingbox from v0, v1, v2
                 (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
-                    renderer.rasterizer.calculate_bounding_box(&v0, &v1, &v2);
+                    renderer.rasterizer.calculate_bounding_box(v0, v1, v2);
 
                 // 1. PRE-CALCULATION
                 // Create aliases for positions to make math cleaner (p = position)
@@ -165,13 +165,11 @@ impl RenderPass for VertexPass {
                     continue;
                 }
 
-                let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
-
-                fragment_storage.extend([
+                let fragment_storage = [
                     [v0.position[0] as i32, v0.position[1] as i32],
                     [v1.position[0] as i32, v1.position[1] as i32],
                     [v2.position[0] as i32, v2.position[1] as i32],
-                ]);
+                ];
 
                 for fragment_chunk in fragment_storage {
                     renderer.fragment_buffer.push(Fragment {

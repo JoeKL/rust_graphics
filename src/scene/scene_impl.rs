@@ -36,7 +36,7 @@ impl Scene {
         // model
         let mut model_node = SceneNode::new();
 
-        model_node.set_mesh(Mesh::load_obj("models/f-16.obj".into(), 2, [1.0, 1.0, 1.0]));
+        model_node.set_mesh(Mesh::load_obj("models/f-16.obj", 2, [1.0, 1.0, 1.0]));
 
         // model_node.set_scale(Vector3D {
         //     x: (0.015),
@@ -44,7 +44,7 @@ impl Scene {
         //     z: (0.015),
         //     w: (1),
         // });
-        //
+
         root_node.add_child(model_node);
 
         Scene {

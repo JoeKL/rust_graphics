@@ -73,8 +73,6 @@ impl InputHandler {
     // For continuous state checks
     pub fn is_mouse_button_down(&self, button_number: usize) -> bool {
         self.current_mouse_button_states[button_number.clamp(0, 2)]
-            && self.previous_mouse_button_states[button_number.clamp(0, 2)]
-
         // Returns true while key is held down
     }
 
@@ -104,8 +102,7 @@ impl InputHandler {
 
     // For continuous state checks
     pub fn is_key_down(&self, key: Key) -> bool {
-        self.current_keys.contains(&key) && self.previous_keys.contains(&key)
-
+        self.current_keys.contains(&key)
         // Returns true while key is held down
     }
 
