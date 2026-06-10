@@ -16,6 +16,9 @@ pub use draw_command::DrawCommand;
 pub use fragment::Fragment;
 pub use frustum::Frustum;
 pub use hud::Hud;
-pub use passes::{FacePass, RenderPass, VertexNormalPass, VertexPass, WireframePass};
+pub use passes::{
+    FacePass, RasterizerInput, RasterizerOutput, RenderPass, VertexNormalPass, VertexPass,
+    WireframePass,
+};
 pub use rasterizer::Rasterizer;
 pub use viewport::Viewport;

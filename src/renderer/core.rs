@@ -1,6 +1,6 @@
 use super::{
-    font_provider::FontProvider, DrawCommand, FacePass, Fragment, Frustum, Rasterizer, RenderPass,
-    VertexNormalPass, VertexPass, WireframePass,
+    font_provider::FontProvider, DrawCommand, FacePass, Fragment, Frustum, Rasterizer,
+    RasterizerInput, RasterizerOutput, RenderPass, VertexNormalPass, VertexPass, WireframePass,
 };
 use crate::{
     scene::Scene,
@@ -227,17 +227,30 @@ impl Renderer {
 
     /// Rasterization Stage
     fn rasterize(&mut self) {
+        let input = RasterizerInput {
+            draw_commands: &self.draw_commands,
+            triangle_index_buffer: &self.triangle_index_buffer,
+            transformed_vertices: &self.transformed_vertices,
+            backface_culling: self.backface_culling,
+        };
+
+        let mut output = RasterizerOutput {
+            fragment_buffer: &mut self.fragment_buffer,
+            z_buffer: &mut self.z_buffer,
+            debug_lines: &mut self.debug_lines,
+        };
+
         if self.draw_faces {
-            FacePass.execute(self);
+            FacePass.execute(&self.rasterizer, &input, &mut output);
         }
         if self.draw_vertex {
-            VertexPass.execute(self);
+            VertexPass.execute(&self.rasterizer, &input, &mut output);
         }
         if self.draw_wireframe {
-            WireframePass.execute(self);
+            WireframePass.execute(&self.rasterizer, &input, &mut output);
         }
         if self.draw_vertex_normals {
-            VertexNormalPass.execute(self);
+            VertexNormalPass.execute(&self.rasterizer, &input, &mut output);
         }
     }
 
