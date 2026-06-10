@@ -113,6 +113,16 @@ impl Renderer {
         }
     }
 
+    fn project_point(point: Point3D, matrix: &Mat4x4, viewport_matrix: &Mat4x4) -> ScreenPoint {
+        let mut projected = matrix.mul_point(point);
+        projected.dehomogen();
+        projected = viewport_matrix.mul_point(projected);
+        ScreenPoint {
+            x: projected.x as i32,
+            y: projected.y as i32,
+        }
+    }
+
     /// Command Stream - Collect and prepare draw calls
     fn process_commands(&mut self, scene: &mut Scene) {
         // - Set up vertex/index buffer ranges
@@ -177,19 +187,22 @@ impl Renderer {
                     let end_point_view: Point3D =
                         start_point_view.add_v(vertex.normal_to_vector().mul(line_len));
 
-                    let mut start_screen = self.projection_matrix.mul_point(start_point_view);
-                    start_screen.dehomogen();
-                    start_screen = self.viewport_matrix.mul_point(start_screen);
-
-                    let mut end_screen = self.projection_matrix.mul_point(end_point_view);
-                    end_screen.dehomogen();
-                    end_screen = self.viewport_matrix.mul_point(end_screen);
+                    let start_screen = Self::project_point(
+                        start_point_view,
+                        &self.projection_matrix,
+                        &self.viewport_matrix,
+                    );
+                    let end_screen = Self::project_point(
+                        end_point_view,
+                        &self.projection_matrix,
+                        &self.viewport_matrix,
+                    );
 
                     self.debug_lines.push([
-                        start_screen.x as i32,
-                        start_screen.y as i32,
-                        end_screen.x as i32,
-                        end_screen.y as i32,
+                        start_screen.x,
+                        start_screen.y,
+                        end_screen.x,
+                        end_screen.y,
                     ]);
                 }
 
@@ -208,260 +221,260 @@ impl Renderer {
 
     /// Rasterization Stage
     fn rasterize(&mut self) {
-        // - Triangle setup
-        // - Generate fragments
-        // - Interpolate vertex attributes
-
         if self.draw_faces {
-            // For each draw command/mesh
-            for draw_command in &self.draw_commands {
-                let index_start = draw_command.first_triangle_index_offset;
-                let index_length = draw_command.triangle_index_count;
-                let index_end = index_length + index_start;
+            self.rasterize_faces();
+        }
+        if self.draw_vertex {
+            self.rasterize_vertices();
+        }
+        if self.draw_wireframe {
+            self.rasterize_wireframe();
+        }
+        if self.draw_vertex_normals {
+            self.rasterize_vertex_normals();
+        }
+    }
 
-                // Process indices in groups of 3 to form triangles
-                for i in (index_start..index_end).step_by(3) {
-                    // Get vertex indices
-                    let i0 = self.triangle_index_buffer[i];
-                    let i1 = self.triangle_index_buffer[i + 1];
-                    let i2 = self.triangle_index_buffer[i + 2];
+    fn rasterize_faces(&mut self) {
+        // For each draw command/mesh
+        for draw_command in &self.draw_commands {
+            let index_start = draw_command.first_triangle_index_offset;
+            let index_length = draw_command.triangle_index_count;
+            let index_end = index_length + index_start;
 
-                    // Get transformed vertices
-                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
-                    let v1 = &self.transformed_vertices[i1 as usize];
-                    let v2 = &self.transformed_vertices[i2 as usize];
+            // Process indices in groups of 3 to form triangles
+            for i in (index_start..index_end).step_by(3) {
+                // Get vertex indices
+                let i0 = self.triangle_index_buffer[i];
+                let i1 = self.triangle_index_buffer[i + 1];
+                let i2 = self.triangle_index_buffer[i + 2];
 
-                    // Check if triangle is partly on screen
-                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
-                        continue;
-                    }
+                // Get transformed vertices
+                let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                let v1 = &self.transformed_vertices[i1 as usize];
+                let v2 = &self.transformed_vertices[i2 as usize];
 
-                    let bounds_min_x: i32;
-                    let bounds_min_y: i32;
-                    let bounds_max_x: i32;
-                    let bounds_max_y: i32;
+                // Check if triangle is partly on screen
+                if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                    continue;
+                }
 
-                    // create boundingbox from v0, v1, v2
-                    (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
-                        self.rasterizer.calculate_bounding_box(&v0, &v1, &v2);
+                let bounds_min_x: i32;
+                let bounds_min_y: i32;
+                let bounds_max_x: i32;
+                let bounds_max_y: i32;
 
-                    // 1. PRE-CALCULATION
-                    // Create aliases for positions to make math cleaner (p = position)
-                    let p0 = &v0.position;
-                    let p1 = &v1.position;
-                    let p2 = &v2.position;
+                // create boundingbox from v0, v1, v2
+                (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
+                    self.rasterizer.calculate_bounding_box(&v0, &v1, &v2);
 
-                    // Calculate triangle vectors
-                    let v0_to_v1_x = p1[0] - p0[0];
-                    let v0_to_v1_y = p1[1] - p0[1];
-                    let v0_to_v2_x = p2[0] - p0[0];
-                    let v0_to_v2_y = p2[1] - p0[1];
+                // 1. PRE-CALCULATION
+                // Create aliases for positions to make math cleaner (p = position)
+                let p0 = &v0.position;
+                let p1 = &v1.position;
+                let p2 = &v2.position;
 
-                    // Calculate denominator once (cross product Z component)
-                    let denominator = v0_to_v1_x * v0_to_v2_y - v0_to_v2_x * v0_to_v1_y;
+                // Calculate triangle vectors
+                let v0_to_v1_x = p1[0] - p0[0];
+                let v0_to_v1_y = p1[1] - p0[1];
+                let v0_to_v2_x = p2[0] - p0[0];
+                let v0_to_v2_y = p2[1] - p0[1];
 
-                    // OPTIMIZATION: Skip degenerate triangles (zero area)
-                    if denominator.abs() < f32::EPSILON {
-                        continue;
-                    }
+                // Calculate denominator once (cross product Z component)
+                let denominator = v0_to_v1_x * v0_to_v2_y - v0_to_v2_x * v0_to_v1_y;
 
-                    // Calculate inverse once to replace division with multiplication
-                    let inv_denominator = 1.0 / denominator;
+                // OPTIMIZATION: Skip degenerate triangles (zero area)
+                if denominator.abs() < f32::EPSILON {
+                    continue;
+                }
 
-                    // For each pixel in triangle's bounding box:
-                    // traverse the bounding box in scanline
-                    for y in (bounds_min_y)..(bounds_max_y) {
-                        for x in (bounds_min_x)..(bounds_max_x) {
-                            let fx = x as f32;
-                            let fy = y as f32;
+                // Calculate inverse once to replace division with multiplication
+                let inv_denominator = 1.0 / denominator;
 
-                            // Vector from Point to p0
-                            let p_to_v0_x = fx - p0[0];
-                            let p_to_v0_y = fy - p0[1];
+                // For each pixel in triangle's bounding box:
+                // traverse the bounding box in scanline
+                for y in (bounds_min_y)..(bounds_max_y) {
+                    for x in (bounds_min_x)..(bounds_max_x) {
+                        let fx = x as f32;
+                        let fy = y as f32;
 
-                            // Calculate Beta and Gamma using Multiplications
-                            let beta =
-                                (p_to_v0_x * v0_to_v2_y - v0_to_v2_x * p_to_v0_y) * inv_denominator;
-                            let gamma =
-                                (v0_to_v1_x * p_to_v0_y - p_to_v0_x * v0_to_v1_y) * inv_denominator;
-                            let alpha = 1.0 - beta - gamma;
+                        // Vector from Point to p0
+                        let p_to_v0_x = fx - p0[0];
+                        let p_to_v0_y = fy - p0[1];
 
-                            // Test if pixel is inside triangle
-                            if (0.0..=1.0).contains(&alpha)
-                                && (0.0..=1.0).contains(&beta)
-                                && (0.0..=1.0).contains(&gamma)
-                            {
-                                // Interpolate Z, color, normal using barycentric
-                                let interpolated_z = alpha * v0.position[2]
-                                    + beta * v1.position[2]
-                                    + gamma * v2.position[2];
+                        // Calculate Beta and Gamma using Multiplications
+                        let beta =
+                            (p_to_v0_x * v0_to_v2_y - v0_to_v2_x * p_to_v0_y) * inv_denominator;
+                        let gamma =
+                            (v0_to_v1_x * p_to_v0_y - p_to_v0_x * v0_to_v1_y) * inv_denominator;
+                        let alpha = 1.0 - beta - gamma;
 
-                                let interpolated_color = [
-                                    alpha * v0.color[0] + beta * v1.color[0] + gamma * v2.color[0],
-                                    alpha * v0.color[1] + beta * v1.color[1] + gamma * v2.color[1],
-                                    alpha * v0.color[2] + beta * v1.color[2] + gamma * v2.color[2],
-                                ];
+                        // Test if pixel is inside triangle
+                        if (0.0..=1.0).contains(&alpha)
+                            && (0.0..=1.0).contains(&beta)
+                            && (0.0..=1.0).contains(&gamma)
+                        {
+                            // Interpolate Z, color, normal using barycentric
+                            let interpolated_z = alpha * v0.position[2]
+                                + beta * v1.position[2]
+                                + gamma * v2.position[2];
 
-                                let interpolated_normal = [
-                                    alpha * v0.normal[0]
-                                        + beta * v1.normal[0]
-                                        + gamma * v2.normal[0],
-                                    alpha * v0.normal[1]
-                                        + beta * v1.normal[1]
-                                        + gamma * v2.normal[1],
-                                    alpha * v0.normal[2]
-                                        + beta * v1.normal[2]
-                                        + gamma * v2.normal[2],
-                                ];
+                            let interpolated_color = [
+                                alpha * v0.color[0] + beta * v1.color[0] + gamma * v2.color[0],
+                                alpha * v0.color[1] + beta * v1.color[1] + gamma * v2.color[1],
+                                alpha * v0.color[2] + beta * v1.color[2] + gamma * v2.color[2],
+                            ];
 
-                                // setup z index to access right place in buffer
-                                let z_buffer_idx = y as usize
-                                    * self.rasterizer.framebuffer.get_width()
-                                    + x as usize;
+                            let interpolated_normal = [
+                                alpha * v0.normal[0] + beta * v1.normal[0] + gamma * v2.normal[0],
+                                alpha * v0.normal[1] + beta * v1.normal[1] + gamma * v2.normal[1],
+                                alpha * v0.normal[2] + beta * v1.normal[2] + gamma * v2.normal[2],
+                            ];
 
-                                // Create and store fragment if Z-test passes
-                                // Z-test before creating fragment
-                                if interpolated_z < self.z_buffer[z_buffer_idx] {
-                                    // Only if closer than what's in zbuffer at coordinates
-                                    self.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
+                            // setup z index to access right place in buffer
+                            let z_buffer_idx =
+                                y as usize * self.rasterizer.framebuffer.get_width() + x as usize;
 
-                                    self.fragment_buffer.push(Fragment {
-                                        x,
-                                        y,
-                                        z: interpolated_z,
-                                        color: interpolated_color,
-                                        normal: interpolated_normal,
-                                        material_id: draw_command.material_id,
-                                    });
-                                }
+                            // Create and store fragment if Z-test passes
+                            // Z-test before creating fragment
+                            if interpolated_z < self.z_buffer[z_buffer_idx] {
+                                // Only if closer than what's in zbuffer at coordinates
+                                self.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
+
+                                self.fragment_buffer.push(Fragment {
+                                    x,
+                                    y,
+                                    z: interpolated_z,
+                                    color: interpolated_color,
+                                    normal: interpolated_normal,
+                                    material_id: draw_command.material_id,
+                                });
                             }
                         }
                     }
                 }
             }
         }
-        if self.draw_vertex {
-            // only draw vertices as dots
+    }
 
-            // For each draw command/mesh
-            for draw_command in &self.draw_commands {
-                let index_start = draw_command.first_triangle_index_offset;
-                let index_length = draw_command.triangle_index_count;
-                let index_end = index_length + index_start;
+    fn rasterize_vertices(&mut self) {
+        // For each draw command/mesh
+        for draw_command in &self.draw_commands {
+            let index_start = draw_command.first_triangle_index_offset;
+            let index_length = draw_command.triangle_index_count;
+            let index_end = index_length + index_start;
 
-                // Process indices in groups of 3 to form triangles
-                for i in (index_start..index_end).step_by(3) {
-                    // Get vertex indices
-                    let i0 = self.triangle_index_buffer[i];
-                    let i1 = self.triangle_index_buffer[i + 1];
-                    let i2 = self.triangle_index_buffer[i + 2];
+            // Process indices in groups of 3 to form triangles
+            for i in (index_start..index_end).step_by(3) {
+                // Get vertex indices
+                let i0 = self.triangle_index_buffer[i];
+                let i1 = self.triangle_index_buffer[i + 1];
+                let i2 = self.triangle_index_buffer[i + 2];
 
-                    // Get transformed vertices
-                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
-                    let v1 = &self.transformed_vertices[i1 as usize];
-                    let v2 = &self.transformed_vertices[i2 as usize];
+                // Get transformed vertices
+                let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                let v1 = &self.transformed_vertices[i1 as usize];
+                let v2 = &self.transformed_vertices[i2 as usize];
 
-                    // Check if triangle is partly on screen
-                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
-                        continue;
-                    }
+                // Check if triangle is partly on screen
+                if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                    continue;
+                }
 
-                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+                let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
 
-                    fragment_storage.extend([
-                        [v0.position[0] as i32, v0.position[1] as i32],
-                        [v1.position[0] as i32, v1.position[1] as i32],
-                        [v2.position[0] as i32, v2.position[1] as i32],
-                    ]);
+                fragment_storage.extend([
+                    [v0.position[0] as i32, v0.position[1] as i32],
+                    [v1.position[0] as i32, v1.position[1] as i32],
+                    [v2.position[0] as i32, v2.position[1] as i32],
+                ]);
 
-                    for fragment_chunk in fragment_storage {
-                        self.fragment_buffer.push(Fragment {
-                            x: fragment_chunk[0],
-                            y: fragment_chunk[1],
-                            z: 0.0,
-                            color: [1.0, 1.0, 1.0],
-                            normal: [0.0, 0.0, 0.0],
-                            material_id: 0,
-                        });
-                    }
+                for fragment_chunk in fragment_storage {
+                    self.fragment_buffer.push(Fragment {
+                        x: fragment_chunk[0],
+                        y: fragment_chunk[1],
+                        z: 0.0,
+                        color: [1.0, 1.0, 1.0],
+                        normal: [0.0, 0.0, 0.0],
+                        material_id: 0,
+                    });
                 }
             }
         }
-        if self.draw_wireframe {
-            // only draw wireframe
+    }
 
-            // For each draw command/mesh
-            for draw_command in &self.draw_commands {
-                let index_start = draw_command.first_triangle_index_offset;
-                let index_length = draw_command.triangle_index_count;
-                let index_end = index_length + index_start;
+    fn rasterize_wireframe(&mut self) {
+        // For each draw command/mesh
+        for draw_command in &self.draw_commands {
+            let index_start = draw_command.first_triangle_index_offset;
+            let index_length = draw_command.triangle_index_count;
+            let index_end = index_length + index_start;
 
-                // Process indices in groups of 3 to form triangles
-                for i in (index_start..index_end).step_by(3) {
-                    // Get vertex indices
-                    let i0 = self.triangle_index_buffer[i];
-                    let i1 = self.triangle_index_buffer[i + 1];
-                    let i2 = self.triangle_index_buffer[i + 2];
+            // Process indices in groups of 3 to form triangles
+            for i in (index_start..index_end).step_by(3) {
+                // Get vertex indices
+                let i0 = self.triangle_index_buffer[i];
+                let i1 = self.triangle_index_buffer[i + 1];
+                let i2 = self.triangle_index_buffer[i + 2];
 
-                    // Get transformed vertices
-                    let v0: &Vertex = &self.transformed_vertices[i0 as usize];
-                    let v1 = &self.transformed_vertices[i1 as usize];
-                    let v2 = &self.transformed_vertices[i2 as usize];
+                // Get transformed vertices
+                let v0: &Vertex = &self.transformed_vertices[i0 as usize];
+                let v1 = &self.transformed_vertices[i1 as usize];
+                let v2 = &self.transformed_vertices[i2 as usize];
 
-                    // Check if triangle is partly on screen
-                    if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
-                        continue;
-                    }
+                // Check if triangle is partly on screen
+                if !self.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                    continue;
+                }
 
-                    let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+                let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
 
-                    fragment_storage.extend(self.rasterizer.calculate_line(
-                        [v0.position[0] as i32, v0.position[1] as i32],
-                        [v1.position[0] as i32, v1.position[1] as i32],
-                    ));
+                fragment_storage.extend(self.rasterizer.calculate_line(
+                    [v0.position[0] as i32, v0.position[1] as i32],
+                    [v1.position[0] as i32, v1.position[1] as i32],
+                ));
 
-                    fragment_storage.extend(self.rasterizer.calculate_line(
-                        [v1.position[0] as i32, v1.position[1] as i32],
-                        [v2.position[0] as i32, v2.position[1] as i32],
-                    ));
+                fragment_storage.extend(self.rasterizer.calculate_line(
+                    [v1.position[0] as i32, v1.position[1] as i32],
+                    [v2.position[0] as i32, v2.position[1] as i32],
+                ));
 
-                    fragment_storage.extend(self.rasterizer.calculate_line(
-                        [v0.position[0] as i32, v0.position[1] as i32],
-                        [v2.position[0] as i32, v2.position[1] as i32],
-                    ));
+                fragment_storage.extend(self.rasterizer.calculate_line(
+                    [v0.position[0] as i32, v0.position[1] as i32],
+                    [v2.position[0] as i32, v2.position[1] as i32],
+                ));
 
-                    for fragment_chunk in fragment_storage {
-                        self.fragment_buffer.push(Fragment {
-                            x: fragment_chunk[0],
-                            y: fragment_chunk[1],
-                            z: 0.0,
-                            color: [1.0, 1.0, 1.0],
-                            normal: [0.0, 0.0, 0.0],
-                            material_id: 0,
-                        });
-                    }
+                for fragment_chunk in fragment_storage {
+                    self.fragment_buffer.push(Fragment {
+                        x: fragment_chunk[0],
+                        y: fragment_chunk[1],
+                        z: 0.0,
+                        color: [1.0, 1.0, 1.0],
+                        normal: [0.0, 0.0, 0.0],
+                        material_id: 0,
+                    });
                 }
             }
         }
-        if self.draw_vertex_normals {
-            // For each draw command/mesh
-            let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+    }
 
-            for [x1, y1, x2, y2] in self.debug_lines.drain(..) {
-                let points = self.rasterizer.calculate_line([x1, y1], [x2, y2]);
-                fragment_storage.extend(points);
-            }
+    fn rasterize_vertex_normals(&mut self) {
+        let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
 
-            for fragment_chunk in fragment_storage {
-                self.fragment_buffer.push(Fragment {
-                    x: fragment_chunk[0],
-                    y: fragment_chunk[1],
-                    z: 0.0,
-                    color: [1.0, 1.0, 1.0],
-                    normal: [0.0, 0.0, 0.0],
-                    material_id: 0,
-                });
-            }
+        for [x1, y1, x2, y2] in self.debug_lines.drain(..) {
+            let points = self.rasterizer.calculate_line([x1, y1], [x2, y2]);
+            fragment_storage.extend(points);
+        }
+
+        for fragment_chunk in fragment_storage {
+            self.fragment_buffer.push(Fragment {
+                x: fragment_chunk[0],
+                y: fragment_chunk[1],
+                z: 0.0,
+                color: [1.0, 1.0, 1.0],
+                normal: [0.0, 0.0, 0.0],
+                material_id: 0,
+            });
         }
     }
 
@@ -559,7 +572,6 @@ impl Renderer {
 
     pub fn render_axis(&mut self, scene: &mut Scene) {
         let frustum_matrix = scene.camera.get_frustum_matrix();
-        let viewport_matrix = self.rasterizer.viewport.get_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
         let x_end = Point3D::new(1.0, 0.0, 0.0); // X axis in red
@@ -573,26 +585,8 @@ impl Renderer {
         ];
 
         for (start, end, color) in axes {
-            let mut start_point = start;
-            let mut end_point = end;
-
-            start_point = frustum_matrix.mul_point(start_point);
-            end_point = frustum_matrix.mul_point(end_point);
-
-            start_point.dehomogen();
-            end_point.dehomogen();
-
-            start_point = viewport_matrix.mul_point(start_point);
-            end_point = viewport_matrix.mul_point(end_point);
-
-            let screen_start = ScreenPoint {
-                x: start_point.x as i32,
-                y: start_point.y as i32,
-            };
-            let screen_end = ScreenPoint {
-                x: end_point.x as i32,
-                y: end_point.y as i32,
-            };
+            let screen_start = Self::project_point(start, &frustum_matrix, &self.viewport_matrix);
+            let screen_end = Self::project_point(end, &frustum_matrix, &self.viewport_matrix);
 
             self.rasterizer.draw_line(screen_start, screen_end, color);
         }
@@ -600,7 +594,6 @@ impl Renderer {
 
     pub fn render_grid(&mut self, scene: &mut Scene) {
         let frustum_matrix = scene.camera.get_frustum_matrix();
-        let viewport_matrix = self.rasterizer.viewport.get_matrix();
 
         let line_color = ColorRGB::from_rgb(32, 32, 32);
         let start_dist = 5.0;
@@ -643,26 +636,8 @@ impl Renderer {
         }
 
         for (start, end, color) in axes {
-            let mut start_point = start;
-            let mut end_point = end;
-
-            start_point = frustum_matrix.mul_point(start_point);
-            end_point = frustum_matrix.mul_point(end_point);
-
-            start_point.dehomogen();
-            end_point.dehomogen();
-
-            start_point = viewport_matrix.mul_point(start_point);
-            end_point = viewport_matrix.mul_point(end_point);
-
-            let screen_start = ScreenPoint {
-                x: start_point.x as i32,
-                y: start_point.y as i32,
-            };
-            let screen_end = ScreenPoint {
-                x: end_point.x as i32,
-                y: end_point.y as i32,
-            };
+            let screen_start = Self::project_point(start, &frustum_matrix, &self.viewport_matrix);
+            let screen_end = Self::project_point(end, &frustum_matrix, &self.viewport_matrix);
 
             self.rasterizer.draw_line(screen_start, screen_end, color);
         }
@@ -670,31 +645,16 @@ impl Renderer {
 
     pub fn render_light_vectors(&mut self, scene: &mut Scene) {
         let frustum_matrix = scene.camera.get_frustum_matrix();
-        let viewport_matrix = self.rasterizer.viewport.get_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
 
         for lights in &scene.lights {
-            let mut start_point = lights.get_position();
-            let mut end_point = origin;
+            let start_point = lights.get_position();
+            let end_point = origin;
 
-            start_point = frustum_matrix.mul_point(start_point);
-            end_point = frustum_matrix.mul_point(end_point);
-
-            start_point.dehomogen();
-            end_point.dehomogen();
-
-            start_point = viewport_matrix.mul_point(start_point);
-            end_point = viewport_matrix.mul_point(end_point);
-
-            let screen_start = ScreenPoint {
-                x: start_point.x as i32,
-                y: start_point.y as i32,
-            };
-            let screen_end = ScreenPoint {
-                x: end_point.x as i32,
-                y: end_point.y as i32,
-            };
+            let screen_start =
+                Self::project_point(start_point, &frustum_matrix, &self.viewport_matrix);
+            let screen_end = Self::project_point(end_point, &frustum_matrix, &self.viewport_matrix);
 
             self.rasterizer
                 .draw_line(screen_start, screen_end, ColorRGB::YELLOW);
