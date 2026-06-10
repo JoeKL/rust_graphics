@@ -1,4 +1,4 @@
-use crate::types::color::ColorRGB;
+use crate::renderer::color::ColorRGB;
 
 pub struct FrameBuffer {
     pub buffer: Vec<u32>,

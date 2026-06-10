@@ -1,5 +1,5 @@
 use crate::renderer::Renderer;
-use crate::types::color::ColorRGB;
+use crate::renderer::color::ColorRGB;
 
 pub struct Hud;
 

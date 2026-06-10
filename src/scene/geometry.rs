@@ -1,5 +1,5 @@
-use crate::types::math::{Mat4x4, Point3D, Vector3D};
-use crate::types::primitives::Vertex;
+use crate::math::{Mat4x4, Point3D, Vector3D};
+use crate::scene::Vertex;
 use std::fs;
 use std::sync::atomic::{AtomicUsize, Ordering};
 

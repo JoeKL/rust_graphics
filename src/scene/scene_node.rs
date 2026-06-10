@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
-use crate::types::{
-    geometry::Mesh,
-    math::{Mat4x4, Vector3D},
-};
+use crate::math::{Mat4x4, Vector3D};
+use super::Mesh;
 
 pub struct SceneNode {
     position: Vector3D, // current position

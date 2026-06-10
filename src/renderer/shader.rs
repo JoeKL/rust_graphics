@@ -1,7 +1,5 @@
-use crate::types::{
-    light::PointLight,
-    math::{Point3D, Vector3D},
-};
+use crate::scene::PointLight;
+use crate::math::{Point3D, Vector3D};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static MATERIAL_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);

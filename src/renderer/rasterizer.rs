@@ -1,7 +1,6 @@
-use crate::renderer::{FrameBuffer, Viewport};
-use crate::types::color::ColorRGB;
-use crate::types::display::ScreenPoint;
-use crate::types::primitives::Vertex;
+use crate::renderer::{FrameBuffer, Viewport, ColorRGB};
+use crate::math::ScreenPoint;
+use crate::scene::Vertex;
 
 //  To avoid potential confusion, let me define "rasterization":
 //  For our present purposes, it's the process of determining which pixels are inside a triangle, and nothing more.

@@ -1,18 +1,12 @@
 use super::{
-    font_provider::FontProvider, DrawCommand, FacePass, Fragment, Frustum, Rasterizer,
-    RasterizerInput, RasterizerOutput, RenderPass, VertexNormalPass, VertexPass, WireframePass,
+    ColorRGB, FlatShader, FontProvider, Material, ShadingModel, DrawCommand, FacePass, Fragment,
+    Frustum, Rasterizer, RasterizerInput, RasterizerOutput, RenderPass, VertexNormalPass,
+    VertexPass, WireframePass,
 };
 use crate::{
-    scene::Scene,
-    types::{
-        color::ColorRGB,
-        display::ScreenPoint,
-        light::PointLight,
-        math::{Mat4x4, Point3D},
-        primitives::Vertex,
-        shader::{FlatShader, Material, ShadingModel},
-    },
-    utils::bmp::BMP,
+    math::{Mat4x4, Point3D, ScreenPoint},
+    scene::{PointLight, Scene, Vertex},
+    utils::bmp::Bmp,
 };
 
 pub struct Renderer {
@@ -443,7 +437,7 @@ impl Renderer {
         for char in text.chars() {
             let char_cords = self.font_provider.get_glyph_grid_pos(char);
 
-            let mut character_bmp: BMP = self
+            let mut character_bmp: Bmp = self
                 .font_provider
                 .get_character(char_cords.0, char_cords.1)
                 .scale_up(scale);

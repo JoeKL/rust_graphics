@@ -1,4 +1,4 @@
-use crate::types::math::{Point2D, Point3D};
+use super::{Point2D, Point3D};
 use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -144,7 +144,7 @@ impl Vector3D {
     }
 
     pub fn length(&self) -> f32 {
-        (self.x.powf(2.0) + self.y.powf(2.0) + self.z.powf(2.0)).sqrt()
+        self.norm()
     }
 }
 

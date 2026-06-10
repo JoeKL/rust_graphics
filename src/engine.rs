@@ -1,11 +1,10 @@
 use std::time::Instant;
 
 use crate::input::InputHandler;
+use crate::math::{Mat4x4, Point2D, Point3D, ScreenPoint, Vector3D};
+use crate::renderer::color::ColorRGB;
 use crate::renderer::Renderer;
 use crate::scene::Scene;
-use crate::types::color::ColorRGB;
-use crate::types::display::ScreenPoint;
-use crate::types::math::{Mat4x4, Point2D, Point3D, Vector3D};
 
 pub struct Engine {
     renderer: Renderer,

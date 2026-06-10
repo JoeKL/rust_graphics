@@ -1,7 +1,5 @@
-use crate::types::{
-    math::{Mat4x4, Point3D, Vector3D},
-    primitives::Vertex,
-};
+use crate::math::{Mat4x4, Point3D, Vector3D};
+use crate::scene::Vertex;
 
 pub struct Plane {
     point: Point3D,

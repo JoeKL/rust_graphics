@@ -1,13 +1,7 @@
-use super::SceneNode;
+use super::{Camera, Mesh, PointLight, SceneNode, Vertex};
+use crate::math::{Point3D, Vector3D};
+use crate::renderer::color::ColorRGB;
 use crate::renderer::DrawCommand;
-use crate::types::camera::Camera;
-use crate::types::color::ColorRGB;
-use crate::types::geometry::Mesh;
-use crate::types::light::PointLight;
-use crate::types::{
-    math::{Point3D, Vector3D},
-    primitives::Vertex,
-};
 
 pub struct Scene {
     pub root_node: SceneNode,

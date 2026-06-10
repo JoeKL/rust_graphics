@@ -1,5 +1,5 @@
-use crate::types::color::ColorRGB;
-use crate::types::math::{Mat4x4, Point3D, Vector3D};
+use crate::renderer::color::ColorRGB;
+use crate::math::{Mat4x4, Point3D, Vector3D};
 
 #[derive(Debug, Clone, Copy)]
 pub struct PointLight {

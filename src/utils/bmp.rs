@@ -1,14 +1,14 @@
-use crate::types::color::ColorRGB;
+use crate::renderer::color::ColorRGB;
 use std::io;
 
 #[derive(Debug, Clone)]
-pub struct BMP {
+pub struct Bmp {
     pub width: i32,
     pub height: i32,
     pub data: Vec<u8>,
 }
 
-impl BMP {
+impl Bmp {
     #[allow(dead_code)]
     pub fn new(width: i32, height: i32, data: Vec<u8>) -> Self {
         Self {
@@ -61,7 +61,7 @@ impl BMP {
             }
         }
 
-        BMP {
+        Bmp {
             width: new_width,
             height: new_height,
             data: scaled_data,
@@ -69,7 +69,7 @@ impl BMP {
     }
 }
 
-pub fn read_bmp(path: &str) -> io::Result<BMP> {
+pub fn read_bmp(path: &str) -> io::Result<Bmp> {
     let img = bmp::open(path).map_err(|e| {
         io::Error::new(
             io::ErrorKind::InvalidData,
@@ -90,7 +90,7 @@ pub fn read_bmp(path: &str) -> io::Result<BMP> {
         }
     }
 
-    Ok(BMP {
+    Ok(Bmp {
         width,
         height,
         data,

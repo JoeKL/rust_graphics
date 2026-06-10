@@ -1,6 +1,6 @@
 use crate::renderer::{DrawCommand, Fragment, Rasterizer};
-use crate::types::display::ScreenPoint;
-use crate::types::primitives::Vertex;
+use crate::math::ScreenPoint;
+use crate::scene::Vertex;
 
 pub struct RasterizerInput<'a> {
     pub draw_commands: &'a [DrawCommand],
