@@ -89,7 +89,7 @@ impl FrameBuffer {
         }
     }
 
-    pub fn get_pixel(&mut self, x: i32, y: i32) -> u32 {
+    pub fn get_pixel(&self, x: i32, y: i32) -> u32 {
         if self.is_in_bounds(x, y) {
             let index = self.get_index(x as usize, y as usize);
             self.buffer[index]

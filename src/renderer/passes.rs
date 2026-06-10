@@ -1,5 +1,6 @@
 use crate::renderer::Fragment;
 use crate::renderer::Renderer;
+use crate::types::display::ScreenPoint;
 use crate::types::primitives::Vertex;
 
 pub trait RenderPass {
@@ -214,33 +215,30 @@ impl RenderPass for WireframePass {
                     continue;
                 }
 
-                let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
+                let p0 = ScreenPoint::new(v0.position[0] as i32, v0.position[1] as i32);
+                let p1 = ScreenPoint::new(v1.position[0] as i32, v1.position[1] as i32);
+                let p2 = ScreenPoint::new(v2.position[0] as i32, v2.position[1] as i32);
 
-                fragment_storage.extend(renderer.rasterizer.calculate_line(
-                    [v0.position[0] as i32, v0.position[1] as i32],
-                    [v1.position[0] as i32, v1.position[1] as i32],
-                ));
-
-                fragment_storage.extend(renderer.rasterizer.calculate_line(
-                    [v1.position[0] as i32, v1.position[1] as i32],
-                    [v2.position[0] as i32, v2.position[1] as i32],
-                ));
-
-                fragment_storage.extend(renderer.rasterizer.calculate_line(
-                    [v0.position[0] as i32, v0.position[1] as i32],
-                    [v2.position[0] as i32, v2.position[1] as i32],
-                ));
-
-                for fragment_chunk in fragment_storage {
+                let mut push_fragment = |x, y| {
                     renderer.fragment_buffer.push(Fragment {
-                        x: fragment_chunk[0],
-                        y: fragment_chunk[1],
+                        x,
+                        y,
                         z: 0.0,
                         color: [1.0, 1.0, 1.0],
                         normal: [0.0, 0.0, 0.0],
                         material_id: 0,
                     });
-                }
+                };
+
+                renderer
+                    .rasterizer
+                    .for_each_line_point(p0, p1, &mut push_fragment);
+                renderer
+                    .rasterizer
+                    .for_each_line_point(p1, p2, &mut push_fragment);
+                renderer
+                    .rasterizer
+                    .for_each_line_point(p0, p2, &mut push_fragment);
             }
         }
     }
@@ -250,21 +248,18 @@ pub struct VertexNormalPass;
 
 impl RenderPass for VertexNormalPass {
     fn execute(&self, renderer: &mut Renderer) {
-        let mut fragment_storage: Vec<[i32; 2]> = Vec::new();
-
         for [x1, y1, x2, y2] in renderer.debug_lines.drain(..) {
-            let points = renderer.rasterizer.calculate_line([x1, y1], [x2, y2]);
-            fragment_storage.extend(points);
-        }
-
-        for fragment_chunk in fragment_storage {
-            renderer.fragment_buffer.push(Fragment {
-                x: fragment_chunk[0],
-                y: fragment_chunk[1],
-                z: 0.0,
-                color: [1.0, 1.0, 1.0],
-                normal: [0.0, 0.0, 0.0],
-                material_id: 0,
+            let p0 = ScreenPoint::new(x1, y1);
+            let p1 = ScreenPoint::new(x2, y2);
+            renderer.rasterizer.for_each_line_point(p0, p1, |x, y| {
+                renderer.fragment_buffer.push(Fragment {
+                    x,
+                    y,
+                    z: 0.0,
+                    color: [1.0, 1.0, 1.0],
+                    normal: [0.0, 0.0, 0.0],
+                    material_id: 0,
+                });
             });
         }
     }
