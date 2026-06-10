@@ -11,12 +11,7 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn new(
-        ambient: f32,
-        diffuse: f32,
-        specular: f32,
-        shininess: f32,
-    ) -> Material {
+    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32) -> Material {
         let id = MATERIAL_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Self {
             id,

@@ -7,7 +7,6 @@ pub struct FrameBuffer {
 }
 
 impl FrameBuffer {
-    
     pub fn new(width: usize, height: usize) -> Self {
         Self {
             buffer: vec![0; width * height],
@@ -31,7 +30,6 @@ impl FrameBuffer {
     pub fn get_index(&self, x: usize, y: usize) -> usize {
         y * self.width + x
     }
-
 
     /// get coordiantes from index as usize
     ///
@@ -69,7 +67,6 @@ impl FrameBuffer {
         x >= 0 && y >= 0 && x < self.width as i32 && y < self.height as i32
     }
 
-
     pub fn get_width(&self) -> usize {
         self.width
     }
@@ -78,7 +75,7 @@ impl FrameBuffer {
         self.height
     }
 
-        /// Sets a Pixel to a specified color
+    /// Sets a Pixel to a specified color
     ///
     /// # Arguments
     /// * `x` - The x coordinate
@@ -92,7 +89,7 @@ impl FrameBuffer {
         }
     }
 
-    pub fn get_pixel(&mut self, x: i32, y: i32) -> u32{
+    pub fn get_pixel(&mut self, x: i32, y: i32) -> u32 {
         if self.is_in_bounds(x, y) {
             let index = self.get_index(x as usize, y as usize);
             self.buffer[index]
@@ -104,6 +101,4 @@ impl FrameBuffer {
     pub fn fill(&mut self, color: ColorRGB) {
         self.buffer.fill(color.get_as_u32());
     }
-
-
 }
