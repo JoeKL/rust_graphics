@@ -35,12 +35,14 @@ impl Engine {
         let far: f32 = 75.0;
         let near: f32 = 1.0;
 
-        scene.camera.set_projection_params(
-            30.0, // 60 degree FOV
-            window_width as f32 / window_height as f32,
-            near,
-            far,
-        );
+        if let Some(camera) = scene.find_camera_mut() {
+            camera.set_projection_params(
+                30.0, // 60 degree FOV
+                window_width as f32 / window_height as f32,
+                near,
+                far,
+            );
+        }
 
         let frame = 0;
         let time_since_title_update = Instant::now();
@@ -149,15 +151,17 @@ impl Engine {
     }
 
     fn change_camera_fov(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_key_down(minifb::Key::O) {
-            let mut current_fov = self.scene.camera.get_fov_in_degrees();
-            current_fov += 0.5;
-            self.scene.camera.set_fov_in_degrees(current_fov);
-        }
-        if input_handler.is_key_down(minifb::Key::P) {
-            let mut current_fov = self.scene.camera.get_fov_in_degrees();
-            current_fov -= 0.5;
-            self.scene.camera.set_fov_in_degrees(current_fov);
+        if let Some(camera) = self.scene.find_camera_mut() {
+            if input_handler.is_key_down(minifb::Key::O) {
+                let mut current_fov = camera.get_fov_in_degrees();
+                current_fov += 0.5;
+                camera.set_fov_in_degrees(current_fov);
+            }
+            if input_handler.is_key_down(minifb::Key::P) {
+                let mut current_fov = camera.get_fov_in_degrees();
+                current_fov -= 0.5;
+                camera.set_fov_in_degrees(current_fov);
+            }
         }
     }
 
@@ -197,12 +201,12 @@ impl Engine {
                 [0.0, 0.0, 0.0, 1.0],
             ]);
 
-            for light in &mut self.scene.lights {
+            self.scene.update_lights(|light| {
                 let current_light_pos = light.get_position();
                 let mut new_light_pos = rot_x_mat * current_light_pos;
                 new_light_pos = rot_y_mat * new_light_pos;
                 light.set_position(new_light_pos);
-            }
+            });
         }
     }
 
@@ -266,38 +270,87 @@ impl Engine {
 
     fn orbit_camera_with_mouse(&mut self, input_handler: &InputHandler) {
         if input_handler.is_mouse_button_down(1) {
-            let current_position = self.scene.camera.get_position();
+            if let Some(camera) = self.scene.find_camera_mut() {
+                let current_position = camera.get_position();
 
+                let target = Point3D {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                    w: 1.0,
+                };
+                let distance = current_position.sub_p(target).length();
+
+                let dist_center_threshhold = 25.0;
+
+                let mut mouse_pos_relative_center = input_handler.get_mouse_position();
+                mouse_pos_relative_center.x -=
+                    (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+                mouse_pos_relative_center.y -=
+                    (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
+
+                let rotation_factor = 0.005;
+
+                if mouse_pos_relative_center.x > dist_center_threshhold {
+                    self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
+                }
+                if mouse_pos_relative_center.x < -dist_center_threshhold {
+                    self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
+                }
+
+                if mouse_pos_relative_center.y > dist_center_threshhold {
+                    self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
+                }
+                if mouse_pos_relative_center.y < -dist_center_threshhold {
+                    self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
+                }
+
+                self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
+
+                let pitch_rad = self.orbit_pitch.to_radians();
+                let yaw_rad = self.orbit_yaw.to_radians();
+
+                let h_distance = distance * pitch_rad.cos();
+                let x = h_distance * yaw_rad.sin();
+                let y = distance * pitch_rad.sin();
+                let z = h_distance * yaw_rad.cos();
+
+                camera.set_position(Point3D { x, y, z, w: 1.0 });
+
+                camera.look_at(target);
+            }
+
+            self.draw_mouse_line = true;
+        } else {
+            self.draw_mouse_line = false
+        }
+    }
+
+    fn orbit_camera(&mut self, input_handler: &InputHandler) {
+        if let Some(camera) = self.scene.find_camera_mut() {
+            let current_position = camera.get_position();
+
+            let rot_speed = 1.0;
             let target = Point3D {
                 x: 0.0,
                 y: 0.0,
                 z: 0.0,
                 w: 1.0,
             };
+
             let distance = current_position.sub_p(target).length();
 
-            let dist_center_threshhold = 25.0;
-
-            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -=
-                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
-            mouse_pos_relative_center.y -=
-                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
-
-            let rotation_factor = 0.005;
-
-            if mouse_pos_relative_center.x > dist_center_threshhold {
-                self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
+            if input_handler.is_key_down(minifb::Key::Left) {
+                self.orbit_yaw -= rot_speed;
             }
-            if mouse_pos_relative_center.x < -dist_center_threshhold {
-                self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
+            if input_handler.is_key_down(minifb::Key::Right) {
+                self.orbit_yaw += rot_speed;
             }
-
-            if mouse_pos_relative_center.y > dist_center_threshhold {
-                self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
+            if input_handler.is_key_down(minifb::Key::Up) {
+                self.orbit_pitch += rot_speed;
             }
-            if mouse_pos_relative_center.y < -dist_center_threshhold {
-                self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
+            if input_handler.is_key_down(minifb::Key::Down) {
+                self.orbit_pitch -= rot_speed;
             }
 
             self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
@@ -310,55 +363,10 @@ impl Engine {
             let y = distance * pitch_rad.sin();
             let z = h_distance * yaw_rad.cos();
 
-            self.scene.camera.set_position(Point3D { x, y, z, w: 1.0 });
+            camera.set_position(Point3D { x, y, z, w: 1.0 });
 
-            self.scene.camera.look_at(target);
-
-            self.draw_mouse_line = true;
-        } else {
-            self.draw_mouse_line = false
+            camera.look_at(target);
         }
-    }
-
-    fn orbit_camera(&mut self, input_handler: &InputHandler) {
-        let current_position = self.scene.camera.get_position();
-
-        let rot_speed = 1.0;
-        let target = Point3D {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-            w: 1.0,
-        };
-
-        let distance = current_position.sub_p(target).length();
-
-        if input_handler.is_key_down(minifb::Key::Left) {
-            self.orbit_yaw -= rot_speed;
-        }
-        if input_handler.is_key_down(minifb::Key::Right) {
-            self.orbit_yaw += rot_speed;
-        }
-        if input_handler.is_key_down(minifb::Key::Up) {
-            self.orbit_pitch += rot_speed;
-        }
-        if input_handler.is_key_down(minifb::Key::Down) {
-            self.orbit_pitch -= rot_speed;
-        }
-
-        self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
-
-        let pitch_rad = self.orbit_pitch.to_radians();
-        let yaw_rad = self.orbit_yaw.to_radians();
-
-        let h_distance = distance * pitch_rad.cos();
-        let x = h_distance * yaw_rad.sin();
-        let y = distance * pitch_rad.sin();
-        let z = h_distance * yaw_rad.cos();
-
-        self.scene.camera.set_position(Point3D { x, y, z, w: 1.0 });
-
-        self.scene.camera.look_at(target);
     }
 
     fn iso_scale_model(&mut self, input_handler: &InputHandler) {

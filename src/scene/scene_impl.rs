@@ -5,8 +5,6 @@ use crate::renderer::DrawCommand;
 
 pub struct Scene {
     pub root_node: SceneNode,
-    pub camera: Camera,
-    pub lights: Vec<PointLight>,
 }
 
 impl Scene {
@@ -23,9 +21,15 @@ impl Scene {
         camera.set_position(Point3D::new(0.0, 2.0, -10.0));
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
+        let mut camera_node = SceneNode::new();
+        camera_node.set_camera(camera);
+        root_node.add_child(camera_node);
+
         // light sources
         let light = PointLight::new(Point3D::new(0.0, 3.0, -3.0), ColorRGB::WHITE, 1.0);
-        let lights: Vec<PointLight> = vec![light];
+        let mut light_node = SceneNode::new();
+        light_node.set_light(light);
+        root_node.add_child(light_node);
 
         // model
         let mut model_node = SceneNode::new();
@@ -37,19 +41,85 @@ impl Scene {
             }
         }
 
-        // model_node.set_scale(Vector3D {
-        //     x: (0.015),
-        //     y: (0.015),
-        //     z: (0.015),
-        //     w: (1),
-        // });
-
         root_node.add_child(model_node);
 
         Scene {
             root_node,
-            camera,
-            lights,
+        }
+    }
+
+    pub fn find_camera(&self) -> Option<&Camera> {
+        let mut node_queue = vec![&self.root_node];
+        while let Some(node) = node_queue.pop() {
+            if node.camera.is_some() {
+                return node.camera.as_ref();
+            }
+            for child in &node.children {
+                node_queue.push(child);
+            }
+        }
+        None
+    }
+
+    pub fn find_camera_mut(&mut self) -> Option<&mut Camera> {
+        let mut node_queue = vec![&mut self.root_node];
+        while let Some(node) = node_queue.pop() {
+            if node.camera.is_some() {
+                return node.camera.as_mut();
+            }
+            for child in &mut node.children {
+                node_queue.push(child);
+            }
+        }
+        None
+    }
+
+    pub fn get_active_camera(&self) -> Camera {
+        let mut node_queue = vec![&self.root_node];
+        while let Some(node) = node_queue.pop() {
+            if let Some(camera) = &node.camera {
+                let world_transform = node.get_world_transform();
+                return camera.to_world(&world_transform);
+            }
+            for child in &node.children {
+                node_queue.push(child);
+            }
+        }
+        // Fallback default camera if none is found
+        Camera::new(
+            Point3D::new(0.0, 2.0, -10.0),
+            Point3D::new(0.0, 0.0, 0.0),
+            Vector3D::new(0.0, 1.0, 0.0),
+        )
+    }
+
+    pub fn collect_lights(&self) -> Vec<PointLight> {
+        let mut lights = Vec::new();
+        let mut node_queue = vec![&self.root_node];
+        while let Some(node) = node_queue.pop() {
+            if let Some(light) = &node.light {
+                let world_transform = node.get_world_transform();
+                lights.push(light.to_world(&world_transform));
+            }
+            for child in &node.children {
+                node_queue.push(child);
+            }
+        }
+        lights
+    }
+
+    pub fn update_lights<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut PointLight),
+    {
+        let mut node_queue = vec![&mut self.root_node];
+        while let Some(node) = node_queue.pop() {
+            if let Some(light) = &mut node.light {
+                f(light);
+            }
+            for child in &mut node.children {
+                node_queue.push(child);
+            }
         }
     }
 

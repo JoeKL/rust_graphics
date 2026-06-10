@@ -61,4 +61,13 @@ impl PointLight {
         let new_light_pos = loot_at_mat * light.get_position();
         PointLight::new(new_light_pos, light.get_color(), light.get_intensity())
     }
+
+    pub fn to_world(&self, world_transform: &Mat4x4) -> PointLight {
+        let world_pos = world_transform.mul_point(self.position);
+        PointLight {
+            position: world_pos,
+            color: self.color,
+            intensity: self.intensity,
+        }
+    }
 }

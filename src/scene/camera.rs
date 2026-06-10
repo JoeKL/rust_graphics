@@ -157,4 +157,28 @@ impl Camera {
     pub fn get_frustum_matrix(&self) -> Mat4x4 {
         self.frustum_matrix
     }
+
+    pub fn to_world(&self, world_transform: &Mat4x4) -> Camera {
+        let world_pos = world_transform.mul_point(self.position);
+        let world_dir = world_transform.mul_vec(self.direction).normalize();
+        let world_up = world_transform.mul_vec(self.up).normalize();
+        let world_right = world_transform.mul_vec(self.right).normalize();
+
+        let mut world_camera = Camera {
+            position: world_pos,
+            direction: world_dir,
+            up: world_up,
+            right: world_right,
+            fov_in_degrees: self.fov_in_degrees,
+            aspect_ratio: self.aspect_ratio,
+            near: self.near,
+            far: self.far,
+            look_at_matrix: Mat4x4::identity(),
+            projection_matrix: Mat4x4::identity(),
+            frustum_matrix: Mat4x4::identity(),
+        };
+
+        world_camera.update_matrices();
+        world_camera
+    }
 }

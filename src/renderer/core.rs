@@ -148,8 +148,9 @@ impl Renderer {
 
     /// Vertex Processing Stage
     fn process_vertices(&mut self, scene: &Scene) {
+        let active_camera = scene.get_active_camera();
         let transformed_lights: Vec<PointLight> = scene
-            .lights
+            .collect_lights()
             .iter()
             .map(|light| PointLight::new_transformed_light(light, self.look_at_matrix))
             .collect();
@@ -172,7 +173,7 @@ impl Renderer {
                     &vertex.position_to_point(),
                     &vertex.normal_to_vector(),
                     &vertex.color,
-                    &scene.camera.direction.normalize(),
+                    &active_camera.direction.normalize(),
                     &self.material_cache[draw_command.material_id],
                     &transformed_lights,
                 );
@@ -309,10 +310,11 @@ impl Renderer {
 
     pub fn render_scene(&mut self, scene: &Scene) {
         // Get camera matrices once
-        self.look_at_matrix = scene.camera.get_look_at_matrix();
-        self.projection_matrix = scene.camera.get_projection_matrix();
+        let camera = scene.get_active_camera();
+        self.look_at_matrix = camera.get_look_at_matrix();
+        self.projection_matrix = camera.get_projection_matrix();
         self.viewport_matrix = self.rasterizer.viewport.get_matrix();
-        self.frustum_matrix = scene.camera.get_frustum_matrix();
+        self.frustum_matrix = camera.get_frustum_matrix();
 
         // Create frustum from frusutm matrix
         self.view_frustum = Frustum::from_matrix(&self.frustum_matrix);
@@ -336,7 +338,8 @@ impl Renderer {
     }
 
     pub fn render_axis(&mut self, scene: &Scene) {
-        let frustum_matrix = scene.camera.get_frustum_matrix();
+        let camera = scene.get_active_camera();
+        let frustum_matrix = camera.get_frustum_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
         let x_end = Point3D::new(1.0, 0.0, 0.0); // X axis in red
@@ -358,7 +361,8 @@ impl Renderer {
     }
 
     pub fn render_grid(&mut self, scene: &Scene) {
-        let frustum_matrix = scene.camera.get_frustum_matrix();
+        let camera = scene.get_active_camera();
+        let frustum_matrix = camera.get_frustum_matrix();
 
         let line_color = ColorRGB::from_rgb(32, 32, 32);
         let start_dist = 5.0;
@@ -409,11 +413,12 @@ impl Renderer {
     }
 
     pub fn render_light_vectors(&mut self, scene: &Scene) {
-        let frustum_matrix = scene.camera.get_frustum_matrix();
+        let camera = scene.get_active_camera();
+        let frustum_matrix = camera.get_frustum_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
 
-        for lights in &scene.lights {
+        for lights in scene.collect_lights() {
             let start_point = lights.get_position();
             let end_point = origin;
 

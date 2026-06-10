@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::math::{Mat4x4, Vector3D};
-use super::Mesh;
+use super::{Camera, Mesh, PointLight};
 
 pub struct SceneNode {
     position: Vector3D, // current position
@@ -11,6 +11,8 @@ pub struct SceneNode {
     has_dirty_locals: bool,
 
     pub mesh: Option<Mesh>, // Not all nodes need meshes (empty groups/pivots)
+    pub camera: Option<Camera>,
+    pub light: Option<PointLight>,
     pub children: Vec<SceneNode>, // Vector of child nodes
     pub transform_stack: Vec<Mat4x4>, // transformation stack stacks the necessary transformations from root to child for each node
 }
@@ -25,6 +27,8 @@ impl SceneNode {
         let has_dirty_locals = false;
 
         let mesh: Option<Mesh> = None;
+        let camera: Option<Camera> = None;
+        let light: Option<PointLight> = None;
         let children: Vec<SceneNode> = Vec::new();
         let transform_stack: Vec<Mat4x4> = Vec::new();
 
@@ -34,6 +38,8 @@ impl SceneNode {
             scale,
             has_dirty_locals,
             mesh,
+            camera,
+            light,
             children,
             transform_stack,
         }
@@ -88,6 +94,14 @@ impl SceneNode {
     // appends mesh to node
     pub fn set_mesh(&mut self, mesh: Mesh) {
         self.mesh = Some(mesh);
+    }
+
+    pub fn set_camera(&mut self, camera: Camera) {
+        self.camera = Some(camera);
+    }
+
+    pub fn set_light(&mut self, light: PointLight) {
+        self.light = Some(light);
     }
 
     // appends child to current node
