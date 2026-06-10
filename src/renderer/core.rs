@@ -12,7 +12,7 @@ use crate::{
         primitives::Vertex,
         shader::{FlatShader, Material, ShadingModel},
     },
-    utils::bmp::BMP,
+    utils::bmp::Bmp,
 };
 
 pub struct Renderer {
@@ -65,7 +65,7 @@ impl Renderer {
 
         let fragment_buffer: Vec<Fragment> = Vec::new();
         let z_buffer: Vec<f32> = Vec::new();
-        let material_cache: Vec<Material> = Vec::new();
+        let material_cache: Vec<Material> = Material::MATERIAL_ARRAY.to_vec();
 
         let look_at_matrix: Mat4x4 = Mat4x4::identity();
         let projection_matrix: Mat4x4 = Mat4x4::identity();
@@ -154,13 +154,11 @@ impl Renderer {
 
     /// Vertex Processing Stage
     fn process_vertices(&mut self, scene: &Scene) {
-        let mut transformed_lights: Vec<PointLight> = Vec::new();
-        for light in &scene.lights {
-            transformed_lights.push(PointLight::new_transformed_light(
-                light,
-                self.look_at_matrix,
-            ))
-        }
+        let transformed_lights: Vec<PointLight> = scene
+            .lights
+            .iter()
+            .map(|light| PointLight::new_transformed_light(light, self.look_at_matrix))
+            .collect();
 
         for draw_command in &self.draw_commands {
             for vertex_idx in 0..draw_command.vertex_count {
@@ -312,9 +310,6 @@ impl Renderer {
         // Create frustum from frusutm matrix
         self.view_frustum = Frustum::from_matrix(&self.frustum_matrix);
 
-        //create material cache
-        self.material_cache = Material::MATERIAL_ARRAY.to_vec();
-
         // set zbuffer
         let width = self.rasterizer.framebuffer.get_width();
         let height = self.rasterizer.framebuffer.get_height();
@@ -430,7 +425,7 @@ impl Renderer {
         for char in text.chars() {
             let char_cords = self.font_provider.get_glyph_grid_pos(char);
 
-            let mut character_bmp: BMP = self
+            let mut character_bmp: Bmp = self
                 .font_provider
                 .get_character(char_cords.0, char_cords.1)
                 .scale_up(scale);

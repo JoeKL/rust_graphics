@@ -3,9 +3,19 @@ use crate::types::{
     primitives::Vertex,
 };
 
+#[derive(Debug, Clone, Copy)]
 pub struct Plane {
     point: Point3D,
     normal: Vector3D,
+}
+
+impl Default for Plane {
+    fn default() -> Self {
+        Self {
+            point: Point3D { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
+            normal: Vector3D { x: 0.0, y: 0.0, z: 0.0, w: 0 },
+        }
+    }
 }
 
 impl Plane {
@@ -33,13 +43,20 @@ impl Plane {
 }
 
 pub struct Frustum {
-    planes: Vec<Plane>,
+    planes: [Plane; 6],
+}
+
+impl Default for Frustum {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Frustum {
     pub fn new() -> Frustum {
-        let planes: Vec<Plane> = Vec::new();
-        Self { planes }
+        Self {
+            planes: [Plane::default(); 6],
+        }
     }
 
     // Create frustum from view-projection matrix
@@ -82,20 +99,8 @@ impl Frustum {
         frustum_p110.dehomogen();
         frustum_p111.dehomogen();
 
-        // println!("________");
-
-        // println!("{:?}", frustum_p000);
-        // println!("{:?}", frustum_p010);
-        // println!("{:?}", frustum_p100);
-        // println!("{:?}", frustum_p110);
-        // println!("");
-        // println!("{:?}", frustum_p001);
-        // println!("{:?}", frustum_p011);
-        // println!("{:?}", frustum_p101);
-        // println!("{:?}", frustum_p111);
-
         // construct all 6 planes in worldspace (left, right, top, bottom, front, back)
-        let planes: Vec<Plane> = vec![
+        let planes = [
             //left -x
             Plane::new(frustum_p001, frustum_p000, frustum_p010),
             //right +x
@@ -126,32 +131,14 @@ impl Frustum {
     }
 
     pub fn triangle_in_bounds(&self, triangle_vertices: [&Vertex; 3]) -> bool {
-        let mut strike = 0;
-        for vertex in triangle_vertices {
-            if !(self.point_in_bounds(Point3D::new(
-                vertex.position[0],
-                vertex.position[1],
-                vertex.position[2],
-            ))) {
-                strike += 1;
-            }
-        }
-        if strike < 3 {
-            return true;
-        }
-        false
+        triangle_vertices
+            .iter()
+            .any(|vertex| self.point_in_bounds(Point3D::from_array(vertex.position)))
     }
 
     pub fn triangle_in_bounds_conservative(&self, triangle_vertices: [&Vertex; 3]) -> bool {
-        for vertex in triangle_vertices {
-            if !(self.point_in_bounds(Point3D::new(
-                vertex.position[0],
-                vertex.position[1],
-                vertex.position[2],
-            ))) {
-                return false;
-            }
-        }
-        true
+        triangle_vertices
+            .iter()
+            .all(|vertex| self.point_in_bounds(Point3D::from_array(vertex.position)))
     }
 }
