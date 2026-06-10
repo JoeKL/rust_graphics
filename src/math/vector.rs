@@ -1,4 +1,4 @@
-use crate::types::math::{Point2D, Point3D};
+use super::{Point2D, Point3D};
 use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq)]

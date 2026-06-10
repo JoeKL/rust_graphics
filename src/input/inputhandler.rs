@@ -1,4 +1,4 @@
-use crate::types::math::{Point2D, Vector2D};
+use crate::math::{Point2D, Vector2D};
 use minifb::{Key, Window};
 use std::collections::HashSet;
 

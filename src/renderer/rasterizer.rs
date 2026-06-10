@@ -1,7 +1,6 @@
-use crate::renderer::{FrameBuffer, Viewport};
-use crate::types::color::ColorRGB;
-use crate::types::display::ScreenPoint;
-use crate::types::primitives::Vertex;
+use crate::renderer::{FrameBuffer, Viewport, ColorRGB};
+use crate::math::ScreenPoint;
+use crate::scene::Vertex;
 
 //  To avoid potential confusion, let me define "rasterization":
 //  For our present purposes, it's the process of determining which pixels are inside a triangle, and nothing more.
@@ -153,5 +152,55 @@ impl Rasterizer {
         let alpha = 1.0 - beta - gamma;
 
         (alpha, beta, gamma)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_horizontal_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(5, 0);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)]);
+    }
+
+    #[test]
+    fn test_vertical_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(0, 5);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5)]);
+    }
+
+    #[test]
+    fn test_diagonal_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(3, 3);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (1, 1), (2, 2), (3, 3)]);
+    }
+
+    #[test]
+    fn test_steep_line() {
+        let p0 = ScreenPoint::new(0, 0);
+        let p1 = ScreenPoint::new(2, 5);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(0, 0), (0, 1), (1, 2), (1, 3), (2, 4), (2, 5)]);
+    }
+
+    #[test]
+    fn test_single_point() {
+        let p0 = ScreenPoint::new(2, 2);
+        let p1 = ScreenPoint::new(2, 2);
+        let mut points = Vec::new();
+        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
+        assert_eq!(points, vec![(2, 2)]);
     }
 }

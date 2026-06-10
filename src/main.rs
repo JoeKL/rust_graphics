@@ -1,8 +1,8 @@
 mod engine;
 mod input;
+mod math;
 mod renderer;
 mod scene;
-mod types;
 mod utils;
 
 use engine::Engine;

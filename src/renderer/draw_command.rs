@@ -1,4 +1,4 @@
-use crate::types::math::Mat4x4;
+use crate::math::Mat4x4;
 
 #[derive(Debug)]
 pub struct DrawCommand {

@@ -1,6 +1,6 @@
-use crate::types::math::Vector3D;
+use crate::math::Vector3D;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ColorRGB {
     pub as_u32: u32,
     pub r: u8,

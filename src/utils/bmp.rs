@@ -1,4 +1,4 @@
-use crate::types::color::ColorRGB;
+use crate::renderer::color::ColorRGB;
 use std::io;
 
 #[derive(Debug, Clone)]

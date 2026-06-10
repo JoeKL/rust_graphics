@@ -1,4 +1,4 @@
-use crate::types::math::{Mat4x4, Point3D, Vector3D};
+use crate::math::{Mat4x4, Point3D, Vector3D};
 
 pub struct Camera {
     // positional parameters

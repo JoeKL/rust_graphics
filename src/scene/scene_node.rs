@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 
-use crate::types::{
-    geometry::Mesh,
-    math::{Mat4x4, Vector3D},
-};
+use crate::math::{Mat4x4, Vector3D};
+use super::Mesh;
 
 pub struct SceneNode {
     position: Vector3D, // current position
@@ -166,5 +164,14 @@ impl SceneNode {
         self.transform_stack
             .iter()
             .fold(Mat4x4::identity(), |acc, transform| acc * *transform)
+    }
+
+    /// Safely retrieves a nested child node at a specific depth by following the first child path.
+    pub fn get_nested_child_mut(&mut self, depth: usize) -> Option<&mut SceneNode> {
+        let mut current = self;
+        for _ in 0..depth {
+            current = current.children.get_mut(0)?;
+        }
+        Some(current)
     }
 }

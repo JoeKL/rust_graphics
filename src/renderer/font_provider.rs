@@ -1,5 +1,5 @@
 use crate::{
-    types::color::ColorRGB,
+    renderer::color::ColorRGB,
     utils::bmp::{read_bmp, Bmp},
 };
 

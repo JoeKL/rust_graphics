@@ -1,18 +1,30 @@
-use crate::renderer::Fragment;
-use crate::renderer::Renderer;
-use crate::types::display::ScreenPoint;
-use crate::types::primitives::Vertex;
+use crate::renderer::{DrawCommand, Fragment, Rasterizer};
+use crate::math::ScreenPoint;
+use crate::scene::Vertex;
+
+pub struct RasterizerInput<'a> {
+    pub draw_commands: &'a [DrawCommand],
+    pub triangle_index_buffer: &'a [u32],
+    pub transformed_vertices: &'a [Vertex],
+    pub backface_culling: bool,
+}
+
+pub struct RasterizerOutput<'a> {
+    pub fragment_buffer: &'a mut Vec<Fragment>,
+    pub z_buffer: &'a mut [f32],
+    pub debug_lines: &'a mut Vec<[i32; 4]>,
+}
 
 pub trait RenderPass {
-    fn execute(&self, renderer: &mut Renderer);
+    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput);
 }
 
 pub struct FacePass;
 
 impl RenderPass for FacePass {
-    fn execute(&self, renderer: &mut Renderer) {
+    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput) {
         // For each draw command/mesh
-        for draw_command in &renderer.draw_commands {
+        for draw_command in input.draw_commands {
             let index_start = draw_command.first_triangle_index_offset;
             let index_length = draw_command.triangle_index_count;
             let index_end = index_length + index_start;
@@ -20,17 +32,17 @@ impl RenderPass for FacePass {
             // Process indices in groups of 3 to form triangles
             for i in (index_start..index_end).step_by(3) {
                 // Get vertex indices
-                let i0 = renderer.triangle_index_buffer[i];
-                let i1 = renderer.triangle_index_buffer[i + 1];
-                let i2 = renderer.triangle_index_buffer[i + 2];
+                let i0 = input.triangle_index_buffer[i];
+                let i1 = input.triangle_index_buffer[i + 1];
+                let i2 = input.triangle_index_buffer[i + 2];
 
                 // Get transformed vertices
-                let v0: &Vertex = &renderer.transformed_vertices[i0 as usize];
-                let v1 = &renderer.transformed_vertices[i1 as usize];
-                let v2 = &renderer.transformed_vertices[i2 as usize];
+                let v0: &Vertex = &input.transformed_vertices[i0 as usize];
+                let v1 = &input.transformed_vertices[i1 as usize];
+                let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !renderer.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
                     continue;
                 }
 
@@ -41,7 +53,7 @@ impl RenderPass for FacePass {
 
                 // create boundingbox from v0, v1, v2
                 (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
-                    renderer.rasterizer.calculate_bounding_box(v0, v1, v2);
+                    rasterizer.calculate_bounding_box(v0, v1, v2);
 
                 // 1. PRE-CALCULATION
                 // Create aliases for positions to make math cleaner (p = position)
@@ -63,7 +75,7 @@ impl RenderPass for FacePass {
                     continue;
                 }
 
-                if renderer.backface_culling && denominator >= 0.0 {
+                if input.backface_culling && denominator >= 0.0 {
                     continue;
                 }
 
@@ -112,16 +124,16 @@ impl RenderPass for FacePass {
 
                             // setup z index to access right place in buffer
                             let z_buffer_idx = y as usize
-                                * renderer.rasterizer.framebuffer.get_width()
+                                * rasterizer.framebuffer.get_width()
                                 + x as usize;
 
                             // Create and store fragment if Z-test passes
                             // Z-test before creating fragment
-                            if interpolated_z < renderer.z_buffer[z_buffer_idx] {
+                            if interpolated_z < output.z_buffer[z_buffer_idx] {
                                 // Only if closer than what's in zbuffer at coordinates
-                                renderer.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
+                                output.z_buffer[z_buffer_idx] = interpolated_z; // Update z-buffer
 
-                                renderer.fragment_buffer.push(Fragment {
+                                output.fragment_buffer.push(Fragment {
                                     x,
                                     y,
                                     z: interpolated_z,
@@ -141,9 +153,9 @@ impl RenderPass for FacePass {
 pub struct VertexPass;
 
 impl RenderPass for VertexPass {
-    fn execute(&self, renderer: &mut Renderer) {
+    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput) {
         // For each draw command/mesh
-        for draw_command in &renderer.draw_commands {
+        for draw_command in input.draw_commands {
             let index_start = draw_command.first_triangle_index_offset;
             let index_length = draw_command.triangle_index_count;
             let index_end = index_length + index_start;
@@ -151,17 +163,17 @@ impl RenderPass for VertexPass {
             // Process indices in groups of 3 to form triangles
             for i in (index_start..index_end).step_by(3) {
                 // Get vertex indices
-                let i0 = renderer.triangle_index_buffer[i];
-                let i1 = renderer.triangle_index_buffer[i + 1];
-                let i2 = renderer.triangle_index_buffer[i + 2];
+                let i0 = input.triangle_index_buffer[i];
+                let i1 = input.triangle_index_buffer[i + 1];
+                let i2 = input.triangle_index_buffer[i + 2];
 
                 // Get transformed vertices
-                let v0: &Vertex = &renderer.transformed_vertices[i0 as usize];
-                let v1 = &renderer.transformed_vertices[i1 as usize];
-                let v2 = &renderer.transformed_vertices[i2 as usize];
+                let v0: &Vertex = &input.transformed_vertices[i0 as usize];
+                let v1 = &input.transformed_vertices[i1 as usize];
+                let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !renderer.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
                     continue;
                 }
 
@@ -172,7 +184,7 @@ impl RenderPass for VertexPass {
                 ];
 
                 for fragment_chunk in fragment_storage {
-                    renderer.fragment_buffer.push(Fragment {
+                    output.fragment_buffer.push(Fragment {
                         x: fragment_chunk[0],
                         y: fragment_chunk[1],
                         z: 0.0,
@@ -189,9 +201,9 @@ impl RenderPass for VertexPass {
 pub struct WireframePass;
 
 impl RenderPass for WireframePass {
-    fn execute(&self, renderer: &mut Renderer) {
+    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput) {
         // For each draw command/mesh
-        for draw_command in &renderer.draw_commands {
+        for draw_command in input.draw_commands {
             let index_start = draw_command.first_triangle_index_offset;
             let index_length = draw_command.triangle_index_count;
             let index_end = index_length + index_start;
@@ -199,17 +211,17 @@ impl RenderPass for WireframePass {
             // Process indices in groups of 3 to form triangles
             for i in (index_start..index_end).step_by(3) {
                 // Get vertex indices
-                let i0 = renderer.triangle_index_buffer[i];
-                let i1 = renderer.triangle_index_buffer[i + 1];
-                let i2 = renderer.triangle_index_buffer[i + 2];
+                let i0 = input.triangle_index_buffer[i];
+                let i1 = input.triangle_index_buffer[i + 1];
+                let i2 = input.triangle_index_buffer[i + 2];
 
                 // Get transformed vertices
-                let v0: &Vertex = &renderer.transformed_vertices[i0 as usize];
-                let v1 = &renderer.transformed_vertices[i1 as usize];
-                let v2 = &renderer.transformed_vertices[i2 as usize];
+                let v0: &Vertex = &input.transformed_vertices[i0 as usize];
+                let v1 = &input.transformed_vertices[i1 as usize];
+                let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !renderer.rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
                     continue;
                 }
 
@@ -218,7 +230,7 @@ impl RenderPass for WireframePass {
                 let p2 = ScreenPoint::new(v2.position[0] as i32, v2.position[1] as i32);
 
                 let mut push_fragment = |x, y| {
-                    renderer.fragment_buffer.push(Fragment {
+                    output.fragment_buffer.push(Fragment {
                         x,
                         y,
                         z: 0.0,
@@ -228,15 +240,9 @@ impl RenderPass for WireframePass {
                     });
                 };
 
-                renderer
-                    .rasterizer
-                    .for_each_line_point(p0, p1, &mut push_fragment);
-                renderer
-                    .rasterizer
-                    .for_each_line_point(p1, p2, &mut push_fragment);
-                renderer
-                    .rasterizer
-                    .for_each_line_point(p0, p2, &mut push_fragment);
+                rasterizer.for_each_line_point(p0, p1, &mut push_fragment);
+                rasterizer.for_each_line_point(p1, p2, &mut push_fragment);
+                rasterizer.for_each_line_point(p0, p2, &mut push_fragment);
             }
         }
     }
@@ -245,12 +251,12 @@ impl RenderPass for WireframePass {
 pub struct VertexNormalPass;
 
 impl RenderPass for VertexNormalPass {
-    fn execute(&self, renderer: &mut Renderer) {
-        for [x1, y1, x2, y2] in renderer.debug_lines.drain(..) {
+    fn execute(&self, rasterizer: &Rasterizer, _input: &RasterizerInput, output: &mut RasterizerOutput) {
+        for [x1, y1, x2, y2] in output.debug_lines.drain(..) {
             let p0 = ScreenPoint::new(x1, y1);
             let p1 = ScreenPoint::new(x2, y2);
-            renderer.rasterizer.for_each_line_point(p0, p1, |x, y| {
-                renderer.fragment_buffer.push(Fragment {
+            rasterizer.for_each_line_point(p0, p1, |x, y| {
+                output.fragment_buffer.push(Fragment {
                     x,
                     y,
                     z: 0.0,

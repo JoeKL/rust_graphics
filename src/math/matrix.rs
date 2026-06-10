@@ -1,4 +1,4 @@
-use crate::types::math::{Point3D, Vector3D};
+use super::{Point3D, Vector3D};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Mat4x4 {

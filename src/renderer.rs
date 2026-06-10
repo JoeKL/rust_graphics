@@ -9,13 +9,21 @@ mod hud;
 mod passes;
 mod rasterizer; // Drawing algorithms
 mod viewport; //Screen space transformations and mapping
+pub mod color;
+pub mod shader;
 
 pub use buffer::FrameBuffer;
 pub use core::Renderer;
 pub use draw_command::DrawCommand;
+pub use font_provider::FontProvider;
 pub use fragment::Fragment;
 pub use frustum::Frustum;
 pub use hud::Hud;
-pub use passes::{FacePass, RenderPass, VertexNormalPass, VertexPass, WireframePass};
+pub use passes::{
+    FacePass, RasterizerInput, RasterizerOutput, RenderPass, VertexNormalPass, VertexPass,
+    WireframePass,
+};
 pub use rasterizer::Rasterizer;
 pub use viewport::Viewport;
+pub use color::ColorRGB;
+pub use shader::{Material, ShadingModel, FlatShader};

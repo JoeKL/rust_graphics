@@ -1,4 +1,4 @@
-use crate::types::math::{Vector2D, Vector3D};
+use super::{Vector2D, Vector3D};
 use std::ops::{Add, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -137,5 +137,17 @@ impl Sub<Point3D> for Point3D {
 
     fn sub(self, other: Point3D) -> Self::Output {
         Vector3D::new(self.x - other.x, self.y - other.y, self.z - other.z)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ScreenPoint {
+    pub x: i32,
+    pub y: i32,
+}
+
+impl ScreenPoint {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
     }
 }
