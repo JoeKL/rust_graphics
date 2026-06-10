@@ -51,6 +51,7 @@ pub struct Renderer {
     pub draw_vertex: bool,
     pub draw_vertex_normals: bool,
     pub draw_faces: bool,
+    pub backface_culling: bool,
 }
 
 impl Renderer {
@@ -81,6 +82,7 @@ impl Renderer {
         let draw_vertex = false;
         let draw_vertex_normals = false;
         let draw_faces = true;
+        let backface_culling = true;
 
         Self {
             vertex_buffer,
@@ -113,6 +115,7 @@ impl Renderer {
             draw_vertex,
             draw_vertex_normals,
             draw_faces,
+            backface_culling,
         }
     }
 

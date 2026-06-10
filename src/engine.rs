@@ -134,6 +134,11 @@ impl Engine {
             self.renderer.draw_wireframe = !self.renderer.draw_wireframe;
         }
 
+        if input_handler.is_key_pressed(minifb::Key::B) {
+            //toggle backface_culling
+            self.renderer.backface_culling = !self.renderer.backface_culling;
+        }
+
         self.change_camera_fov(input_handler);
         self.rotate_lightsources(input_handler);
 

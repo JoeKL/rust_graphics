@@ -62,6 +62,10 @@ impl RenderPass for FacePass {
                     continue;
                 }
 
+                if renderer.backface_culling && denominator >= 0.0 {
+                    continue;
+                }
+
                 // Calculate inverse once to replace division with multiplication
                 let inv_denominator = 1.0 / denominator;
 
