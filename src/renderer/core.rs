@@ -124,7 +124,7 @@ impl Renderer {
     }
 
     /// Command Stream - Collect and prepare draw calls
-    fn process_commands(&mut self, scene: &mut Scene) {
+    fn process_commands(&mut self, scene: &Scene) {
         // - Set up vertex/index buffer ranges
         // - Track material changes
         // - Handle state changes
@@ -307,7 +307,7 @@ impl Renderer {
             .fill(ColorRGB::from_u32(0x101010));
     }
 
-    pub fn render_scene(&mut self, scene: &mut Scene) {
+    pub fn render_scene(&mut self, scene: &Scene) {
         // Get camera matrices once
         self.look_at_matrix = scene.camera.get_look_at_matrix();
         self.projection_matrix = scene.camera.get_projection_matrix();
@@ -335,7 +335,7 @@ impl Renderer {
         self.draw_commands.clear();
     }
 
-    pub fn render_axis(&mut self, scene: &mut Scene) {
+    pub fn render_axis(&mut self, scene: &Scene) {
         let frustum_matrix = scene.camera.get_frustum_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
@@ -357,7 +357,7 @@ impl Renderer {
         }
     }
 
-    pub fn render_grid(&mut self, scene: &mut Scene) {
+    pub fn render_grid(&mut self, scene: &Scene) {
         let frustum_matrix = scene.camera.get_frustum_matrix();
 
         let line_color = ColorRGB::from_rgb(32, 32, 32);
@@ -408,7 +408,7 @@ impl Renderer {
         }
     }
 
-    pub fn render_light_vectors(&mut self, scene: &mut Scene) {
+    pub fn render_light_vectors(&mut self, scene: &Scene) {
         let frustum_matrix = scene.camera.get_frustum_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);

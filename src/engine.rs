@@ -414,18 +414,18 @@ impl Engine {
         self.renderer.draw_background_on_framebuffer();
 
         if self.draw_grid {
-            self.renderer.render_grid(&mut self.scene);
+            self.renderer.render_grid(&self.scene);
         }
 
         // Render
-        self.renderer.render_scene(&mut self.scene);
+        self.renderer.render_scene(&self.scene);
 
         // Debug renders
         if self.draw_axis {
-            self.renderer.render_axis(&mut self.scene);
+            self.renderer.render_axis(&self.scene);
         }
         if self.draw_lights {
-            self.renderer.render_light_vectors(&mut self.scene);
+            self.renderer.render_light_vectors(&self.scene);
         }
 
         if self.draw_mouse_line {

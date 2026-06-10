@@ -53,20 +53,19 @@ impl Scene {
         }
     }
 
-    // depth first traversal of scene tree and return vertices, triangle_indices and draw commands
-    pub fn collect(&mut self) -> (Vec<Vertex>, Vec<u32>, Vec<DrawCommand>) {
+    pub fn collect(&self) -> (Vec<Vertex>, Vec<u32>, Vec<DrawCommand>) {
         let mut vertex_buffer: Vec<Vertex> = Vec::new();
         let mut triangle_index_buffer: Vec<u32> = Vec::new();
         let mut draw_command_buffer: Vec<DrawCommand> = Vec::new();
 
-        let mut node_queue: Vec<&mut SceneNode> = vec![&mut self.root_node];
+        let mut node_queue: Vec<&SceneNode> = vec![&self.root_node];
 
         // Keep processing until queue is empty
         while let Some(node) = node_queue.pop() {
             let world_transform = node.get_world_transform();
 
             // if node has a mesh add it to "to-be-drawn" objects
-            if let Some(mesh) = &mut node.mesh {
+            if let Some(mesh) = &node.mesh {
                 let vertex_offset = vertex_buffer.len(); // Store current vertex buffer length
 
                 draw_command_buffer.push(DrawCommand {
@@ -87,7 +86,7 @@ impl Scene {
             }
 
             // Add references of all children of the current node to the node queue
-            for child in &mut node.children {
+            for child in &node.children {
                 node_queue.push(child);
             }
         }
