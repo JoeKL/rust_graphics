@@ -4,15 +4,16 @@ use crate::types::math::{Mat4x4, Point3D, Vector3D};
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
     pub position: [f32; 3],
-    // uv: [f32; 2], todo
+    pub uv: [f32; 2],
     pub normal: [f32; 3],
     pub color: [f32; 3],
 }
 
 impl Vertex {
-    pub fn new(position: [f32; 3], normal: [f32; 3], color: [f32; 3]) -> Self {
+    pub fn new(position: [f32; 3], uv: [f32; 2], normal: [f32; 3], color: [f32; 3]) -> Self {
         Self {
             position,
+            uv,
             normal,
             color,
         }
@@ -31,7 +32,8 @@ impl Vertex {
     }
 
     pub fn has_normal(self) -> bool {
-        self.normal[0].is_normal() || self.normal[1].is_normal() || self.normal[2].is_normal()
+        // is_normal returns true if the number is neither zero, infinite, subnormal, or NaN.
+        self.normal[0].is_normal() && self.normal[1].is_normal() && self.normal[2].is_normal()
     }
 
     pub fn transform(&mut self, transform_mat: Mat4x4) {

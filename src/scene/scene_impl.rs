@@ -29,35 +29,26 @@ impl Scene {
         camera.set_position(Point3D::new(0.0, 2.0, -10.0));
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
-        //light sources
+        // light sources
         let light = PointLight::new(Point3D::new(0.0, 3.0, -3.0), ColorRGB::WHITE, 1.0);
         let lights: Vec<PointLight> = vec![light];
 
+        // model
         let mut model_node = SceneNode::new();
-        // let mut child_ball_node = SceneNode::new();
-        // let mut grandchild_ball_node = SceneNode::new();
 
-        // ball_node.set_mesh(Mesh::create_ball(0, [0.0, 1.0, 0.8]));
-        // child_ball_node.set_mesh(Mesh::create_ball(1, [0.78, 0.42, 0.0]));
-        // grandchild_ball_node.set_mesh(Mesh::create_ball(2, [0.78, 0.0, 0.6]));
+        model_node.set_mesh(Mesh::load_obj(
+            "models/dolphin.obj".into(),
+            2,
+            [1.0, 1.0, 1.0],
+        ));
 
-        model_node.set_mesh(Mesh::load_obj("models/f-16.obj".into(), 0, [0.0, 1.0, 0.8]));
+        model_node.set_scale(Vector3D {
+            x: (0.015),
+            y: (0.015),
+            z: (0.015),
+            w: (1),
+        });
 
-        // child_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 1, [0.78, 0.42, 0.0]));
-        // grandchild_ball_node.set_mesh(Mesh::load_obj("teapot.obj".into(), 2, [0.78, 0.0, 0.6]));
-
-        // model_node.set_scale(Vector3D {
-        //     x: (0.015),
-        //     y: (0.015),
-        //     z: (0.015),
-        //     w: (1),
-        // });
-
-        // child_ball_node.set_position(Vector3D::new(2.5 * 100.0, 0.0, 0.0));
-        // grandchild_ball_node.set_position(Vector3D::new(2.5 * 100.0, 0.0, 0.0));
-
-        // child_ball_node.add_child(grandchild_ball_node);
-        // ball_node.add_child(child_ball_node);
         root_node.add_child(model_node);
 
         Scene {
@@ -79,6 +70,7 @@ impl Scene {
         while let Some(node) = node_queue.pop() {
             let world_transform = node.get_world_transform();
 
+            // if node has a mesh add it to "to-be-drawn" objects
             if let Some(mesh) = &mut node.mesh {
                 let vertex_offset = vertex_buffer.len(); // Store current vertex buffer length
 
@@ -88,7 +80,7 @@ impl Scene {
                     first_triangle_index_offset: triangle_index_buffer.len(), // Start index in index buffer (current length before adding new indices)
                     triangle_index_count: mesh.triangle_indices.len(), // How many indices this mesh contains
                     material_id: mesh.material_indices[0] as usize, // Use first material ID found in mesh (temporary solution)
-                    transform: world_transform, // Store node's world transform for vertex transformation
+                    transform: world_transform, // Store node's world transform (transformaton to place in world space) for vertex transformation
                 });
                 vertex_buffer.extend(&mesh.vertices);
                 // Offset indices by vertex_offset before adding them
@@ -99,7 +91,7 @@ impl Scene {
                 );
             }
 
-            // Add references to all children to queue
+            // Add references of all children of the current node to the node queue
             for child in &mut node.children {
                 node_queue.push(child);
             }

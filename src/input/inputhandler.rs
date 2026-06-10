@@ -1,6 +1,6 @@
+use crate::types::math::{Point2D, Vector2D};
 use minifb::{Key, Window};
 use std::collections::HashSet;
-use crate::types::math::{Point2D, Vector2D};
 
 #[derive(Debug)]
 
@@ -65,20 +65,23 @@ impl InputHandler {
 
     // For instant checks (single frame)
     pub fn is_mouse_button_pressed(&self, button_number: usize) -> bool {
-        self.current_mouse_button_states[button_number.clamp(0, 2)]&& !self.previous_mouse_button_states[button_number.clamp(0, 2)]
+        self.current_mouse_button_states[button_number.clamp(0, 2)]
+            && !self.previous_mouse_button_states[button_number.clamp(0, 2)]
         // Returns true only on the frame the key is first pressed
     }
 
     // For continuous state checks
     pub fn is_mouse_button_down(&self, button_number: usize) -> bool {
-        self.current_mouse_button_states[button_number.clamp(0, 2)] && self.previous_mouse_button_states[button_number.clamp(0, 2)]
+        self.current_mouse_button_states[button_number.clamp(0, 2)]
+            && self.previous_mouse_button_states[button_number.clamp(0, 2)]
 
         // Returns true while key is held down
     }
 
     // For release checks
     pub fn is_mouse_button_released(&self, button_number: usize) -> bool {
-        !self.current_mouse_button_states[button_number.clamp(0, 2)] && self.previous_mouse_button_states[button_number.clamp(0, 2)]
+        !self.current_mouse_button_states[button_number.clamp(0, 2)]
+            && self.previous_mouse_button_states[button_number.clamp(0, 2)]
         // Returns true only on the frame the key is released
     }
 

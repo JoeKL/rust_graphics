@@ -12,4 +12,3 @@ pub struct Fragment {
     // Material info
     pub material_id: usize, // which material to use
 }
-

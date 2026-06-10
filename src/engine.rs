@@ -203,7 +203,7 @@ impl Engine {
     }
 
     fn rotate_model_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(1) {
+        if input_handler.is_mouse_button_down(0) {
             let mut x_rot: f32 = 0.00;
             let mut y_rot: f32 = 0.00;
 
@@ -263,7 +263,7 @@ impl Engine {
     }
 
     fn orbit_camera_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(0) {
+        if input_handler.is_mouse_button_down(1) {
             let current_position = self.scene.camera.get_position();
 
             let target = Point3D {
@@ -384,215 +384,14 @@ impl Engine {
     }
 
     pub fn draw_gui(&mut self) {
-        self.renderer
-            .render_text("[ESC] Exit", 0, 0, ColorRGB::WHITE, 2);
-
-        let keybind_hud_pos = (150, 0);
-
-        self.renderer
-            .render_text("Niko Tepe - 2025", 0, 980, ColorRGB::WHITE, 2);
-
-        self.renderer.render_text(
-            format!("FPS: {}", self.current_fps).as_str(),
-            0,
-            960,
-            ColorRGB::WHITE,
-            2,
+        crate::renderer::Hud::draw(
+            &mut self.renderer,
+            self.current_fps,
+            self.draw_keybinds,
+            self.draw_grid,
+            self.draw_axis,
+            self.draw_lights,
         );
-
-        if !self.draw_keybinds {
-            self.renderer.render_text(
-                "[F1] Keybinds",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1,
-                ColorRGB::GRAY_MEDIUM,
-                2,
-            );
-        } else {
-            self.renderer.render_text(
-                "[F1] Keybinds",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 20,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [G] Grid",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 40,
-                if self.draw_grid {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [H] Faces",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 60,
-                if self.renderer.draw_faces {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [K] Axis",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 80,
-                if self.draw_axis {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [L] Light Vectors",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 100,
-                if self.draw_lights {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 120,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [Z] Z-Buffer",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 140,
-                if self.renderer.draw_z_buffer {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [X] Wireframe",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 160,
-                if self.renderer.draw_wireframe {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [C] Vertices",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 180,
-                if self.renderer.draw_vertex {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [V] Vertex Normals",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 200,
-                if self.renderer.draw_vertex_normals {
-                    ColorRGB::WHITE
-                } else {
-                    ColorRGB::GRAY_MEDIUM
-                },
-                2,
-            );
-
-            self.renderer.render_text(
-                "|",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 220,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [Arrow Keys] Move Camera",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 240,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [Mouse 1]    Move Camera",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 260,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [W, A, S, D] Move Light Vectors",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 280,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 300,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [O/P] Change FOV",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 320,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            self.renderer.render_text(
-                "|- [N/M] Change Scale",
-                keybind_hud_pos.0,
-                keybind_hud_pos.1 + 340,
-                ColorRGB::WHITE,
-                2,
-            );
-
-            // self.renderer.render_text(
-            //     "|- [Space] Change Augmentation",
-            //     keybind_hud_pos.0,
-            //     keybind_hud_pos.1 + 360,
-            //     ColorRGB::GRAY_VERY_DARK,
-            //     2,
-            // );
-        }
     }
 
     pub fn run(&mut self, input_handler: &InputHandler) -> &[u32] {

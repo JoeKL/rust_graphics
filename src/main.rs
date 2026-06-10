@@ -20,7 +20,6 @@ fn main() {
         WindowOptions {
             borderless: false, // Remove window borders
             resize: false,     // Allow window resizing
-
             ..WindowOptions::default()
         },
     )
