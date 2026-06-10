@@ -12,8 +12,8 @@ pub struct FontProvider {
 }
 
 impl FontProvider {
-    pub fn new(font_file_path: &str, channels: u32, letter_width: u32, letter_height: u32) -> Self {
-        let font_file = read_bmp(font_file_path, channels).unwrap();
+    pub fn new(font_file_path: &str, letter_width: u32, letter_height: u32) -> Self {
+        let font_file = read_bmp(font_file_path).unwrap();
         Self {
             font_file,
             letter_width,
@@ -22,10 +22,9 @@ impl FontProvider {
     }
 
     pub fn draw_font_file(&mut self, framebuffer: &mut FrameBuffer, x_pos: i32, y_pos: i32) {
-        for y in (1..self.font_file.height).rev() {
-            for x in 1..self.font_file.width {
-                let index =
-                    ((y * self.font_file.width + x) * self.font_file.channels as i32) as usize;
+        for y in (0..self.font_file.height).rev() {
+            for x in 0..self.font_file.width {
+                let index = ((y * self.font_file.width + x) * 3) as usize;
 
                 let r = self.font_file.data[index];
                 let g = self.font_file.data[index + 1];
@@ -37,9 +36,9 @@ impl FontProvider {
     }
 
     pub fn draw_bmp(&mut self, bmp: &BMP, framebuffer: &mut FrameBuffer, x_pos: i32, y_pos: i32) {
-        for y in (1..bmp.height).rev() {
-            for x in 1..bmp.width {
-                let index = ((y * bmp.width + x) * bmp.channels as i32) as usize;
+        for y in (0..bmp.height).rev() {
+            for x in 0..bmp.width {
+                let index = ((y * bmp.width + x) * 3) as usize;
 
                 let r = bmp.data[index];
                 let g = bmp.data[index + 1];
@@ -58,9 +57,9 @@ impl FontProvider {
         y_pos: i32,
         color: ColorRGB,
     ) {
-        for y in (1..bmp.height).rev() {
-            for x in 1..bmp.width {
-                let index = ((y * bmp.width + x) * bmp.channels as i32) as usize;
+        for y in (0..bmp.height).rev() {
+            for x in 0..bmp.width {
+                let index = ((y * bmp.width + x) * 3) as usize;
 
                 if bmp.data[index] == 255
                     && bmp.data[index + 1] == 255
@@ -102,7 +101,6 @@ impl FontProvider {
             width: self.letter_width as i32,
             height: self.letter_height as i32,
             data: letter_data,
-            channels: self.font_file.channels,
         }
     }
 

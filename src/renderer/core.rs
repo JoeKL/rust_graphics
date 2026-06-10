@@ -75,7 +75,7 @@ impl Renderer {
         let view_frustum: Frustum = Frustum::new();
 
         let framebuffer: Vec<ColorRGB> = Vec::new();
-        let font_provider: FontProvider = FontProvider::new("fonts/monogram.bmp", 3, 6, 12);
+        let font_provider: FontProvider = FontProvider::new("fonts/monogram.bmp", 6, 12);
 
         let draw_z_buffer = false;
         let draw_wireframe = false;
