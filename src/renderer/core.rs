@@ -5,7 +5,7 @@ use super::{
 };
 use crate::{
     math::{Mat4x4, Point3D, ScreenPoint},
-    scene::{PointLight, Scene, Vertex},
+    scene::{Light, Scene, Vertex},
     utils::bmp::Bmp,
 };
 
@@ -149,10 +149,10 @@ impl Renderer {
     /// Vertex Processing Stage
     fn process_vertices(&mut self, scene: &Scene) {
         let active_camera = scene.get_active_camera();
-        let transformed_lights: Vec<PointLight> = scene
+        let transformed_lights: Vec<Light> = scene
             .collect_lights()
             .iter()
-            .map(|light| PointLight::new_transformed_light(light, self.look_at_matrix))
+            .map(|light| Light::new_transformed_light(light, self.look_at_matrix))
             .collect();
 
         for draw_command in &self.draw_commands {

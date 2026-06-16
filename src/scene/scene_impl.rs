@@ -1,4 +1,4 @@
-use super::{Camera, Mesh, PointLight, SceneNode, Vertex};
+use super::{Camera, Light, Mesh, PointLight, SceneNode, Spotlight, Vertex};
 use crate::math::{Point3D, Vector3D};
 use crate::renderer::color::ColorRGB;
 use crate::renderer::DrawCommand;
@@ -26,26 +26,57 @@ impl Scene {
         root_node.add_child(camera_node);
 
         // light sources
-        let light = PointLight::new(Point3D::new(0.0, 3.0, -3.0), ColorRGB::WHITE, 1.0);
-        let mut light_node = SceneNode::new();
-        light_node.set_light(light);
-        root_node.add_child(light_node);
+        // let light = Light::Point(PointLight::new(Point3D::new(0.0, 3.0, -3.0), ColorRGB::WHITE, 1.0));
+        // let mut light_node = SceneNode::new();
+        // light_node.set_light(light);
+        // root_node.add_child(light_node);
+
+        // spotlight source
+        let spotlight = Light::Spot(Spotlight::new(
+            Point3D::new(5.0, 0.0, 0.0),
+            ColorRGB::from_rgb(255, 255, 255), // green spotlight to distinguish
+            2.0,
+            Vector3D::new(-1.0, 0.0, 0.0).normalize(),
+            30.0, // 30 degrees cutoff angle
+        ));
+        let mut spot_node = SceneNode::new();
+        spot_node.set_light(spotlight);
+        root_node.add_child(spot_node);
 
         // model
         let mut model_node = SceneNode::new();
 
-        match Mesh::load_obj("models/f-16.obj", 2, [1.0, 1.0, 1.0]) {
+        match Mesh::load_obj("models/suzanne.obj", 2, [0.2, 0.6, 0.7]) {
             Ok(mesh) => model_node.set_mesh(mesh),
             Err(e) => {
-                eprintln!("Failed to load 'models/f-16.obj': {}", e);
+                eprintln!("Failed to load model: {}", e);
             }
         }
 
+        // model_node.set_scale(Vector3D::new(0.01, 0.01, 0.01));
+
+        // model
+        // let mut child_model_node = SceneNode::new();
+        //
+        // match Mesh::load_obj("models/f-16.obj", 1, [0.7, 0.2, 0.2]) {
+        //     Ok(mesh) => child_model_node.set_mesh(mesh),
+        //     Err(e) => {
+        //         eprintln!("Failed to load model: {}", e);
+        //     }
+        // }
+        //
+        // child_model_node.translate(Vector3D {
+        //     x: -2.0,
+        //     y: 0.0,
+        //     z: -2.0,
+        //     w: 1,
+        // });
+        //
+        // model_node.add_child(child_model_node);
+
         root_node.add_child(model_node);
 
-        Scene {
-            root_node,
-        }
+        Scene { root_node }
     }
 
     pub fn find_camera(&self) -> Option<&Camera> {
@@ -93,7 +124,7 @@ impl Scene {
         )
     }
 
-    pub fn collect_lights(&self) -> Vec<PointLight> {
+    pub fn collect_lights(&self) -> Vec<Light> {
         let mut lights = Vec::new();
         let mut node_queue = vec![&self.root_node];
         while let Some(node) = node_queue.pop() {
@@ -110,7 +141,7 @@ impl Scene {
 
     pub fn update_lights<F>(&mut self, mut f: F)
     where
-        F: FnMut(&mut PointLight),
+        F: FnMut(&mut Light),
     {
         let mut node_queue = vec![&mut self.root_node];
         while let Some(node) = node_queue.pop() {

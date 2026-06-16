@@ -144,9 +144,9 @@ impl Engine {
         self.rotate_lightsources(input_handler);
 
         self.rotate_model_with_mouse(input_handler);
-        self.orbit_camera_with_mouse(input_handler);
+        // self.orbit_camera_with_mouse(input_handler);
 
-        self.orbit_camera(input_handler);
+        self.orbit_camera_with_keyboard(input_handler);
         self.iso_scale_model(input_handler);
     }
 
@@ -206,6 +206,8 @@ impl Engine {
                 let mut new_light_pos = rot_x_mat * current_light_pos;
                 new_light_pos = rot_y_mat * new_light_pos;
                 light.set_position(new_light_pos);
+                light.rotate_direction(rot_x_mat);
+                light.rotate_direction(rot_y_mat);
             });
         }
     }
@@ -254,9 +256,12 @@ impl Engine {
                 [0.0, 0.0, 0.0, 1.0],
             ]);
 
-            let focus_segment = match self.scene.root_node.get_nested_child_mut(self.augmentation_segment as usize + 1) {
+            let focus_segment = match self.scene.root_node.get_nested_child_mut(1) {
                 Some(node) => node,
-                None => return,
+                None => {
+                    println!("no node");
+                    return;
+                }
             };
 
             let combined_rot = rot_x_mat * rot_y_mat;
@@ -305,7 +310,7 @@ impl Engine {
                     self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
                 }
 
-                self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
+                self.orbit_pitch = self.orbit_pitch.clamp(-89.9, 89.9);
 
                 let pitch_rad = self.orbit_pitch.to_radians();
                 let yaw_rad = self.orbit_yaw.to_radians();
@@ -326,7 +331,7 @@ impl Engine {
         }
     }
 
-    fn orbit_camera(&mut self, input_handler: &InputHandler) {
+    fn orbit_camera_with_keyboard(&mut self, input_handler: &InputHandler) {
         if let Some(camera) = self.scene.find_camera_mut() {
             let current_position = camera.get_position();
 
@@ -381,7 +386,11 @@ impl Engine {
             scale += scale_delta;
         }
 
-        let focus_segment = match self.scene.root_node.get_nested_child_mut(self.augmentation_segment as usize + 1) {
+        let focus_segment = match self
+            .scene
+            .root_node
+            .get_nested_child_mut(self.augmentation_segment as usize + 1)
+        {
             Some(node) => node,
             None => return,
         };

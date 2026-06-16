@@ -1,5 +1,5 @@
-use crate::renderer::Renderer;
 use crate::renderer::color::ColorRGB;
+use crate::renderer::Renderer;
 
 pub struct Hud;
 
@@ -180,7 +180,7 @@ impl Hud {
             );
 
             renderer.render_text(
-                "|- [Mouse 1]    Move Camera",
+                "|- [Mouse 1]    Move Model",
                 keybind_hud_pos.0,
                 keybind_hud_pos.1 + 280,
                 ColorRGB::WHITE,

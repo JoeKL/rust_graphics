@@ -1,4 +1,4 @@
-use crate::scene::PointLight;
+use crate::scene::Light;
 use crate::math::{Point3D, Vector3D};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -58,7 +58,7 @@ pub trait ShadingModel {
         surface_color: &[f32; 3],
         view_vector: &Vector3D,
         material: &Material,
-        lights: &[PointLight],
+        lights: &[Light],
     ) -> [f32; 3];
 }
 
@@ -73,7 +73,7 @@ impl ShadingModel for FlatShader {
         surface_color: &[f32; 3],
         view_vector: &Vector3D,
         material: &Material,
-        lights: &[PointLight],
+        lights: &[Light],
     ) -> [f32; 3] {
         let material_color = Vector3D::new(surface_color[0], surface_color[1], surface_color[2]);
         let mut final_color = Vector3D::new(0.0, 0.0, 0.0);
@@ -100,10 +100,35 @@ impl ShadingModel for FlatShader {
                 .mul(f32::max(halfway.dot(*surface_normal), 0.0).powf(material.shininess));
 
             let light_color = light.get_color().to_vector();
+
+            // Spotlight factor calculation
+            let spotlight_factor = match light {
+                Light::Point(_) => 1.0,
+                Light::Spot(spot) => {
+                    // Vector pointing from light position to surface point (both in view space)
+                    let light_to_surface = (*surface_point - spot.get_position()).normalize();
+                    // Direction vector of the spotlight is spot.direction
+                    let cos_theta = light_to_surface.dot(spot.direction.normalize());
+                    let cos_cutoff = spot.cutoff.to_radians().cos();
+                    if cos_theta >= cos_cutoff {
+                        // Apply a smooth falloff towards the edges of the spotlight cone
+                        let delta = 1.0 - cos_cutoff;
+                        if delta > 0.0 {
+                            let factor = (cos_theta - cos_cutoff) / delta;
+                            factor.powf(2.0)
+                        } else {
+                            1.0
+                        }
+                    } else {
+                        0.0
+                    }
+                }
+            };
+
             let light_contribution = cd_diffuse
                 .add(cs_specular)
                 .mul_vec(light_color)
-                .mul(light.get_intensity() / light_count);
+                .mul(light.get_intensity() * spotlight_factor / light_count);
 
             final_color = final_color.add(light_contribution);
         }

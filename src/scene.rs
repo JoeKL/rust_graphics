@@ -10,7 +10,7 @@ pub mod primitives;
 pub use scene_impl::Scene;
 pub use scene_node::SceneNode;
 pub use camera::Camera;
-pub use light::PointLight;
+pub use light::{Light, PointLight, Spotlight};
 pub use geometry::Mesh;
 #[allow(unused_imports)]
 pub use primitives::{Vertex, Triangle};
