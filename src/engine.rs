@@ -254,7 +254,11 @@ impl Engine {
                 [0.0, 0.0, 0.0, 1.0],
             ]);
 
-            let focus_segment = match self.scene.root_node.get_nested_child_mut(self.augmentation_segment as usize + 1) {
+            let focus_segment = match self
+                .scene
+                .root_node
+                .get_nested_child_mut(self.augmentation_segment as usize + 1)
+            {
                 Some(node) => node,
                 None => return,
             };
@@ -343,9 +347,9 @@ impl Engine {
             if input_handler.is_key_down(minifb::Key::Left) {
                 self.orbit_yaw -= rot_speed;
             }
-            if input_handler.is_key_down(minifb::Key::Right) {
-                self.orbit_yaw += rot_speed;
-            }
+            // if input_handler.is_key_down(minifb::Key::Right) {
+            self.orbit_yaw += rot_speed;
+            // }
             if input_handler.is_key_down(minifb::Key::Up) {
                 self.orbit_pitch += rot_speed;
             }
@@ -381,7 +385,11 @@ impl Engine {
             scale += scale_delta;
         }
 
-        let focus_segment = match self.scene.root_node.get_nested_child_mut(self.augmentation_segment as usize + 1) {
+        let focus_segment = match self
+            .scene
+            .root_node
+            .get_nested_child_mut(self.augmentation_segment as usize + 1)
+        {
             Some(node) => node,
             None => return,
         };
