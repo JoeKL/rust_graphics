@@ -2,41 +2,50 @@ use crate::math::Vector3D;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ColorRGB {
-    pub as_u32: u32,
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
+    a: u8,
+    r: u8,
+    g: u8,
+    b: u8,
 }
 
 impl ColorRGB {
     pub fn from_rgb(r: u8, g: u8, b: u8) -> ColorRGB {
-        let color = (r as u32) << 16 | (g as u32) << 8 | b as u32;
-        ColorRGB {
-            as_u32: color,
-            r,
-            g,
-            b,
-        }
+        ColorRGB { a: 255, r, g, b }
+    }
+
+    pub fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> ColorRGB {
+        ColorRGB { a, r, g, b }
     }
 
     pub fn f32_to_color_component(value: f32) -> u8 {
         (f32::min(value, 1.0) * 255.0) as u8
     }
 
+    /// Assumes a 24-bit RGB u32 (like 0xFF0000 for Red) and sets Alpha to 255
     pub fn from_u32(color: u32) -> ColorRGB {
         let r = ((color >> 16) & 0xFF) as u8;
         let g = ((color >> 8) & 0xFF) as u8;
         let b = (color & 0xFF) as u8;
-        ColorRGB {
-            as_u32: color,
-            r,
-            g,
-            b,
-        }
+        ColorRGB { a: 255, r, g, b }
     }
 
-    pub fn update_color(&mut self) {
-        self.as_u32 = (self.r as u32) << 16 | (self.g as u32) << 8 | self.b as u32;
+    /// Parses a 32-bit ARGB u32
+    pub fn from_argb_u32(color: u32) -> ColorRGB {
+        let a = ((color >> 24) & 0xFF) as u8;
+        let r = ((color >> 16) & 0xFF) as u8;
+        let g = ((color >> 8) & 0xFF) as u8;
+        let b = (color & 0xFF) as u8;
+        ColorRGB { a, r, g, b }
+    }
+
+    /// Returns the color packed as a 24-bit RGB u32
+    pub fn as_u32(&self) -> u32 {
+        (self.r as u32) << 16 | (self.g as u32) << 8 | self.b as u32
+    }
+
+    /// Returns the color packed as a 32-bit ARGB u32
+    pub fn as_argb_u32(&self) -> u32 {
+        (self.a as u32) << 24 | (self.r as u32) << 16 | (self.g as u32) << 8 | self.b as u32
     }
 
     #[allow(dead_code)]
@@ -44,32 +53,45 @@ impl ColorRGB {
         self.r = r;
         self.g = g;
         self.b = b;
-        self.as_u32 = (r as u32) << 16 | (g as u32) << 8 | b as u32;
+    }
+
+    #[allow(dead_code)]
+    pub fn set_rgba(&mut self, r: u8, g: u8, b: u8, a: u8) {
+        self.r = r;
+        self.g = g;
+        self.b = b;
+        self.a = a;
+    }
+
+    #[allow(dead_code)]
+    pub fn set_a(&mut self, a: u8) -> &mut Self {
+        self.a = a;
+        self
     }
 
     #[allow(dead_code)]
     pub fn set_r(&mut self, r: u8) -> &mut Self {
         self.r = r;
-        self.update_color();
         self
     }
 
     #[allow(dead_code)]
     pub fn set_g(&mut self, g: u8) -> &mut Self {
         self.g = g;
-        self.update_color();
         self
     }
 
     #[allow(dead_code)]
     pub fn set_b(&mut self, b: u8) -> &mut Self {
         self.b = b;
-        self.update_color();
         self
     }
 
     pub fn get_as_u32(&self) -> u32 {
-        self.as_u32
+        self.as_u32()
+    }
+    pub fn get_a(&self) -> u8 {
+        self.a
     }
     pub fn get_r(&self) -> u8 {
         self.r
@@ -97,16 +119,18 @@ impl ColorRGB {
             Self::f32_to_color_component(vec.z),
         )
     }
+
     #[allow(dead_code)]
     pub const BLACK: ColorRGB = ColorRGB {
-        as_u32: 0x000000,
+        a: 255,
         r: 0,
         g: 0,
         b: 0,
     };
+
     #[allow(dead_code)]
     pub const WHITE: ColorRGB = ColorRGB {
-        as_u32: 0xFFFFFF,
+        a: 255,
         r: 255,
         g: 255,
         b: 255,
@@ -115,7 +139,7 @@ impl ColorRGB {
     /// A very dark gray (approx 12.5% brightness).
     #[allow(dead_code)]
     pub const GRAY_VERY_DARK: ColorRGB = ColorRGB {
-        as_u32: 0x202020,
+        a: 255,
         r: 32,
         g: 32,
         b: 32,
@@ -124,7 +148,7 @@ impl ColorRGB {
     /// A dark gray (25% brightness).
     #[allow(dead_code)]
     pub const GRAY_DARK: ColorRGB = ColorRGB {
-        as_u32: 0x404040,
+        a: 255,
         r: 64,
         g: 64,
         b: 64,
@@ -133,7 +157,7 @@ impl ColorRGB {
     /// A medium gray, exact middle ground (approx 50% brightness).
     #[allow(dead_code)]
     pub const GRAY_MEDIUM: ColorRGB = ColorRGB {
-        as_u32: 0x808080,
+        a: 255,
         r: 128,
         g: 128,
         b: 128,
@@ -142,7 +166,7 @@ impl ColorRGB {
     /// A light gray, often known as "Silver" (75% brightness).
     #[allow(dead_code)]
     pub const GRAY_LIGHT: ColorRGB = ColorRGB {
-        as_u32: 0xC0C0C0,
+        a: 255,
         r: 192,
         g: 192,
         b: 192,
@@ -151,7 +175,7 @@ impl ColorRGB {
     /// A very light gray, almost white (approx 87.5% brightness).
     #[allow(dead_code)]
     pub const GRAY_VERY_LIGHT: ColorRGB = ColorRGB {
-        as_u32: 0xE0E0E0,
+        a: 255,
         r: 224,
         g: 224,
         b: 224,
@@ -159,42 +183,47 @@ impl ColorRGB {
 
     #[allow(dead_code)]
     pub const RED: ColorRGB = ColorRGB {
-        as_u32: 0xFF0000,
+        a: 255,
         r: 255,
         g: 0,
         b: 0,
     };
+
     #[allow(dead_code)]
     pub const GREEN: ColorRGB = ColorRGB {
-        as_u32: 0x00FF00,
+        a: 255,
         r: 0,
         g: 255,
         b: 0,
     };
+
     #[allow(dead_code)]
     pub const BLUE: ColorRGB = ColorRGB {
-        as_u32: 0x0000FF,
+        a: 255,
         r: 0,
         g: 0,
         b: 255,
     };
+
     #[allow(dead_code)]
     pub const YELLOW: ColorRGB = ColorRGB {
-        as_u32: 0xFFFF00,
+        a: 255,
         r: 255,
         g: 255,
         b: 0,
     };
+
     #[allow(dead_code)]
     pub const CYAN: ColorRGB = ColorRGB {
-        as_u32: 0x00FFFF,
+        a: 255,
         r: 0,
         g: 255,
         b: 255,
     };
+
     #[allow(dead_code)]
     pub const MAGENTA: ColorRGB = ColorRGB {
-        as_u32: 0xFF00FF,
+        a: 255,
         r: 255,
         g: 0,
         b: 255,
