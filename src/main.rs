@@ -31,6 +31,7 @@ fn main() -> eframe::Result {
 struct MyApp {
     render_engine: Engine,
     input_handler: InputHandler,
+    frame_texture: Option<egui::TextureHandle>,
 }
 
 impl MyApp {
@@ -38,34 +39,36 @@ impl MyApp {
         Self {
             render_engine: Engine::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32),
             input_handler: InputHandler::new(),
+            frame_texture: None,
         }
     }
 }
 
 impl eframe::App for MyApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show_inside(ui, |ui| {
-            let content_rect = ui.content_rect();
+        let content_rect = ui.content_rect();
+        let size: (f32, f32) = (content_rect.width(), content_rect.height());
 
-            let size: (f32, f32) = (content_rect.width(), content_rect.height());
-            let frame = self.render_engine.run(&self.input_handler);
-            let pixel = &split_rgba_slice(frame);
+        let raw_frame = self.render_engine.run(&self.input_handler);
+        let rgba_pixels = split_rgba_slice(raw_frame);
 
-            ui.add(
-                egui::Image::new(egui::load::SizedTexture::new(
-                    &ui.load_texture(
-                        "buffer",
-                        egui::ColorImage::from_rgba_premultiplied(
-                            [size.0 as usize, size.1 as usize],
-                            pixel,
-                        ),
-                        Default::default(),
-                    ),
-                    Vec2::new(size.0, size.1),
-                ))
-                .fit_to_exact_size(Vec2::new(size.0, size.1)),
-            );
+        let image = egui::ColorImage::from_rgba_premultiplied(
+            [size.0 as usize, size.1 as usize],
+            &rgba_pixels,
+        );
+
+        let texture = self.frame_texture.get_or_insert_with(|| {
+            ui.load_texture("render_buffer", image.clone(), egui::TextureOptions::LINEAR)
         });
+
+        texture.set(image, egui::TextureOptions::LINEAR);
+
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            let available_size = ui.available_size();
+            ui.image((texture.id(), available_size));
+        });
+
+        ui.request_repaint();
     }
 }
 
