@@ -3,10 +3,10 @@ use crate::math::Vector3D;
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ColorRGB {
-    a: u8,
     r: u8,
     g: u8,
     b: u8,
+    a: u8,
 }
 
 impl ColorRGB {
