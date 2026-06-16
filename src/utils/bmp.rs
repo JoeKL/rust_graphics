@@ -27,7 +27,7 @@ impl Bmp {
                 let g = self.data[index + 1];
                 let b = self.data[index + 2];
 
-                if !(r == color.r && g == color.g && b == color.b) {
+                if !(r == color.get_r() && g == color.get_g() && b == color.get_b()) {
                     self.data[index] = 255;
                     self.data[index + 1] = 255;
                     self.data[index + 2] = 255;

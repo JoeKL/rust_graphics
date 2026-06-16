@@ -1,5 +1,6 @@
 use crate::math::Vector3D;
 
+#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ColorRGB {
     a: u8,
