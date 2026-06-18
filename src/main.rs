@@ -22,7 +22,7 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
     eframe::run_native(
-        "Image Viewer",
+        "Renderer",
         options,
         Box::new(|cc| Ok(Box::new(MyApp::new(cc)))),
     )
@@ -70,13 +70,6 @@ impl eframe::App for MyApp {
 
         ui.request_repaint();
     }
-}
-
-pub fn get_max_quadratic_size(ui: &mut Ui) -> Vec2 {
-    let size = ui.available_size();
-    let min_size = if size.x < size.y { size.x } else { size.y };
-    let size = Vec2::from([min_size, min_size]);
-    size
 }
 
 fn split_rgba_slice(colors: &[u32]) -> Vec<u8> {
