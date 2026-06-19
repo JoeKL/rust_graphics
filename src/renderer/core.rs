@@ -1,6 +1,6 @@
 use super::{
-    ColorRGB, FlatShader, FontProvider, Material, ShadingModel, DrawCommand, FacePass, Fragment,
-    Frustum, Rasterizer, RasterizerInput, RasterizerOutput, RenderPass, VertexNormalPass,
+    ColorRGB, DrawCommand, FacePass, FlatShader, FontProvider, Fragment, Frustum, Material,
+    Rasterizer, RasterizerInput, RasterizerOutput, RenderPass, ShadingModel, VertexNormalPass,
     VertexPass, WireframePass,
 };
 use crate::{
@@ -296,9 +296,11 @@ impl Renderer {
                 )
             };
 
-            self.rasterizer
-                .framebuffer
-                .set_pixel(fragment.x, fragment.y, final_color);
+            self.rasterizer.framebuffer.set_pixel(
+                fragment.x as usize,
+                fragment.y as usize,
+                final_color,
+            );
         }
     }
 

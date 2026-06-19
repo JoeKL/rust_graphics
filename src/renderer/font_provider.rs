@@ -1,6 +1,6 @@
 use crate::{
     renderer::color::ColorRGB,
-    utils::bmp::{read_bmp, Bmp},
+    utils::bmp::{Bmp, read_bmp},
 };
 
 use super::FrameBuffer;
@@ -30,7 +30,11 @@ impl FontProvider {
                 let g = self.font_file.data[index + 1];
                 let b = self.font_file.data[index + 2];
 
-                framebuffer.set_pixel(x + x_pos, y + y_pos, ColorRGB::from_rgb(r, g, b));
+                framebuffer.set_pixel(
+                    (x + x_pos) as usize,
+                    (y + y_pos) as usize,
+                    ColorRGB::from_rgb(r, g, b),
+                );
             }
         }
     }
@@ -44,7 +48,11 @@ impl FontProvider {
                 let g = bmp.data[index + 1];
                 let b = bmp.data[index + 2];
 
-                framebuffer.set_pixel(x + x_pos, y + y_pos, ColorRGB::from_rgb(r, g, b));
+                framebuffer.set_pixel(
+                    (x + x_pos) as usize,
+                    (y + y_pos) as usize,
+                    ColorRGB::from_rgb(r, g, b),
+                );
             }
         }
     }
@@ -65,7 +73,7 @@ impl FontProvider {
                     && bmp.data[index + 1] == 255
                     && bmp.data[index + 2] == 255
                 {
-                    framebuffer.set_pixel(x + x_pos, y + y_pos, color);
+                    framebuffer.set_pixel((x + x_pos) as usize, (y + y_pos) as usize, color);
                 }
             }
         }

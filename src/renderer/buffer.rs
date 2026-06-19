@@ -1,7 +1,7 @@
 use crate::renderer::color::ColorRGB;
 
 pub struct FrameBuffer {
-    pub buffer: Vec<u32>,
+    pub buffer: Vec<u8>,
     width: usize,
     height: usize,
 }
@@ -9,13 +9,14 @@ pub struct FrameBuffer {
 impl FrameBuffer {
     pub fn new(width: usize, height: usize) -> Self {
         Self {
-            buffer: vec![0; width * height],
+            // buffer is multiplied by 4 since every frame is composed of R, G, B, A
+            buffer: vec![0; width * height * 4],
             width,
             height,
         }
     }
 
-    pub fn get_buffer(&self) -> &[u32] {
+    pub fn get_buffer(&self) -> &[u8] {
         &self.buffer
     }
 
@@ -28,7 +29,7 @@ impl FrameBuffer {
     /// # Returns
     /// The corresponding buffer index
     pub fn get_index(&self, x: usize, y: usize) -> usize {
-        y * self.width + x
+        (y * self.width) * 4 + x * 4
     }
 
     /// get coordiantes from index as usize
@@ -63,8 +64,8 @@ impl FrameBuffer {
     /// assert!(!buffer.is_in_bounds(-1, 50)); // Outside bounds (negative)
     /// assert!(!buffer.is_in_bounds(100, 50)); // Outside bounds (too large)
     /// ```
-    pub fn is_in_bounds(&self, x: i32, y: i32) -> bool {
-        x >= 0 && y >= 0 && x < self.width as i32 && y < self.height as i32
+    pub fn is_in_bounds(&self, x: usize, y: usize) -> bool {
+        x >= 0 && y >= 0 && x < self.width && y < self.height
     }
 
     pub fn get_width(&self) -> usize {
@@ -82,16 +83,20 @@ impl FrameBuffer {
     /// * `y` - The x coordinate
     /// * `color` - The color
     ///
-    pub fn set_pixel(&mut self, x: i32, y: i32, color: ColorRGB) {
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: ColorRGB) {
         if self.is_in_bounds(x, y) {
-            let index = self.get_index(x as usize, y as usize);
-            self.buffer[index] = color.get_as_u32();
+            let index = self.get_index(x, y);
+
+            self.buffer[index] = color.get_r();
+            self.buffer[index + 1] = color.get_g();
+            self.buffer[index + 2] = color.get_b();
+            self.buffer[index + 3] = color.get_a();
         }
     }
 
-    pub fn get_pixel(&self, x: i32, y: i32) -> u32 {
+    pub fn get_pixel(&self, x: usize, y: usize) -> u8 {
         if self.is_in_bounds(x, y) {
-            let index = self.get_index(x as usize, y as usize);
+            let index = self.get_index(x, y);
             self.buffer[index]
         } else {
             0
@@ -99,6 +104,8 @@ impl FrameBuffer {
     }
 
     pub fn fill(&mut self, color: ColorRGB) {
-        self.buffer.fill(color.get_as_u32());
+        for pixel in self.buffer.chunks_exact_mut(4) {
+            pixel.copy_from_slice(&color.as_argb_u8_slice());
+        }
     }
 }

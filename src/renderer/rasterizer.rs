@@ -1,5 +1,5 @@
-use crate::renderer::{FrameBuffer, Viewport, ColorRGB};
 use crate::math::ScreenPoint;
+use crate::renderer::{ColorRGB, FrameBuffer, Viewport};
 use crate::scene::Vertex;
 
 //  To avoid potential confusion, let me define "rasterization":
@@ -33,7 +33,7 @@ impl Rasterizer {
     pub fn draw_line(&mut self, p0: ScreenPoint, p1: ScreenPoint, color: ColorRGB) {
         let framebuffer = &mut self.framebuffer;
         Self::for_each_line_point_impl(p0, p1, |x, y| {
-            framebuffer.set_pixel(x, y, color);
+            framebuffer.set_pixel(x as usize, y as usize, color);
         });
     }
 
@@ -120,13 +120,13 @@ impl Rasterizer {
         // and false if all are off
         // cool effect if changed to &&. it then only draws if ALL of them are on screen
         self.framebuffer
-            .is_in_bounds(v0.position[0] as i32, v0.position[1] as i32)
+            .is_in_bounds(v0.position[0] as usize, v0.position[1] as usize)
             || self
                 .framebuffer
-                .is_in_bounds(v1.position[0] as i32, v1.position[1] as i32)
+                .is_in_bounds(v1.position[0] as usize, v1.position[1] as usize)
             || self
                 .framebuffer
-                .is_in_bounds(v2.position[0] as i32, v2.position[1] as i32)
+                .is_in_bounds(v2.position[0] as usize, v2.position[1] as usize)
     }
 
     pub fn calculate_barycentric(

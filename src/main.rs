@@ -5,7 +5,7 @@ mod renderer;
 mod scene;
 mod utils;
 
-use eframe::{egui, CreationContext};
+use eframe::{CreationContext, egui};
 use engine::Engine;
 use input::InputHandler;
 
@@ -50,11 +50,11 @@ impl eframe::App for MyApp {
         let size: (f32, f32) = (content_rect.width(), content_rect.height());
 
         let raw_frame = self.render_engine.run(&self.input_handler);
-        let rgba_pixels = split_rgba_slice(raw_frame);
+        // let rgba_pixels = split_rgba_slice(raw_frame);
 
         let image = egui::ColorImage::from_rgba_premultiplied(
             [size.0 as usize, size.1 as usize],
-            &rgba_pixels,
+            &raw_frame,
         );
 
         let texture = self.frame_texture.get_or_insert_with(|| {
@@ -70,19 +70,4 @@ impl eframe::App for MyApp {
 
         ui.request_repaint();
     }
-}
-
-fn split_rgba_slice(colors: &[u32]) -> Vec<u8> {
-    let mut result = Vec::with_capacity(colors.len() * 4);
-
-    for &color in colors {
-        let bytes = color.to_ne_bytes();
-
-        result.push(bytes[2]); // Extract Red
-        result.push(bytes[1]); // Extract Green
-        result.push(bytes[0]); // Extract Blue
-        result.push(255); // Force Alpha to 255 (Opaque)
-    }
-
-    result
 }

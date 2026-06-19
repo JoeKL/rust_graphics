@@ -49,6 +49,10 @@ impl ColorRGB {
         (self.a as u32) << 24 | (self.r as u32) << 16 | (self.g as u32) << 8 | self.b as u32
     }
 
+    pub fn as_argb_u8_slice(&self) -> [u8; 4] {
+        [self.get_r(), self.get_g(), self.get_b(), self.get_a()]
+    }
+
     #[allow(dead_code)]
     pub fn set(&mut self, r: u8, g: u8, b: u8) {
         self.r = r;

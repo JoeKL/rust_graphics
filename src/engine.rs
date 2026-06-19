@@ -405,7 +405,7 @@ impl Engine {
         );
     }
 
-    pub fn run(&mut self, input_handler: &InputHandler) -> &[u32] {
+    pub fn run(&mut self, input_handler: &InputHandler) -> &[u8] {
         //increase frames_count
         self.frame_count += 1;
 
