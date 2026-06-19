@@ -2,29 +2,29 @@ use std::time::Instant;
 
 use crate::input::InputHandler;
 use crate::math::{Mat4x4, Point2D, Point3D, ScreenPoint, Vector3D};
-use crate::renderer::color::ColorRGB;
 use crate::renderer::Renderer;
+use crate::renderer::color::ColorRGB;
 use crate::scene::Scene;
 
 pub struct Engine {
     renderer: Renderer,
+
     scene: Scene,
-    frame: u32,
+
+    // ui: Ui,
     time_since_title_update: Instant,
     frame_count: u32,
     current_fps: u32,
 
     augmentation_segment: i32,
-
-    draw_keybinds: bool,
-
-    draw_axis: bool,
-    draw_grid: bool,
-    draw_lights: bool,
-    draw_mouse_line: bool,
-
     orbit_yaw: f32,
     orbit_pitch: f32,
+
+    pub draw_keybind_menu: bool,
+    pub draw_axis: bool,
+    pub draw_grid: bool,
+    pub draw_lights: bool,
+    pub draw_mouse_line: bool,
 }
 
 impl Engine {
@@ -44,18 +44,15 @@ impl Engine {
             );
         }
 
-        let frame = 0;
         let time_since_title_update = Instant::now();
         let frame_count = 0;
         let current_fps = 0;
 
         let augmentation_segment = 0;
-
         let orbit_yaw = 150.0;
         let orbit_pitch = 10.0;
 
-        let draw_keybinds = false;
-
+        let draw_keybind_menu = false;
         let draw_axis = true;
         let draw_grid = true;
         let draw_lights = false;
@@ -64,22 +61,20 @@ impl Engine {
         Engine {
             renderer,
             scene,
-            frame,
+
             time_since_title_update,
             frame_count,
             current_fps,
 
             augmentation_segment,
+            orbit_yaw,
+            orbit_pitch,
 
-            draw_keybinds,
-
+            draw_keybind_menu,
             draw_axis,
             draw_grid,
             draw_lights,
             draw_mouse_line,
-
-            orbit_yaw,
-            orbit_pitch,
         }
     }
 
@@ -92,7 +87,7 @@ impl Engine {
         // }
 
         if input_handler.is_key_pressed(minifb::Key::F1) {
-            self.draw_keybinds = !self.draw_keybinds;
+            self.draw_keybind_menu = !self.draw_keybind_menu;
         }
 
         if input_handler.is_key_pressed(minifb::Key::K) {
@@ -403,7 +398,7 @@ impl Engine {
         crate::renderer::Hud::draw(
             &mut self.renderer,
             self.current_fps,
-            self.draw_keybinds,
+            self.draw_keybind_menu,
             self.draw_grid,
             self.draw_axis,
             self.draw_lights,
@@ -421,8 +416,6 @@ impl Engine {
             //reset time since last update
             self.time_since_title_update = Instant::now();
         }
-
-        self.frame += 1;
 
         // Handle input
         self.process_input(input_handler);
