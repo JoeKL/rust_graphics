@@ -6,7 +6,6 @@ mod scene;
 mod utils;
 
 use eframe::{egui, CreationContext};
-use egui::{Ui, Vec2};
 use engine::Engine;
 use input::InputHandler;
 
@@ -21,6 +20,7 @@ fn main() -> eframe::Result {
             .with_resizable(false),
         ..Default::default()
     };
+
     eframe::run_native(
         "Renderer",
         options,
