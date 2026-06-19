@@ -15,9 +15,10 @@ const WINDOW_HEIGHT: usize = 1008;
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([1920.0, 1008.0])
+            .with_inner_size([WINDOW_WIDTH as f32, WINDOW_HEIGHT as f32])
             .with_maximized(true)
-            .with_resizable(false),
+            .with_resizable(false)
+            .with_fullscreen(false), // if set to true change the height of the window or else panic
         ..Default::default()
     };
 
