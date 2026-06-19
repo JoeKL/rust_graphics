@@ -65,7 +65,7 @@ impl FrameBuffer {
     /// assert!(!buffer.is_in_bounds(100, 50)); // Outside bounds (too large)
     /// ```
     pub fn is_in_bounds(&self, x: usize, y: usize) -> bool {
-        x >= 0 && y >= 0 && x < self.width && y < self.height
+        x < self.width && y < self.height
     }
 
     pub fn get_width(&self) -> usize {
