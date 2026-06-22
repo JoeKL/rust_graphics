@@ -2,7 +2,7 @@ use super::{Point3D, Vector3D};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Mat4x4 {
-    pub mat: [[f32; 4]; 4],
+    pub mat: [[f64; 4]; 4],
 }
 
 impl Mat4x4 {
@@ -17,7 +17,7 @@ impl Mat4x4 {
         Mat4x4 { mat }
     }
 
-    pub fn new(mat: [[f32; 4]; 4]) -> Mat4x4 {
+    pub fn new(mat: [[f64; 4]; 4]) -> Mat4x4 {
         Mat4x4 { mat }
     }
 
@@ -194,7 +194,7 @@ impl Mat4x4 {
     }
 
     // Helper function to get matrix minor
-    fn get_minor(&self, row: usize, col: usize) -> f32 {
+    fn get_minor(&self, row: usize, col: usize) -> f64 {
         let mut minor = [[0.0; 3]; 3];
         let mut m_i = 0;
 
@@ -221,13 +221,17 @@ impl Mat4x4 {
     }
 
     // Calculate cofactor
-    fn get_cofactor(&self, row: usize, col: usize) -> f32 {
-        let sign = if (row + col).is_multiple_of(2) { 1.0 } else { -1.0 };
+    fn get_cofactor(&self, row: usize, col: usize) -> f64 {
+        let sign = if (row + col).is_multiple_of(2) {
+            1.0
+        } else {
+            -1.0
+        };
         sign * self.get_minor(row, col)
     }
 
     // Calculate determinant
-    pub fn determinant(&self) -> f32 {
+    pub fn determinant(&self) -> f64 {
         let mut det = 0.0;
         for j in 0..4 {
             det += self.mat[0][j] * self.get_cofactor(0, j);

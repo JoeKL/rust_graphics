@@ -1,15 +1,15 @@
-use crate::renderer::color::ColorRGB;
 use crate::math::{Mat4x4, Point3D, Vector3D};
+use crate::renderer::color::ColorRGB;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PointLight {
     position: Point3D,
     color: ColorRGB,
-    intensity: f32,
+    intensity: f64,
 }
 
 impl PointLight {
-    pub fn new(position: Point3D, color: ColorRGB, intensity: f32) -> PointLight {
+    pub fn new(position: Point3D, color: ColorRGB, intensity: f64) -> PointLight {
         PointLight {
             position,
             color,
@@ -33,11 +33,11 @@ impl PointLight {
         self.color
     }
 
-    pub fn set_intensity(&mut self, intensity: f32) {
+    pub fn set_intensity(&mut self, intensity: f64) {
         self.intensity = intensity
     }
 
-    pub fn get_intensity(&self) -> f32 {
+    pub fn get_intensity(&self) -> f64 {
         self.intensity
     }
 
@@ -47,9 +47,9 @@ impl PointLight {
 
     pub fn get_color_as_vector(&self) -> Vector3D {
         Vector3D::new(
-            self.get_color().get_r() as f32 / 255.0, // Convert 0-255 to 0-1 range
-            self.get_color().get_g() as f32 / 255.0,
-            self.get_color().get_b() as f32 / 255.0,
+            self.get_color().get_r() as f64 / 255.0, // Convert 0-255 to 0-1 range
+            self.get_color().get_g() as f64 / 255.0,
+            self.get_color().get_b() as f64 / 255.0,
         )
     }
 

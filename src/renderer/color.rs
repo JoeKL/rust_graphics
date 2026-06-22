@@ -18,8 +18,8 @@ impl ColorRGB {
         ColorRGB { a, r, g, b }
     }
 
-    pub fn f32_to_color_component(value: f32) -> u8 {
-        (f32::min(value, 1.0) * 255.0) as u8
+    pub fn f64_to_color_component(value: f64) -> u8 {
+        (f64::min(value, 1.0) * 255.0) as u8
     }
 
     /// Assumes a 24-bit RGB u32 (like 0xFF0000 for Red) and sets Alpha to 255
@@ -110,18 +110,18 @@ impl ColorRGB {
 
     pub fn to_vector(self) -> Vector3D {
         Vector3D::new(
-            self.get_r() as f32 / 255.0,
-            self.get_g() as f32 / 255.0,
-            self.get_b() as f32 / 255.0,
+            self.get_r() as f64 / 255.0,
+            self.get_g() as f64 / 255.0,
+            self.get_b() as f64 / 255.0,
         )
     }
 
     #[allow(dead_code)]
     pub fn from_vector(vec: &Vector3D) -> Self {
         ColorRGB::from_rgb(
-            Self::f32_to_color_component(vec.x),
-            Self::f32_to_color_component(vec.y),
-            Self::f32_to_color_component(vec.z),
+            Self::f64_to_color_component(vec.x),
+            Self::f64_to_color_component(vec.y),
+            Self::f64_to_color_component(vec.z),
         )
     }
 

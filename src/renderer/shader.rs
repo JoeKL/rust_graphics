@@ -1,5 +1,5 @@
-use crate::scene::PointLight;
 use crate::math::{Point3D, Vector3D};
+use crate::scene::PointLight;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static MATERIAL_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
@@ -7,14 +7,14 @@ static MATERIAL_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 #[derive(Clone, Copy)]
 pub struct Material {
     pub id: usize,
-    pub ambient: f32,
-    pub diffuse: f32,
-    pub specular: f32,
-    pub shininess: f32,
+    pub ambient: f64,
+    pub diffuse: f64,
+    pub specular: f64,
+    pub shininess: f64,
 }
 
 impl Material {
-    pub fn new(ambient: f32, diffuse: f32, specular: f32, shininess: f32) -> Material {
+    pub fn new(ambient: f64, diffuse: f64, specular: f64, shininess: f64) -> Material {
         let id = MATERIAL_ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Self {
             id,
@@ -55,11 +55,11 @@ pub trait ShadingModel {
         &self,
         surface_point: &Point3D,
         surface_normal: &Vector3D,
-        surface_color: &[f32; 3],
+        surface_color: &[f64; 3],
         view_vector: &Vector3D,
         material: &Material,
         lights: &[PointLight],
-    ) -> [f32; 3];
+    ) -> [f64; 3];
 }
 
 // Flat shading implementation
@@ -70,14 +70,14 @@ impl ShadingModel for FlatShader {
         &self,
         surface_point: &Point3D,
         surface_normal: &Vector3D,
-        surface_color: &[f32; 3],
+        surface_color: &[f64; 3],
         view_vector: &Vector3D,
         material: &Material,
         lights: &[PointLight],
-    ) -> [f32; 3] {
+    ) -> [f64; 3] {
         let material_color = Vector3D::new(surface_color[0], surface_color[1], surface_color[2]);
         let mut final_color = Vector3D::new(0.0, 0.0, 0.0);
-        let light_count = lights.len() as f32;
+        let light_count = lights.len() as f64;
 
         // calculate Ambient component Ca
         let ca_ambient = material_color.mul(material.ambient);
@@ -92,12 +92,12 @@ impl ShadingModel for FlatShader {
             // Diffuse component
             let cd_diffuse = material_color
                 .mul(material.diffuse)
-                .mul(f32::max(light_dir.dot(*surface_normal), 0.0));
+                .mul(f64::max(light_dir.dot(*surface_normal), 0.0));
 
             // Specular component
             let cs_specular = Vector3D::new(1.0, 1.0, 1.0)
                 .mul(material.specular)
-                .mul(f32::max(halfway.dot(*surface_normal), 0.0).powf(material.shininess));
+                .mul(f64::max(halfway.dot(*surface_normal), 0.0).powf(material.shininess));
 
             let light_color = light.get_color().to_vector();
             let light_contribution = cd_diffuse

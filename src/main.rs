@@ -48,10 +48,10 @@ impl MyApp {
 impl eframe::App for MyApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let content_rect = ui.content_rect();
+
         let size: (f32, f32) = (content_rect.width(), content_rect.height());
 
         let raw_frame = self.render_engine.run(&self.input_handler);
-        // let rgba_pixels = split_rgba_slice(raw_frame);
 
         let image = egui::ColorImage::from_rgba_premultiplied(
             [size.0 as usize, size.1 as usize],

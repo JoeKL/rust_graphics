@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 mod buffer; // Frame/pixel buffer management
+pub mod color;
 mod core;
 mod draw_command;
 mod font_provider;
@@ -8,11 +9,11 @@ mod frustum;
 mod hud;
 mod passes;
 mod rasterizer; // Drawing algorithms
-mod viewport; //Screen space transformations and mapping
-pub mod color;
 pub mod shader;
+mod viewport; //Screen space transformations and mapping
 
 pub use buffer::FrameBuffer;
+pub use color::ColorRGB;
 pub use core::Renderer;
 pub use draw_command::DrawCommand;
 pub use font_provider::FontProvider;
@@ -24,6 +25,5 @@ pub use passes::{
     WireframePass,
 };
 pub use rasterizer::Rasterizer;
+pub use shader::{FlatShader, Material, ShadingModel};
 pub use viewport::Viewport;
-pub use color::ColorRGB;
-pub use shader::{Material, ShadingModel, FlatShader};

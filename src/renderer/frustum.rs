@@ -10,8 +10,18 @@ pub struct Plane {
 impl Default for Plane {
     fn default() -> Self {
         Self {
-            point: Point3D { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
-            normal: Vector3D { x: 0.0, y: 0.0, z: 0.0, w: 0 },
+            point: Point3D {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                w: 1.0,
+            },
+            normal: Vector3D {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+                w: 0,
+            },
         }
     }
 }
@@ -28,7 +38,7 @@ impl Plane {
         }
     }
 
-    pub fn distance(&self, p0: Point3D) -> f32 {
+    pub fn distance(&self, p0: Point3D) -> f64 {
         // Calculate the distance using the point-plane distance formula
         // d = n·(p0 - p) where "normal" is normal vector, "point" is the point,
         // and p0 is any point in the plane

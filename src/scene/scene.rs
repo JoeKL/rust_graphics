@@ -1,7 +1,7 @@
 use super::{Camera, Mesh, PointLight, SceneNode, Vertex};
 use crate::math::{Point3D, Vector3D};
-use crate::renderer::color::ColorRGB;
 use crate::renderer::DrawCommand;
+use crate::renderer::color::ColorRGB;
 
 pub struct Scene {
     pub root_node: SceneNode,
@@ -43,9 +43,7 @@ impl Scene {
 
         root_node.add_child(model_node);
 
-        Scene {
-            root_node,
-        }
+        Scene { root_node }
     }
 
     pub fn find_camera(&self) -> Option<&Camera> {

@@ -11,14 +11,14 @@ pub struct Engine {
 
     scene: Scene,
 
-    // ui: Ui,
+    // egui: egui,
     time_since_title_update: Instant,
     frame_count: u32,
     current_fps: u32,
 
     augmentation_segment: i32,
-    orbit_yaw: f32,
-    orbit_pitch: f32,
+    orbit_yaw: f64,
+    orbit_pitch: f64,
 
     pub draw_keybind_menu: bool,
     pub draw_axis: bool,
@@ -32,13 +32,13 @@ impl Engine {
         let renderer = Renderer::new(window_width as usize, window_height as usize);
         let mut scene = Scene::new();
 
-        let far: f32 = 75.0;
-        let near: f32 = 1.0;
+        let far: f64 = 75.0;
+        let near: f64 = 1.0;
 
         if let Some(camera) = scene.find_camera_mut() {
             camera.set_projection_params(
                 30.0, // 60 degree FOV
-                window_width as f32 / window_height as f32,
+                window_width as f64 / window_height as f64,
                 near,
                 far,
             );
@@ -79,13 +79,6 @@ impl Engine {
     }
 
     fn process_input(&mut self, input_handler: &InputHandler) {
-        // if input_handler.is_key_pressed(minifb::Key::Space) {
-        //     self.augmentation_segment += 1;
-        //     if self.augmentation_segment > 2 {
-        //         self.augmentation_segment = 0;
-        //     }
-        // }
-
         if input_handler.is_key_pressed(minifb::Key::F1) {
             self.draw_keybind_menu = !self.draw_keybind_menu;
         }
@@ -152,6 +145,7 @@ impl Engine {
                 current_fov += 0.5;
                 camera.set_fov_in_degrees(current_fov);
             }
+
             if input_handler.is_key_down(minifb::Key::P) {
                 let mut current_fov = camera.get_fov_in_degrees();
                 current_fov -= 0.5;
@@ -161,8 +155,8 @@ impl Engine {
     }
 
     fn rotate_lightsources(&mut self, input_handler: &InputHandler) {
-        let mut x_rot: f32 = 0.00;
-        let mut y_rot: f32 = 0.00;
+        let mut x_rot: f64 = 0.00;
+        let mut y_rot: f64 = 0.00;
 
         let x_rot_delta = 0.05;
         let y_rot_delta = 0.05;
@@ -207,16 +201,16 @@ impl Engine {
 
     fn rotate_model_with_mouse(&mut self, input_handler: &InputHandler) {
         if input_handler.is_mouse_button_down(0) {
-            let mut x_rot: f32 = 0.00;
-            let mut y_rot: f32 = 0.00;
+            let mut x_rot: f64 = 0.00;
+            let mut y_rot: f64 = 0.00;
 
             let dist_center_threshhold = 50.0;
 
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
             mouse_pos_relative_center.x -=
-                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64;
             mouse_pos_relative_center.y -=
-                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
+                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64;
 
             let rotation_factor = 25000.0;
 
@@ -284,9 +278,9 @@ impl Engine {
 
                 let mut mouse_pos_relative_center = input_handler.get_mouse_position();
                 mouse_pos_relative_center.x -=
-                    (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+                    (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64;
                 mouse_pos_relative_center.y -=
-                    (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
+                    (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64;
 
                 let rotation_factor = 0.005;
 
@@ -369,7 +363,7 @@ impl Engine {
     }
 
     fn iso_scale_model(&mut self, input_handler: &InputHandler) {
-        let mut scale: f32 = 1.0;
+        let mut scale: f64 = 1.0;
 
         let scale_delta = 0.01;
 
@@ -439,14 +433,14 @@ impl Engine {
 
         if self.draw_mouse_line {
             let screen_center = Point2D::new(
-                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32,
-                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32,
+                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64,
+                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64,
             );
             let mut mouse_pos_relative_center = input_handler.get_mouse_position();
             mouse_pos_relative_center.x -=
-                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f32;
+                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64;
             mouse_pos_relative_center.y -=
-                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f32;
+                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64;
             let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
 
             let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);

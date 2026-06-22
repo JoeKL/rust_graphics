@@ -8,10 +8,10 @@ pub struct Camera {
     pub right: Vector3D,
 
     // projection parameters
-    pub fov_in_degrees: f32,
-    pub aspect_ratio: f32,
-    pub near: f32,
-    pub far: f32,
+    pub fov_in_degrees: f64,
+    pub aspect_ratio: f64,
+    pub near: f64,
+    pub far: f64,
 
     // Cache matrices to avoid recomputing when nothing changes
     look_at_matrix: Mat4x4,
@@ -66,21 +66,21 @@ impl Camera {
     }
 
     #[allow(dead_code)]
-    pub fn get_pitch_radiants(&self) -> f32 {
+    pub fn get_pitch_radiants(&self) -> f64 {
         self.direction.y.asin()
     }
 
     #[allow(dead_code)]
-    pub fn get_yaw_radiants(&self) -> f32 {
+    pub fn get_yaw_radiants(&self) -> f64 {
         self.direction.x.atan2(self.direction.z)
     }
 
     pub fn set_projection_params(
         &mut self,
-        fov_in_degrees: f32,
-        aspect_ratio: f32,
-        near: f32,
-        far: f32,
+        fov_in_degrees: f64,
+        aspect_ratio: f64,
+        near: f64,
+        far: f64,
     ) {
         self.fov_in_degrees = fov_in_degrees;
         self.aspect_ratio = aspect_ratio;
@@ -135,12 +135,14 @@ impl Camera {
         self.frustum_matrix = self.projection_matrix.mul_mat(self.look_at_matrix);
     }
 
-    pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f32) {
-        self.fov_in_degrees = fov_in_degrees;
-        self.update_matrices();
+    pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f64) {
+        if (10.0..170.0).contains(&fov_in_degrees) {
+            self.fov_in_degrees = fov_in_degrees;
+            self.update_matrices();
+        }
     }
 
-    pub fn get_fov_in_degrees(&self) -> f32 {
+    pub fn get_fov_in_degrees(&self) -> f64 {
         self.fov_in_degrees
     }
 

@@ -68,7 +68,7 @@ impl Mesh {
 
     pub fn calculate_vertex_normals(&mut self) {
         for (vertex_index, vertex_entry) in self.vertex_triangle_adj_list.iter().enumerate() {
-            let mut weighted_normal: [f32; 3] = [0.0, 0.0, 0.0];
+            let mut weighted_normal: [f64; 3] = [0.0, 0.0, 0.0];
 
             for triangle_index in vertex_entry {
                 let v0_idx = self.triangle_indices[triangle_index * 3] as usize;
@@ -131,7 +131,7 @@ impl Mesh {
         }
     }
 
-    pub fn load_obj(obj_path: &str, material_id: u32, color: [f32; 3]) -> Result<Self, String> {
+    pub fn load_obj(obj_path: &str, material_id: u32, color: [f64; 3]) -> Result<Self, String> {
         let mut mesh = Mesh::new();
 
         let contents = fs::read_to_string(obj_path)
@@ -146,22 +146,37 @@ impl Mesh {
             let line = line.trim();
             if line.starts_with("v ") {
                 for s in line[2..].split_whitespace().take(3) {
-                    let val = s.parse::<f32>().map_err(|e| {
-                        format!("Line {}: failed to parse vertex coordinate '{}': {}", line_idx + 1, s, e)
+                    let val = s.parse::<f64>().map_err(|e| {
+                        format!(
+                            "Line {}: failed to parse vertex coordinate '{}': {}",
+                            line_idx + 1,
+                            s,
+                            e
+                        )
                     })?;
                     vertices.push(val);
                 }
             } else if line.starts_with("vt ") {
                 for s in line[3..].split_whitespace().take(3) {
-                    let val = s.parse::<f32>().map_err(|e| {
-                        format!("Line {}: failed to parse texture coordinate '{}': {}", line_idx + 1, s, e)
+                    let val = s.parse::<f64>().map_err(|e| {
+                        format!(
+                            "Line {}: failed to parse texture coordinate '{}': {}",
+                            line_idx + 1,
+                            s,
+                            e
+                        )
                     })?;
                     vertex_uv_cords.push(val);
                 }
             } else if line.starts_with("vn ") {
                 for s in line[3..].split_whitespace().take(3) {
-                    let val = s.parse::<f32>().map_err(|e| {
-                        format!("Line {}: failed to parse normal coordinate '{}': {}", line_idx + 1, s, e)
+                    let val = s.parse::<f64>().map_err(|e| {
+                        format!(
+                            "Line {}: failed to parse normal coordinate '{}': {}",
+                            line_idx + 1,
+                            s,
+                            e
+                        )
                     })?;
                     vertex_normals.push(val);
                 }
@@ -170,7 +185,10 @@ impl Mesh {
                 for vertex_str in line[2..].split_whitespace() {
                     let parts: Vec<&str> = vertex_str.split('/').collect();
                     let get_index = |i: usize| -> Option<u32> {
-                        parts.get(i).filter(|s| !s.is_empty()).and_then(|s| s.parse().ok())
+                        parts
+                            .get(i)
+                            .filter(|s| !s.is_empty())
+                            .and_then(|s| s.parse().ok())
                     };
                     face.push([get_index(0), get_index(1), get_index(2)]);
                 }
@@ -206,7 +224,8 @@ impl Mesh {
             let indices = [start_index, start_index + 1, start_index + 2];
 
             for vertex in face {
-                let v_idx_obj = vertex[0].ok_or_else(|| "Error: Face missing vertex index".to_string())?;
+                let v_idx_obj =
+                    vertex[0].ok_or_else(|| "Error: Face missing vertex index".to_string())?;
                 let vn_idx_obj = vertex[2].unwrap_or(v_idx_obj);
 
                 let v_idx = (v_idx_obj - 1) as usize;
@@ -214,16 +233,19 @@ impl Mesh {
 
                 let pos_stride = v_idx * 3;
                 if pos_stride + 2 >= vertices.len() {
-                    return Err(format!("Error: Vertex index {} is out of bounds", v_idx_obj));
+                    return Err(format!(
+                        "Error: Vertex index {} is out of bounds",
+                        v_idx_obj
+                    ));
                 }
-                let position: [f32; 3] = [
+                let position: [f64; 3] = [
                     vertices[pos_stride],
                     vertices[pos_stride + 1],
                     vertices[pos_stride + 2],
                 ];
 
                 let normal_stride = vn_idx * 3;
-                let normal: [f32; 3] = if normal_stride + 2 < vertex_normals.len() {
+                let normal: [f64; 3] = if normal_stride + 2 < vertex_normals.len() {
                     [
                         vertex_normals[normal_stride],
                         vertex_normals[normal_stride + 1],

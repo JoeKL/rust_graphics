@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use crate::math::{Mat4x4, Vector3D};
 use super::{Camera, Mesh, PointLight};
+use crate::math::{Mat4x4, Vector3D};
 
 pub struct SceneNode {
     position: Vector3D, // current position
@@ -13,7 +13,7 @@ pub struct SceneNode {
     pub mesh: Option<Mesh>, // Not all nodes need meshes (empty groups/pivots)
     pub camera: Option<Camera>,
     pub light: Option<PointLight>,
-    pub children: Vec<SceneNode>, // Vector of child nodes
+    pub children: Vec<SceneNode>,     // Vector of child nodes
     pub transform_stack: Vec<Mat4x4>, // transformation stack stacks the necessary transformations from root to child for each node
 }
 

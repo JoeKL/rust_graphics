@@ -3,14 +3,14 @@ use crate::math::{Mat4x4, Point3D, Vector3D};
 #[repr(C)] // Important: ensures consistent memory layout
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
-    pub position: [f32; 3],
-    pub uv: [f32; 2],
-    pub normal: [f32; 3],
-    pub color: [f32; 3],
+    pub position: [f64; 3],
+    pub uv: [f64; 2],
+    pub normal: [f64; 3],
+    pub color: [f64; 3],
 }
 
 impl Vertex {
-    pub fn new(position: [f32; 3], uv: [f32; 2], normal: [f32; 3], color: [f32; 3]) -> Self {
+    pub fn new(position: [f64; 3], uv: [f64; 2], normal: [f64; 3], color: [f64; 3]) -> Self {
         Self {
             position,
             uv,
@@ -72,7 +72,7 @@ impl Triangle {
         Self { a, b, c }
     }
 
-    pub fn calc_triangle_area(self) -> f32 {
+    pub fn calc_triangle_area(self) -> f64 {
         let signed_area = (self.b.x - self.a.x) * (self.c.y - self.a.y)
             - (self.b.y - self.a.y) * (self.c.x - self.a.x);
         signed_area / 2.0

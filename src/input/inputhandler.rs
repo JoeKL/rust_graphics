@@ -49,7 +49,7 @@ impl InputHandler {
         // Update mouse position if available
         if let Some((x, y)) = window.get_mouse_pos(minifb::MouseMode::Clamp) {
             self.previous_mouse_position = self.mouse_position;
-            self.mouse_position = Point2D::new(x, y);
+            self.mouse_position = Point2D::new(x as f64, y as f64);
         }
 
         // safe previous mouse_button_states

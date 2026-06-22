@@ -21,7 +21,7 @@ pub struct Renderer {
 
     // Rasterization/Fragment data
     pub(crate) fragment_buffer: Vec<Fragment>, // Output of rasterization
-    pub(crate) z_buffer: Vec<f32>,             // Z-buffer for depth testing
+    pub(crate) z_buffer: Vec<f64>,             // Z-buffer for depth testing
     pub(crate) framebuffer: Vec<ColorRGB>,     // Final color buffer
 
     // Pipeline state
@@ -58,7 +58,7 @@ impl Renderer {
         let debug_lines: Vec<[i32; 4]> = Vec::new();
 
         let fragment_buffer: Vec<Fragment> = Vec::new();
-        let z_buffer: Vec<f32> = Vec::new();
+        let z_buffer: Vec<f64> = Vec::new();
         let material_cache: Vec<Material> = Material::MATERIAL_ARRAY.to_vec();
 
         let look_at_matrix: Mat4x4 = Mat4x4::identity();
@@ -267,8 +267,8 @@ impl Renderer {
         // - Framebuffer updates
 
         // get z value range
-        let mut z_near: f32 = 0.0;
-        let mut z_far: f32 = f32::INFINITY;
+        let mut z_near: f64 = 0.0;
+        let mut z_far: f64 = f64::INFINITY;
 
         for fragment in &self.fragment_buffer {
             if fragment.z < z_far {
@@ -290,9 +290,9 @@ impl Renderer {
             } else {
                 // Standard fragment color calculation
                 ColorRGB::from_rgb(
-                    ColorRGB::f32_to_color_component(fragment.color[0]),
-                    ColorRGB::f32_to_color_component(fragment.color[1]),
-                    ColorRGB::f32_to_color_component(fragment.color[2]),
+                    ColorRGB::f64_to_color_component(fragment.color[0]),
+                    ColorRGB::f64_to_color_component(fragment.color[1]),
+                    ColorRGB::f64_to_color_component(fragment.color[2]),
                 )
             };
 
@@ -324,7 +324,7 @@ impl Renderer {
         // set zbuffer
         let width = self.rasterizer.framebuffer.get_width();
         let height = self.rasterizer.framebuffer.get_height();
-        self.z_buffer = vec![f32::INFINITY; width * height];
+        self.z_buffer = vec![f64::INFINITY; width * height];
 
         self.process_commands(scene);
         self.process_vertices(scene);
@@ -385,23 +385,23 @@ impl Renderer {
 
         for i in 1..grid_lines {
             axes.push((
-                Point3D::new(start_dist, y_offset, i as f32),
-                Point3D::new(-start_dist, y_offset, i as f32),
+                Point3D::new(start_dist, y_offset, i as f64),
+                Point3D::new(-start_dist, y_offset, i as f64),
                 line_color,
             ));
             axes.push((
-                Point3D::new(start_dist, y_offset, -i as f32),
-                Point3D::new(-start_dist, y_offset, -i as f32),
+                Point3D::new(start_dist, y_offset, -i as f64),
+                Point3D::new(-start_dist, y_offset, -i as f64),
                 line_color,
             ));
             axes.push((
-                Point3D::new(i as f32, y_offset, start_dist),
-                Point3D::new(i as f32, y_offset, -start_dist),
+                Point3D::new(i as f64, y_offset, start_dist),
+                Point3D::new(i as f64, y_offset, -start_dist),
                 line_color,
             ));
             axes.push((
-                Point3D::new(-i as f32, y_offset, start_dist),
-                Point3D::new(-i as f32, y_offset, -start_dist),
+                Point3D::new(-i as f64, y_offset, start_dist),
+                Point3D::new(-i as f64, y_offset, -start_dist),
                 line_color,
             ));
         }

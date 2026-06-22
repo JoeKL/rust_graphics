@@ -3,13 +3,13 @@ use std::ops::{Add, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point2D {
-    pub x: f32,
-    pub y: f32,
+    pub x: f64,
+    pub y: f64,
     pub w: u32,
 }
 
 impl Point2D {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f64, y: f64) -> Self {
         let w = 1;
         Self { x, y, w }
     }
@@ -66,19 +66,19 @@ impl Sub<Point2D> for Point2D {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point3D {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-    pub w: f32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub w: f64,
 }
 
 impl Point3D {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
         let w = 1.0;
         Self { x, y, z, w }
     }
 
-    pub fn from_array(array: [f32; 3]) -> Point3D {
+    pub fn from_array(array: [f64; 3]) -> Point3D {
         Point3D::new(array[0], array[1], array[2])
     }
 

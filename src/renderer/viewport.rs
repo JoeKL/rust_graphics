@@ -11,16 +11,16 @@ impl Viewport {
         let transform = Mat4x4 {
             mat: [
                 [
-                    screen_width as f32 / 2.0,
+                    screen_width as f64 / 2.0,
                     0.0,
                     0.0,
-                    screen_width as f32 / 2.0,
+                    screen_width as f64 / 2.0,
                 ],
                 [
                     0.0,
-                    -(screen_height as f32) / 2.0,
+                    -(screen_height as f64) / 2.0,
                     0.0,
-                    screen_height as f32 / 2.0,
+                    screen_height as f64 / 2.0,
                 ],
                 [0.0, 0.0, 1.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0],
