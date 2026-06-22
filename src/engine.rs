@@ -44,8 +44,8 @@ impl EngineApp {
         let target = RenderTarget::new(window_width as usize, window_height as usize);
         let viewport = Viewport::new(window_width as usize, window_height as usize);
 
-        let orbit_yaw = 150.0;
-        let orbit_pitch = 10.0;
+        let orbit_yaw = 180.0;
+        let orbit_pitch = 15.0;
 
         let draw_axis = true;
         let draw_grid = true;
@@ -69,11 +69,10 @@ impl EngineApp {
     }
 
     // TODO should be done through scene manipulation
-    fn orbit_camera(&mut self, input_handler: &InputHandler) {
+    fn update_camera(&mut self) {
         if let Some(camera) = self.scene.find_camera_mut() {
             let current_position = camera.get_position();
 
-            let rot_speed = 1.0;
             let target = Point3D {
                 x: 0.0,
                 y: 0.0,
@@ -82,19 +81,6 @@ impl EngineApp {
             };
 
             let distance = current_position.sub_p(target).length();
-
-            if input_handler.is_key_down(minifb::Key::Left) {
-                self.orbit_yaw -= rot_speed;
-            }
-            // if input_handler.is_key_down(minifb::Key::Right) {
-            self.orbit_yaw += rot_speed;
-            // }
-            if input_handler.is_key_down(minifb::Key::Up) {
-                self.orbit_pitch += rot_speed;
-            }
-            if input_handler.is_key_down(minifb::Key::Down) {
-                self.orbit_pitch -= rot_speed;
-            }
 
             self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
 
@@ -159,7 +145,7 @@ impl EngineApp {
         self.target.framebuffer.get_buffer()
     }
 
-    pub fn start(window_width: u32, window_height: u32) -> eframe::Result {
+    pub fn start() -> eframe::Result {
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_maximized(true)
@@ -171,35 +157,95 @@ impl EngineApp {
         eframe::run_native(
             "Renderer",
             options,
-            Box::new(|cc| Ok(Box::new(EngineApp::new(cc, window_width, window_height)))),
+            Box::new(|cc| Ok(Box::new(EngineApp::new(cc, 800, 600)))),
         )
     }
 }
 
 impl eframe::App for EngineApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        let content_rect = ui.content_rect();
+        // Left Side Panel: Top-down projection view
+        egui::Panel::right("view_panel")
+            .resizable(true)
+            .show_inside(ui, |ui| {
+                ui.heading("Camera Controls");
+                ui.add(egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0).text("Yaw"));
+                ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
+                ui.label(format!(
+                    "Yaw: {}, Pitch: {}",
+                    self.orbit_yaw, self.orbit_pitch
+                ));
+            });
 
-        let size: (f32, f32) = (content_rect.width(), content_rect.height());
-
-        let raw_frame = self.render_frame(size.0 as usize, size.1 as usize);
-
-        let image = egui::ColorImage::from_rgba_premultiplied(
-            [size.0 as usize, size.1 as usize],
-            &raw_frame,
-        );
-
-        let texture = self.frame_texture.get_or_insert_with(|| {
-            ui.load_texture("render_buffer", image.clone(), egui::TextureOptions::LINEAR)
+        // Center Panel: Standard 3D perspective view
+        egui::Panel::left("").show_inside(ui, |ui| {
+            ui.heading("Debug Controls");
+            ui.checkbox(&mut self.draw_axis, "draw_axis");
+            ui.checkbox(&mut self.draw_grid, "draw_grid");
+            ui.checkbox(&mut self.draw_lights, "draw_lights");
+            ui.checkbox(&mut self.renderer.draw_wireframe, "draw_wireframe");
+            ui.checkbox(&mut self.renderer.draw_z_buffer, "draw_z_buffer");
+            ui.checkbox(&mut self.renderer.draw_vertex, "draw_vertex");
+            ui.checkbox(
+                &mut self.renderer.draw_vertex_normals,
+                "draw_vertex_normals",
+            );
+            ui.checkbox(&mut self.renderer.draw_faces, "draw_faces");
+            ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
         });
 
-        texture.set(image, egui::TextureOptions::LINEAR);
+        {
+            let size = ui.available_size();
 
-        egui::CentralPanel::default().show_inside(ui, |ui| {
-            let available_size = ui.available_size();
-            ui.image((texture.id(), available_size));
-        });
+            let raw_frame = self.render_frame(size.x as usize, size.y as usize);
 
+            let image = egui::ColorImage::from_rgba_premultiplied(
+                [size.x as usize, size.y as usize],
+                &raw_frame,
+            );
+
+            let texture = self.frame_texture.get_or_insert_with(|| {
+                ui.load_texture("render_buffer", image.clone(), egui::TextureOptions::LINEAR)
+            });
+
+            texture.set(image, egui::TextureOptions::LINEAR);
+
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                let available_size = ui.available_size();
+                ui.image((texture.id(), available_size));
+            });
+        }
+
+        // ui.set_embed_viewports(true);
+        // ui.ctx().show_viewport_immediate(
+        //     egui::ViewportId::from_hash_of("info_view"),
+        //     egui::ViewportBuilder::default().with_title("Camera Viewport"),
+        //     |ui, _class| {
+        //         ui.label("Camera Controls");
+        //         ui.add(egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0).text("Yaw"));
+        //         ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
+        //         ui.label(format!(
+        //             "Yaw: {}, Pitch: {}",
+        //             self.orbit_yaw, self.orbit_pitch
+        //         ));
+        //
+        //         ui.label("Debug Controls");
+        //         ui.checkbox(&mut self.draw_axis, "draw_axis");
+        //         ui.checkbox(&mut self.draw_grid, "draw_grid");
+        //         ui.checkbox(&mut self.draw_lights, "draw_lights");
+        //         ui.checkbox(&mut self.renderer.draw_wireframe, "draw_wireframe");
+        //         ui.checkbox(&mut self.renderer.draw_z_buffer, "draw_z_buffer");
+        //         ui.checkbox(&mut self.renderer.draw_vertex, "draw_vertex");
+        //         ui.checkbox(
+        //             &mut self.renderer.draw_vertex_normals,
+        //             "draw_vertex_normals",
+        //         );
+        //         ui.checkbox(&mut self.renderer.draw_faces, "draw_faces");
+        //         ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
+        //     },
+        // );
+
+        self.update_camera();
         ui.request_repaint();
     }
 }
