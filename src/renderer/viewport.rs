@@ -37,4 +37,12 @@ impl Viewport {
     pub fn get_matrix(&self) -> Mat4x4 {
         self.transform
     }
+
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+
+    pub fn get_height(&self) -> usize {
+        self.height
+    }
 }

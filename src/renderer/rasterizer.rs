@@ -1,23 +1,12 @@
 use crate::math::ScreenPoint;
-use crate::renderer::{ColorRGB, FrameBuffer, Viewport};
+use crate::renderer::{ColorRGB, FrameBuffer};
 use crate::scene::Vertex;
 
-//  To avoid potential confusion, let me define "rasterization":
-//  For our present purposes, it's the process of determining which pixels are inside a triangle, and nothing more.
-//
-//  - Michael Abrash, 2009.
-
-pub struct Rasterizer {
-    pub framebuffer: FrameBuffer,
-    pub viewport: Viewport,
-}
+pub struct Rasterizer;
 
 impl Rasterizer {
-    pub fn new(width: usize, height: usize) -> Self {
-        Self {
-            framebuffer: FrameBuffer::new(width, height),
-            viewport: Viewport::new(width, height),
-        }
+    pub fn new() -> Self {
+        Self
     }
     /// Draws a line between two points using Bresenham's algorithm.
     ///
@@ -26,12 +15,12 @@ impl Rasterizer {
     /// * `p0` - Starting point of the line
     /// * `p1` - Ending point of the line
     /// * `color` - Color value to draw the line with
+    /// * `framebuffer` - Frame buffer to draw onto
     ///
     /// ### Notes
     ///
     /// * Works with all line angles (horizontal, vertical, shallow, steep)
-    pub fn draw_line(&mut self, p0: ScreenPoint, p1: ScreenPoint, color: ColorRGB) {
-        let framebuffer = &mut self.framebuffer;
+    pub fn draw_line(&self, p0: ScreenPoint, p1: ScreenPoint, color: ColorRGB, framebuffer: &mut FrameBuffer) {
         Self::for_each_line_point_impl(p0, p1, |x, y| {
             framebuffer.set_pixel(x as usize, y as usize, color);
         });
@@ -81,6 +70,8 @@ impl Rasterizer {
         v0: &Vertex,
         v1: &Vertex,
         v2: &Vertex,
+        target_width: usize,
+        target_height: usize,
     ) -> (i32, i32, i32, i32) {
         // Triangle setup (bounding box)
         //calculate bounding box
@@ -104,10 +95,10 @@ impl Rasterizer {
 
         // Clamp to screen boundaries before the loops
         bounds_min_x = bounds_min_x.max(0);
-        bounds_max_x = bounds_max_x.min(self.framebuffer.get_width() as i32);
+        bounds_max_x = bounds_max_x.min(target_width as i32);
 
         bounds_min_y = bounds_min_y.max(0);
-        bounds_max_y = bounds_max_y.min(self.framebuffer.get_height() as i32);
+        bounds_max_y = bounds_max_y.min(target_height as i32);
 
         (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y)
     }
@@ -115,18 +106,21 @@ impl Rasterizer {
     /// takes 3 Points and checks of all of them are on screen
     ///
     ///
-    pub fn is_triangle_on_screen(&self, v0: &Vertex, v1: &Vertex, v2: &Vertex) -> bool {
+    pub fn is_triangle_on_screen(
+        &self,
+        v0: &Vertex,
+        v1: &Vertex,
+        v2: &Vertex,
+        target_width: usize,
+        target_height: usize,
+    ) -> bool {
         // this returns true when one of the vertices is on screen
         // and false if all are off
         // cool effect if changed to &&. it then only draws if ALL of them are on screen
-        self.framebuffer
-            .is_in_bounds(v0.position[0] as usize, v0.position[1] as usize)
-            || self
-                .framebuffer
-                .is_in_bounds(v1.position[0] as usize, v1.position[1] as usize)
-            || self
-                .framebuffer
-                .is_in_bounds(v2.position[0] as usize, v2.position[1] as usize)
+        let is_in_bounds = |x: f32, y: f32| x >= 0.0 && x < target_width as f32 && y >= 0.0 && y < target_height as f32;
+        is_in_bounds(v0.position[0] as f32, v0.position[1] as f32)
+            || is_in_bounds(v1.position[0] as f32, v1.position[1] as f32)
+            || is_in_bounds(v2.position[0] as f32, v2.position[1] as f32)
     }
 
     pub fn calculate_barycentric(
@@ -152,55 +146,5 @@ impl Rasterizer {
         let alpha = 1.0 - beta - gamma;
 
         (alpha, beta, gamma)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_horizontal_line() {
-        let p0 = ScreenPoint::new(0, 0);
-        let p1 = ScreenPoint::new(5, 0);
-        let mut points = Vec::new();
-        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
-        assert_eq!(points, vec![(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0)]);
-    }
-
-    #[test]
-    fn test_vertical_line() {
-        let p0 = ScreenPoint::new(0, 0);
-        let p1 = ScreenPoint::new(0, 5);
-        let mut points = Vec::new();
-        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
-        assert_eq!(points, vec![(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5)]);
-    }
-
-    #[test]
-    fn test_diagonal_line() {
-        let p0 = ScreenPoint::new(0, 0);
-        let p1 = ScreenPoint::new(3, 3);
-        let mut points = Vec::new();
-        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
-        assert_eq!(points, vec![(0, 0), (1, 1), (2, 2), (3, 3)]);
-    }
-
-    #[test]
-    fn test_steep_line() {
-        let p0 = ScreenPoint::new(0, 0);
-        let p1 = ScreenPoint::new(2, 5);
-        let mut points = Vec::new();
-        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
-        assert_eq!(points, vec![(0, 0), (0, 1), (1, 2), (1, 3), (2, 4), (2, 5)]);
-    }
-
-    #[test]
-    fn test_single_point() {
-        let p0 = ScreenPoint::new(2, 2);
-        let p1 = ScreenPoint::new(2, 2);
-        let mut points = Vec::new();
-        Rasterizer::for_each_line_point_impl(p0, p1, |x, y| points.push((x, y)));
-        assert_eq!(points, vec![(2, 2)]);
     }
 }

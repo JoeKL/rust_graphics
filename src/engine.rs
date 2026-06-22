@@ -1,35 +1,32 @@
-use std::time::Instant;
+use eframe::CreationContext;
 
 use crate::input::InputHandler;
-use crate::math::{Mat4x4, Point2D, Point3D, ScreenPoint, Vector3D};
-use crate::renderer::Renderer;
-use crate::renderer::color::ColorRGB;
+use crate::math::Point3D;
+use crate::renderer::{RenderTarget, Renderer, Viewport};
 use crate::scene::Scene;
 
-pub struct Engine {
+pub struct EngineApp {
     renderer: Renderer,
 
     scene: Scene,
 
+    target: RenderTarget,
+    viewport: Viewport,
+
     // egui: egui,
-    time_since_title_update: Instant,
-    frame_count: u32,
-    current_fps: u32,
+    frame_texture: Option<egui::TextureHandle>,
 
-    augmentation_segment: i32,
-    orbit_yaw: f64,
-    orbit_pitch: f64,
+    pub orbit_yaw: f64,
+    pub orbit_pitch: f64,
 
-    pub draw_keybind_menu: bool,
     pub draw_axis: bool,
     pub draw_grid: bool,
     pub draw_lights: bool,
-    pub draw_mouse_line: bool,
 }
 
-impl Engine {
-    pub fn new(window_width: u32, window_height: u32) -> Engine {
-        let renderer = Renderer::new(window_width as usize, window_height as usize);
+impl EngineApp {
+    pub fn new(_cc: &CreationContext, window_width: u32, window_height: u32) -> EngineApp {
+        let renderer = Renderer::new();
         let mut scene = Scene::new();
 
         let far: f64 = 75.0;
@@ -44,281 +41,34 @@ impl Engine {
             );
         }
 
-        let time_since_title_update = Instant::now();
-        let frame_count = 0;
-        let current_fps = 0;
+        let target = RenderTarget::new(window_width as usize, window_height as usize);
+        let viewport = Viewport::new(window_width as usize, window_height as usize);
 
-        let augmentation_segment = 0;
         let orbit_yaw = 150.0;
         let orbit_pitch = 10.0;
 
-        let draw_keybind_menu = false;
         let draw_axis = true;
         let draw_grid = true;
         let draw_lights = false;
-        let draw_mouse_line = false;
 
-        Engine {
+        EngineApp {
             renderer,
             scene,
+            target,
+            viewport,
 
-            time_since_title_update,
-            frame_count,
-            current_fps,
+            frame_texture: None,
 
-            augmentation_segment,
             orbit_yaw,
             orbit_pitch,
 
-            draw_keybind_menu,
             draw_axis,
             draw_grid,
             draw_lights,
-            draw_mouse_line,
         }
     }
 
-    fn process_input(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_key_pressed(minifb::Key::F1) {
-            self.draw_keybind_menu = !self.draw_keybind_menu;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::K) {
-            // toggles draw_axis
-            self.draw_axis = !self.draw_axis;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::G) {
-            // toggles draw_grid
-            self.draw_grid = !self.draw_grid;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::H) {
-            // toggles draw_faces
-            self.renderer.draw_faces = !self.renderer.draw_faces;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::L) {
-            //toggle draw_lights
-            self.draw_lights = !self.draw_lights;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::Z) {
-            //toggle draw_vertex
-            self.renderer.draw_z_buffer = !self.renderer.draw_z_buffer;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::C) {
-            //toggle draw_vertex
-            self.renderer.draw_vertex = !self.renderer.draw_vertex;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::V) {
-            //toggle draw_vertex_normals
-            self.renderer.draw_vertex_normals = !self.renderer.draw_vertex_normals;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::X) {
-            //next render mode
-            self.renderer.draw_wireframe = !self.renderer.draw_wireframe;
-        }
-
-        if input_handler.is_key_pressed(minifb::Key::B) {
-            //toggle backface_culling
-            self.renderer.backface_culling = !self.renderer.backface_culling;
-        }
-
-        self.change_camera_fov(input_handler);
-        self.rotate_lightsources(input_handler);
-
-        self.rotate_model_with_mouse(input_handler);
-        self.orbit_camera_with_mouse(input_handler);
-
-        self.orbit_camera(input_handler);
-        self.iso_scale_model(input_handler);
-    }
-
-    fn change_camera_fov(&mut self, input_handler: &InputHandler) {
-        if let Some(camera) = self.scene.find_camera_mut() {
-            if input_handler.is_key_down(minifb::Key::O) {
-                let mut current_fov = camera.get_fov_in_degrees();
-                current_fov += 0.5;
-                camera.set_fov_in_degrees(current_fov);
-            }
-
-            if input_handler.is_key_down(minifb::Key::P) {
-                let mut current_fov = camera.get_fov_in_degrees();
-                current_fov -= 0.5;
-                camera.set_fov_in_degrees(current_fov);
-            }
-        }
-    }
-
-    fn rotate_lightsources(&mut self, input_handler: &InputHandler) {
-        let mut x_rot: f64 = 0.00;
-        let mut y_rot: f64 = 0.00;
-
-        let x_rot_delta = 0.05;
-        let y_rot_delta = 0.05;
-
-        if input_handler.is_key_down(minifb::Key::W) {
-            x_rot += x_rot_delta;
-        }
-        if input_handler.is_key_down(minifb::Key::S) {
-            x_rot -= x_rot_delta;
-        }
-
-        if input_handler.is_key_down(minifb::Key::A) {
-            y_rot -= y_rot_delta;
-        }
-        if input_handler.is_key_down(minifb::Key::D) {
-            y_rot += y_rot_delta;
-        }
-
-        if x_rot != 0.0 || y_rot != 0.0 {
-            let rot_x_mat = Mat4x4::new([
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
-                [0.0, x_rot.sin(), x_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            let rot_y_mat = Mat4x4::new([
-                [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            self.scene.update_lights(|light| {
-                let current_light_pos = light.get_position();
-                let mut new_light_pos = rot_x_mat * current_light_pos;
-                new_light_pos = rot_y_mat * new_light_pos;
-                light.set_position(new_light_pos);
-            });
-        }
-    }
-
-    fn rotate_model_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(0) {
-            let mut x_rot: f64 = 0.00;
-            let mut y_rot: f64 = 0.00;
-
-            let dist_center_threshhold = 50.0;
-
-            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -=
-                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64;
-            mouse_pos_relative_center.y -=
-                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64;
-
-            let rotation_factor = 25000.0;
-
-            if mouse_pos_relative_center.x > dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / rotation_factor;
-            }
-            if mouse_pos_relative_center.x < -dist_center_threshhold {
-                y_rot += mouse_pos_relative_center.x / rotation_factor;
-            }
-
-            if mouse_pos_relative_center.y > dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / rotation_factor;
-            }
-
-            if mouse_pos_relative_center.y < -dist_center_threshhold {
-                x_rot -= mouse_pos_relative_center.y / rotation_factor;
-            }
-
-            let rot_x_mat = Mat4x4::new([
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, x_rot.cos(), -x_rot.sin(), 0.0],
-                [0.0, x_rot.sin(), x_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            let rot_y_mat = Mat4x4::new([
-                [y_rot.cos(), 0.0, y_rot.sin(), 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [-y_rot.sin(), 0.0, y_rot.cos(), 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            let focus_segment = match self
-                .scene
-                .root_node
-                .get_nested_child_mut(self.augmentation_segment as usize + 1)
-            {
-                Some(node) => node,
-                None => return,
-            };
-
-            let combined_rot = rot_x_mat * rot_y_mat;
-            focus_segment.rotate(combined_rot);
-
-            self.draw_mouse_line = true;
-        } else {
-            self.draw_mouse_line = false
-        }
-    }
-
-    fn orbit_camera_with_mouse(&mut self, input_handler: &InputHandler) {
-        if input_handler.is_mouse_button_down(1) {
-            if let Some(camera) = self.scene.find_camera_mut() {
-                let current_position = camera.get_position();
-
-                let target = Point3D {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                    w: 1.0,
-                };
-                let distance = current_position.sub_p(target).length();
-
-                let dist_center_threshhold = 25.0;
-
-                let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-                mouse_pos_relative_center.x -=
-                    (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64;
-                mouse_pos_relative_center.y -=
-                    (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64;
-
-                let rotation_factor = 0.005;
-
-                if mouse_pos_relative_center.x > dist_center_threshhold {
-                    self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
-                }
-                if mouse_pos_relative_center.x < -dist_center_threshhold {
-                    self.orbit_yaw += mouse_pos_relative_center.x * rotation_factor;
-                }
-
-                if mouse_pos_relative_center.y > dist_center_threshhold {
-                    self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
-                }
-                if mouse_pos_relative_center.y < -dist_center_threshhold {
-                    self.orbit_pitch -= mouse_pos_relative_center.y * rotation_factor;
-                }
-
-                self.orbit_pitch = self.orbit_pitch.clamp(-89.0, 89.0);
-
-                let pitch_rad = self.orbit_pitch.to_radians();
-                let yaw_rad = self.orbit_yaw.to_radians();
-
-                let h_distance = distance * pitch_rad.cos();
-                let x = h_distance * yaw_rad.sin();
-                let y = distance * pitch_rad.sin();
-                let z = h_distance * yaw_rad.cos();
-
-                camera.set_position(Point3D { x, y, z, w: 1.0 });
-
-                camera.look_at(target);
-            }
-
-            self.draw_mouse_line = true;
-        } else {
-            self.draw_mouse_line = false
-        }
-    }
-
+    // TODO should be done through scene manipulation
     fn orbit_camera(&mut self, input_handler: &InputHandler) {
         if let Some(camera) = self.scene.find_camera_mut() {
             let current_position = camera.get_position();
@@ -362,100 +112,94 @@ impl Engine {
         }
     }
 
-    fn iso_scale_model(&mut self, input_handler: &InputHandler) {
-        let mut scale: f64 = 1.0;
-
-        let scale_delta = 0.01;
-
-        if input_handler.is_key_down(minifb::Key::N) {
-            scale -= scale_delta;
-        }
-        if input_handler.is_key_down(minifb::Key::M) {
-            scale += scale_delta;
-        }
-
-        let focus_segment = match self
-            .scene
-            .root_node
-            .get_nested_child_mut(self.augmentation_segment as usize + 1)
+    pub fn render_frame(&mut self, frame_width: usize, frame_height: usize) -> &[u8] {
+        if self.target.framebuffer.get_width() != frame_width
+            || self.target.framebuffer.get_height() != frame_height
         {
-            Some(node) => node,
-            None => return,
-        };
-
-        if scale != 1.0 {
-            focus_segment.scale(Vector3D::new(scale, scale, scale));
-        }
-    }
-
-    pub fn draw_gui(&mut self) {
-        crate::renderer::Hud::draw(
-            &mut self.renderer,
-            self.current_fps,
-            self.draw_keybind_menu,
-            self.draw_grid,
-            self.draw_axis,
-            self.draw_lights,
-        );
-    }
-
-    pub fn run(&mut self, input_handler: &InputHandler) -> &[u8] {
-        //increase frames_count
-        self.frame_count += 1;
-
-        if self.time_since_title_update.elapsed().as_millis() >= 1000 {
-            self.current_fps = self.frame_count;
-            //reset frame_count
-            self.frame_count = 0;
-            //reset time since last update
-            self.time_since_title_update = Instant::now();
+            self.target.resize(frame_width, frame_height);
+            self.viewport = Viewport::new(frame_width, frame_height);
+            if let Some(camera) = self.scene.find_camera_mut() {
+                camera.set_projection_params(
+                    camera.fov_in_degrees,
+                    frame_width as f64 / frame_height as f64,
+                    camera.near,
+                    camera.far,
+                );
+            }
         }
 
-        // Handle input
-        self.process_input(input_handler);
+        self.renderer
+            .draw_background_on_framebuffer(&mut self.target);
 
-        self.renderer.draw_background_on_framebuffer();
+        let camera = self.scene.get_active_camera();
 
         if self.draw_grid {
-            self.renderer.render_grid(&self.scene);
+            self.renderer
+                .render_grid(&self.scene, &mut self.target, &self.viewport, &camera);
         }
 
         // Render
-        self.renderer.render_scene(&self.scene);
+        self.renderer
+            .render_scene(&self.scene, &mut self.target, &self.viewport, &camera);
 
         // Debug renders
         if self.draw_axis {
-            self.renderer.render_axis(&self.scene);
+            self.renderer
+                .render_axis(&self.scene, &mut self.target, &self.viewport, &camera);
         }
         if self.draw_lights {
-            self.renderer.render_light_vectors(&self.scene);
+            self.renderer.render_light_vectors(
+                &self.scene,
+                &mut self.target,
+                &self.viewport,
+                &camera,
+            );
         }
 
-        if self.draw_mouse_line {
-            let screen_center = Point2D::new(
-                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64,
-                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64,
-            );
-            let mut mouse_pos_relative_center = input_handler.get_mouse_position();
-            mouse_pos_relative_center.x -=
-                (self.renderer.rasterizer.framebuffer.get_width() / 2) as f64;
-            mouse_pos_relative_center.y -=
-                (self.renderer.rasterizer.framebuffer.get_height() / 2) as f64;
-            let mouse_center_dist_vec = screen_center.add_p(mouse_pos_relative_center);
+        self.target.framebuffer.get_buffer()
+    }
 
-            let dp_point_start = ScreenPoint::new(screen_center.x as i32, screen_center.y as i32);
-            let dp_point_end = ScreenPoint::new(
-                mouse_center_dist_vec.x as i32,
-                mouse_center_dist_vec.y as i32,
-            );
+    pub fn start(window_width: u32, window_height: u32) -> eframe::Result {
+        let options = eframe::NativeOptions {
+            viewport: egui::ViewportBuilder::default()
+                .with_maximized(true)
+                .with_resizable(true)
+                .with_fullscreen(false), // if set to true change the height of the window or else panic
+            ..Default::default()
+        };
 
-            self.renderer
-                .rasterizer
-                .draw_line(dp_point_start, dp_point_end, ColorRGB::WHITE);
-        }
+        eframe::run_native(
+            "Renderer",
+            options,
+            Box::new(|cc| Ok(Box::new(EngineApp::new(cc, window_width, window_height)))),
+        )
+    }
+}
 
-        self.draw_gui();
+impl eframe::App for EngineApp {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let content_rect = ui.content_rect();
 
-        self.renderer.rasterizer.framebuffer.get_buffer()
+        let size: (f32, f32) = (content_rect.width(), content_rect.height());
+
+        let raw_frame = self.render_frame(size.0 as usize, size.1 as usize);
+
+        let image = egui::ColorImage::from_rgba_premultiplied(
+            [size.0 as usize, size.1 as usize],
+            &raw_frame,
+        );
+
+        let texture = self.frame_texture.get_or_insert_with(|| {
+            ui.load_texture("render_buffer", image.clone(), egui::TextureOptions::LINEAR)
+        });
+
+        texture.set(image, egui::TextureOptions::LINEAR);
+
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            let available_size = ui.available_size();
+            ui.image((texture.id(), available_size));
+        });
+
+        ui.request_repaint();
     }
 }

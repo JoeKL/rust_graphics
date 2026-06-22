@@ -13,6 +13,8 @@ pub struct RasterizerOutput<'a> {
     pub fragment_buffer: &'a mut Vec<Fragment>,
     pub z_buffer: &'a mut [f64],
     pub debug_lines: &'a mut Vec<[i32; 4]>,
+    pub target_width: usize,
+    pub target_height: usize,
 }
 
 pub trait RenderPass {
@@ -52,7 +54,7 @@ impl RenderPass for FacePass {
                 let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(v0, v1, v2, output.target_width, output.target_height) {
                     continue;
                 }
 
@@ -63,7 +65,7 @@ impl RenderPass for FacePass {
 
                 // create boundingbox from v0, v1, v2
                 (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
-                    rasterizer.calculate_bounding_box(v0, v1, v2);
+                    rasterizer.calculate_bounding_box(v0, v1, v2, output.target_width, output.target_height);
 
                 // 1. PRE-CALCULATION
                 // Create aliases for positions to make math cleaner (p = position)
@@ -134,7 +136,7 @@ impl RenderPass for FacePass {
 
                             // setup z index to access right place in buffer
                             let z_buffer_idx =
-                                y as usize * rasterizer.framebuffer.get_width() + x as usize;
+                                y as usize * output.target_width + x as usize;
 
                             // Create and store fragment if Z-test passes
                             // Z-test before creating fragment
@@ -187,7 +189,7 @@ impl RenderPass for VertexPass {
                 let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(v0, v1, v2, output.target_width, output.target_height) {
                     continue;
                 }
 
@@ -240,7 +242,7 @@ impl RenderPass for WireframePass {
                 let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(v0, v1, v2, output.target_width, output.target_height) {
                     continue;
                 }
 
