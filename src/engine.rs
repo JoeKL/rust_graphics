@@ -106,7 +106,7 @@ impl EngineApp {
         )
     }
 
-    pub fn views(&self) -> &[RenderView] {
+    pub fn _views(&self) -> &[RenderView] {
         &self.views
     }
 }
@@ -178,27 +178,29 @@ impl eframe::App for EngineApp {
                 ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
             });
         }
+
         let available_height = ui.available_height();
         let half_height = available_height / 2.0;
 
-        egui::Panel::top("main_cam")
-            .height_range(half_height..=half_height)
-            .resizable(true)
-            .show_inside(ui, |ui| {
-                self.show_view(ui, 0);
-            });
+        ui.vertical(|ui| {
+            // Top Camera Area
+            ui.allocate_ui_with_layout(
+                egui::vec2(ui.available_width(), half_height),
+                egui::Layout::top_down(egui::Align::Center),
+                |ui| {
+                    self.show_view(ui, 0);
+                },
+            );
 
-        egui::Panel::bottom("sec_cam")
-            .height_range(half_height..=half_height)
-            .resizable(true)
-            .show_inside(ui, |ui| {
-                self.show_view(ui, 1);
-            });
-
-        // Center Panel: Standard 3D perspective view
-        // egui::CentralPanel::no_frame().show_inside(ui, |ui| {
-        //     self.show_view(ui, 1);
-        // });
+            // Bottom Camera Area
+            ui.allocate_ui_with_layout(
+                egui::vec2(ui.available_width(), half_height),
+                egui::Layout::top_down(egui::Align::Center),
+                |ui| {
+                    self.show_view(ui, 1);
+                },
+            );
+        });
 
         self.update_camera("main_camera");
         ui.request_repaint();
