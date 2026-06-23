@@ -36,7 +36,7 @@ impl EngineApp {
 
         let orbit_yaw = 180.0;
         let orbit_pitch = 15.0;
-        let fov_degrees = 15.0;
+        let fov_degrees = 20.0;
 
         let draw_axis = true;
         let draw_grid = true;
@@ -48,7 +48,7 @@ impl EngineApp {
             views,
 
             show_panels: true,
-            show_second_viewport: true,
+            show_second_viewport: false,
 
             orbit_yaw,
             orbit_pitch,
@@ -185,7 +185,7 @@ impl eframe::App for EngineApp {
 
         if self.show_second_viewport {
             egui::Panel::bottom("sec_cam")
-                .min_size(ui.available_height() / 4.0)
+                .min_size(ui.available_height() / 2.0)
                 .resizable(true)
                 .show_inside(ui, |ui| {
                     self.show_view(ui, 1);
