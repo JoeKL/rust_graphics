@@ -137,10 +137,12 @@ impl EngineApp {
 
     pub fn start() -> eframe::Result {
         let options = eframe::NativeOptions {
+            renderer: eframe::Renderer::Glow,
+            vsync: false,
             viewport: egui::ViewportBuilder::default()
                 .with_maximized(true)
                 .with_resizable(true)
-                .with_fullscreen(false), // if set to true change the height of the window or else panic
+                .with_fullscreen(false),
             ..Default::default()
         };
 
@@ -153,6 +155,7 @@ impl EngineApp {
 }
 
 impl eframe::App for EngineApp {
+    // TODO decouple UI from Rendering
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         // Left Side Panel: Top-down projection view
         egui::Panel::right("view_panel")
