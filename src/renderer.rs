@@ -9,13 +9,14 @@ mod frustum;
 mod passes;
 mod rasterizer; // Drawing algorithms
 pub mod shader;
+mod target;
+mod view;
 mod viewport; //Screen space transformations and mapping
 
 pub use buffer::{FrameBuffer, RenderTarget};
 pub use color::ColorRGB;
 pub use core::Renderer;
 pub use draw_command::DrawCommand;
-pub use font_provider::FontProvider;
 pub use fragment::Fragment;
 pub use frustum::Frustum;
 pub use passes::{
@@ -24,4 +25,5 @@ pub use passes::{
 };
 pub use rasterizer::Rasterizer;
 pub use shader::{FlatShader, Material, ShadingModel};
+pub use view::RenderView;
 pub use viewport::Viewport;

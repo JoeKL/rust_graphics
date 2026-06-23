@@ -1,12 +1,12 @@
 use super::{
     ColorRGB, DrawCommand, FacePass, FlatShader, Fragment, Frustum, Material, Rasterizer,
     RasterizerInput, RasterizerOutput, RenderPass, RenderTarget, ShadingModel, VertexNormalPass,
-    VertexPass, Viewport, WireframePass,
+    VertexPass, WireframePass,
 };
 use crate::{
     math::{Mat4x4, Point3D, ScreenPoint},
+    renderer::view::RenderView,
     scene::{Camera, PointLight, Scene, Vertex},
-    utils::bmp::Bmp,
 };
 
 pub struct Renderer {
@@ -296,36 +296,30 @@ impl Renderer {
         target.framebuffer.fill(ColorRGB::from_u32(0x101010));
     }
 
-    pub fn render_scene(
-        &mut self,
-        scene: &Scene,
-        target: &mut RenderTarget,
-        viewport: &Viewport,
-        camera: &Camera,
-    ) {
+    pub fn render_view(&mut self, scene: &Scene, view: &mut RenderView, camera: &Camera) {
         // Get camera matrices once
         self.look_at_matrix = camera.get_look_at_matrix();
         self.projection_matrix = camera.get_projection_matrix();
-        self.viewport_matrix = viewport.get_matrix();
+        self.viewport_matrix = view.viewport.get_matrix();
         self.frustum_matrix = camera.get_frustum_matrix();
 
         // Create frustum from frustum matrix
         self.view_frustum = Frustum::from_matrix(&self.frustum_matrix);
 
         // set zbuffer
-        let width = target.framebuffer.get_width();
-        let height = target.framebuffer.get_height();
-        if target.z_buffer.len() != width * height {
-            target.z_buffer = vec![f64::INFINITY; width * height];
+        let width = view.target.framebuffer.get_width();
+        let height = view.target.framebuffer.get_height();
+        if view.target.z_buffer.len() != width * height {
+            view.target.z_buffer = vec![f64::INFINITY; width * height];
         } else {
-            target.z_buffer.fill(f64::INFINITY);
+            view.target.z_buffer.fill(f64::INFINITY);
         }
 
         self.process_commands(scene);
         self.process_vertices(scene, camera);
-        self.rasterize(target);
+        self.rasterize(&mut view.target);
         self.process_fragments();
-        self.blend(target);
+        self.blend(&mut view.target);
 
         // clear buffer afterwards
         self.fragment_buffer.clear();
@@ -334,15 +328,9 @@ impl Renderer {
         self.draw_commands.clear();
     }
 
-    pub fn render_axis(
-        &mut self,
-        _scene: &Scene,
-        target: &mut RenderTarget,
-        viewport: &Viewport,
-        camera: &Camera,
-    ) {
+    pub fn render_axis(&mut self, _scene: &Scene, view: &mut RenderView, camera: &Camera) {
         let frustum_matrix = camera.get_frustum_matrix();
-        let viewport_matrix = viewport.get_matrix();
+        let viewport_matrix = view.viewport.get_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
         let x_end = Point3D::new(1.0, 0.0, 0.0); // X axis in red
@@ -360,19 +348,13 @@ impl Renderer {
             let screen_end = Self::project_point(end, &frustum_matrix, &viewport_matrix);
 
             self.rasterizer
-                .draw_line(screen_start, screen_end, color, &mut target.framebuffer);
+                .draw_line(screen_start, screen_end, color, &mut view.target);
         }
     }
 
-    pub fn render_grid(
-        &mut self,
-        _scene: &Scene,
-        target: &mut RenderTarget,
-        viewport: &Viewport,
-        camera: &Camera,
-    ) {
+    pub fn render_grid(&mut self, _scene: &Scene, view: &mut RenderView, camera: &Camera) {
         let frustum_matrix = camera.get_frustum_matrix();
-        let viewport_matrix = viewport.get_matrix();
+        let viewport_matrix = view.viewport.get_matrix();
 
         let line_color = ColorRGB::from_rgb(32, 32, 32);
         let start_dist = 5.0;
@@ -419,19 +401,13 @@ impl Renderer {
             let screen_end = Self::project_point(end, &frustum_matrix, &viewport_matrix);
 
             self.rasterizer
-                .draw_line(screen_start, screen_end, color, &mut target.framebuffer);
+                .draw_line(screen_start, screen_end, color, &mut view.target);
         }
     }
 
-    pub fn render_light_vectors(
-        &mut self,
-        scene: &Scene,
-        target: &mut RenderTarget,
-        viewport: &Viewport,
-        camera: &Camera,
-    ) {
+    pub fn render_light_vectors(&mut self, scene: &Scene, view: &mut RenderView, camera: &Camera) {
         let frustum_matrix = camera.get_frustum_matrix();
-        let viewport_matrix = viewport.get_matrix();
+        let viewport_matrix = view.viewport.get_matrix();
 
         let origin = Point3D::new(0.0, 0.0, 0.0);
 
@@ -442,12 +418,8 @@ impl Renderer {
             let screen_start = Self::project_point(start_point, &frustum_matrix, &viewport_matrix);
             let screen_end = Self::project_point(end_point, &frustum_matrix, &viewport_matrix);
 
-            self.rasterizer.draw_line(
-                screen_start,
-                screen_end,
-                ColorRGB::YELLOW,
-                &mut target.framebuffer,
-            );
+            self.rasterizer
+                .draw_line(screen_start, screen_end, ColorRGB::YELLOW, &mut view.target);
         }
     }
 }

@@ -9,7 +9,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn new() -> Scene {
-        let mut root_node = SceneNode::new();
+        let mut root_node = SceneNode::new("root");
 
         // camera
         let pos = Point3D::new(0.0, 0.0, 10.0);
@@ -21,18 +21,18 @@ impl Scene {
         camera.set_position(Point3D::new(0.0, 2.0, -10.0));
         camera.look_at(Point3D::new(0.0, 0.0, 0.0));
 
-        let mut camera_node = SceneNode::new();
+        let mut camera_node = SceneNode::new("main_camera");
         camera_node.set_camera(camera);
         root_node.add_child(camera_node);
 
         // light sources
         let light = PointLight::new(Point3D::new(0.0, 3.0, -3.0), ColorRGB::WHITE, 1.0);
-        let mut light_node = SceneNode::new();
+        let mut light_node = SceneNode::new("point_light");
         light_node.set_light(light);
         root_node.add_child(light_node);
 
         // model
-        let mut model_node = SceneNode::new();
+        let mut model_node = SceneNode::new("model_node");
 
         match Mesh::load_obj("models/f-16.obj", 2, [1.0, 1.0, 1.0]) {
             Ok(mesh) => model_node.set_mesh(mesh),
@@ -46,10 +46,10 @@ impl Scene {
         Scene { root_node }
     }
 
-    pub fn find_camera(&self) -> Option<&Camera> {
+    pub fn find_camera(&self, node_name: &str) -> Option<&Camera> {
         let mut node_queue = vec![&self.root_node];
         while let Some(node) = node_queue.pop() {
-            if node.camera.is_some() {
+            if node.name == node_name && node.camera.is_some() {
                 return node.camera.as_ref();
             }
             for child in &node.children {
@@ -59,13 +59,29 @@ impl Scene {
         None
     }
 
-    pub fn find_camera_mut(&mut self) -> Option<&mut Camera> {
+    pub fn find_camera_mut(&mut self, node_name: &str) -> Option<&mut Camera> {
         let mut node_queue = vec![&mut self.root_node];
         while let Some(node) = node_queue.pop() {
-            if node.camera.is_some() {
+            if node.name == node_name && node.camera.is_some() {
                 return node.camera.as_mut();
             }
             for child in &mut node.children {
+                node_queue.push(child);
+            }
+        }
+        None
+    }
+
+    pub fn get_camera_by_name(&self, node_name: &str) -> Option<Camera> {
+        let mut node_queue = vec![&self.root_node];
+        while let Some(node) = node_queue.pop() {
+            if node.name == node_name {
+                if let Some(camera) = &node.camera {
+                    let world_transform = node.get_world_transform();
+                    return Some(camera.to_world(&world_transform));
+                }
+            }
+            for child in &node.children {
                 node_queue.push(child);
             }
         }

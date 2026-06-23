@@ -4,6 +4,7 @@ use super::{Camera, Mesh, PointLight};
 use crate::math::{Mat4x4, Vector3D};
 
 pub struct SceneNode {
+    pub name: String,
     position: Vector3D, // current position
     rotation: Mat4x4,   // current rotation
     scale: Vector3D,    // current scale
@@ -19,7 +20,7 @@ pub struct SceneNode {
 
 impl SceneNode {
     //create a new Node with no rotation, no scaling, at origin, without mesh, and no transformation stack
-    pub fn new() -> Self {
+    pub fn new(name: &str) -> Self {
         let position = Vector3D::new(0.0, 0.0, 0.0);
         let rotation = Mat4x4::identity();
         let scale = Vector3D::new(1.0, 1.0, 1.0);
@@ -33,6 +34,7 @@ impl SceneNode {
         let transform_stack: Vec<Mat4x4> = Vec::new();
 
         Self {
+            name: name.to_string(),
             position,
             rotation,
             scale,

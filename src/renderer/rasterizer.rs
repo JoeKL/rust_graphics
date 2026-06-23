@@ -1,5 +1,5 @@
 use crate::math::ScreenPoint;
-use crate::renderer::{ColorRGB, FrameBuffer};
+use crate::renderer::{ColorRGB, RenderTarget};
 use crate::scene::Vertex;
 
 pub struct Rasterizer;
@@ -25,10 +25,10 @@ impl Rasterizer {
         p0: ScreenPoint,
         p1: ScreenPoint,
         color: ColorRGB,
-        framebuffer: &mut FrameBuffer,
+        target: &mut RenderTarget,
     ) {
         Self::for_each_line_point_impl(p0, p1, |x, y| {
-            framebuffer.set_pixel(x as usize, y as usize, color);
+            target.framebuffer.set_pixel(x as usize, y as usize, color);
         });
     }
 

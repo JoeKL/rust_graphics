@@ -2,17 +2,14 @@ use eframe::CreationContext;
 use egui::Key;
 
 use crate::math::Point3D;
-use crate::renderer::{RenderTarget, Renderer, Viewport};
+use crate::renderer::{RenderView, Renderer};
 use crate::scene::Scene;
 
 pub struct EngineApp {
     renderer: Renderer,
     scene: Scene,
 
-    target: RenderTarget,
-    viewport: Viewport,
-
-    frame_texture: Option<egui::TextureHandle>,
+    views: Vec<RenderView>,
 
     show_panels: bool,
 
@@ -26,12 +23,16 @@ pub struct EngineApp {
 }
 
 impl EngineApp {
-    pub fn new(_cc: &CreationContext, window_width: u32, window_height: u32) -> EngineApp {
+    pub fn new(_cc: &CreationContext, window_width: usize, window_height: usize) -> EngineApp {
         let renderer = Renderer::new();
         let scene = Scene::new();
 
-        let target = RenderTarget::new(window_width as usize, window_height as usize);
-        let viewport = Viewport::new(window_width as usize, window_height as usize);
+        let views = vec![RenderView::new(
+            "main",
+            "main_camera",
+            window_width,
+            window_height,
+        )];
 
         let orbit_yaw = 180.0;
         let orbit_pitch = 15.0;
@@ -44,10 +45,7 @@ impl EngineApp {
         EngineApp {
             renderer,
             scene,
-            target,
-            viewport,
-
-            frame_texture: None,
+            views,
 
             show_panels: true,
 
@@ -62,8 +60,8 @@ impl EngineApp {
     }
 
     // TODO should be done through scene manipulation
-    fn update_camera(&mut self) {
-        if let Some(camera) = self.scene.find_camera_mut() {
+    fn update_camera(&mut self, camera_node_name: &str) {
+        if let Some(camera) = self.scene.find_camera_mut(camera_node_name) {
             let current_position = camera.get_position();
 
             let target = Point3D {
@@ -92,53 +90,6 @@ impl EngineApp {
         }
     }
 
-    pub fn render_frame(&mut self, frame_width: usize, frame_height: usize) -> &[u8] {
-        if self.target.framebuffer.get_width() != frame_width
-            || self.target.framebuffer.get_height() != frame_height
-        {
-            self.target.resize(frame_width, frame_height);
-            self.viewport = Viewport::new(frame_width, frame_height);
-            if let Some(camera) = self.scene.find_camera_mut() {
-                camera.set_projection_params(
-                    camera.fov_in_degrees,
-                    frame_width as f64 / frame_height as f64,
-                    camera.near,
-                    camera.far,
-                );
-            }
-        }
-
-        self.renderer
-            .draw_background_on_framebuffer(&mut self.target);
-
-        let camera = self.scene.get_active_camera();
-
-        if self.draw_grid {
-            self.renderer
-                .render_grid(&self.scene, &mut self.target, &self.viewport, &camera);
-        }
-
-        // Render
-        self.renderer
-            .render_scene(&self.scene, &mut self.target, &self.viewport, &camera);
-
-        // Debug renders
-        if self.draw_axis {
-            self.renderer
-                .render_axis(&self.scene, &mut self.target, &self.viewport, &camera);
-        }
-        if self.draw_lights {
-            self.renderer.render_light_vectors(
-                &self.scene,
-                &mut self.target,
-                &self.viewport,
-                &camera,
-            );
-        }
-
-        self.target.framebuffer.get_buffer()
-    }
-
     pub fn start() -> eframe::Result {
         let options = eframe::NativeOptions {
             renderer: eframe::Renderer::Glow,
@@ -155,6 +106,10 @@ impl EngineApp {
             options,
             Box::new(|cc| Ok(Box::new(EngineApp::new(cc, 800, 600)))),
         )
+    }
+
+    pub fn views(&self) -> &[RenderView] {
+        &self.views
     }
 }
 
@@ -227,28 +182,67 @@ impl eframe::App for EngineApp {
         }
 
         // Center Panel: Standard 3D perspective view
-        {
-            let size = ui.available_size();
-            let raw_frame = self.render_frame(size.x as usize, size.y as usize);
+        egui::CentralPanel::no_frame().show_inside(ui, |ui| {
+            self.show_view(ui, 0);
+        });
 
-            let image = egui::ColorImage::from_rgba_premultiplied(
-                [size.x as usize, size.y as usize],
-                &raw_frame,
-            );
+        self.update_camera("main_camera");
+        ui.request_repaint();
+    }
+}
 
-            let texture = self.frame_texture.get_or_insert_with(|| {
-                ui.load_texture("render_buffer", image.clone(), egui::TextureOptions::LINEAR)
-            });
+impl EngineApp {
+    fn show_view(&mut self, ui: &mut egui::Ui, view_idx: usize) {
+        let view = &mut self.views[view_idx];
+        let available_size = ui.available_size();
+        let width = available_size.x as usize;
+        let height = available_size.y as usize;
 
-            texture.set(image, egui::TextureOptions::LINEAR);
-
-            egui::CentralPanel::no_frame().show_inside(ui, |ui| {
-                let available_size = ui.available_size();
-                ui.image((texture.id(), available_size));
-            });
+        // Resize the viewport buffers if egui panel resizes
+        if view.viewport.get_width() != width || view.viewport.get_height() != height {
+            view.resize(width, height);
+            if let Some(camera) = self.scene.find_camera_mut(&view.camera_node_name) {
+                camera.set_projection_params(
+                    camera.fov_in_degrees,
+                    width as f64 / height as f64,
+                    camera.near,
+                    camera.far,
+                );
+            }
         }
 
-        self.update_camera();
-        ui.request_repaint();
+        self.renderer
+            .draw_background_on_framebuffer(&mut view.target);
+
+        let camera = self.scene.get_active_camera();
+
+        if self.draw_grid {
+            self.renderer.render_grid(&self.scene, view, &camera);
+        }
+
+        // Render scene to this view's RenderTarget
+        self.renderer.render_view(&self.scene, view, &camera);
+
+        // Debug renders
+        if self.draw_axis {
+            self.renderer.render_axis(&self.scene, view, &camera);
+        }
+        if self.draw_lights {
+            self.renderer
+                .render_light_vectors(&self.scene, view, &camera);
+        }
+
+        // Upload framebuffer to egui texture
+        let raw_pixels = view.target.framebuffer.get_buffer();
+        let image = egui::ColorImage::from_rgba_premultiplied([width, height], raw_pixels);
+
+        let texture = view.texture_handle.get_or_insert_with(|| {
+            ui.ctx()
+                .load_texture(&view.name, image.clone(), egui::TextureOptions::LINEAR)
+        });
+        texture.set(image, egui::TextureOptions::LINEAR);
+
+        // Display image widget in egui
+        ui.image((texture.id(), available_size));
     }
 }

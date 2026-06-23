@@ -9,19 +9,10 @@ pub struct Viewport {
 impl Viewport {
     pub fn new(screen_width: usize, screen_height: usize) -> Self {
         let transform = Mat4x4 {
+            #[rustfmt::skip]
             mat: [
-                [
-                    screen_width as f64 / 2.0,
-                    0.0,
-                    0.0,
-                    screen_width as f64 / 2.0,
-                ],
-                [
-                    0.0,
-                    -(screen_height as f64) / 2.0,
-                    0.0,
-                    screen_height as f64 / 2.0,
-                ],
+                [screen_width as f64 / 2.0, 0.0, 0.0, screen_width as f64 / 2.0],
+                [0.0, -(screen_height as f64) / 2.0, 0.0, screen_height as f64 / 2.0],
                 [0.0, 0.0, 1.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0],
             ],
