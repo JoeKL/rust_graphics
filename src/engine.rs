@@ -14,6 +14,8 @@ pub struct EngineApp {
 
     frame_texture: Option<egui::TextureHandle>,
 
+    show_panels: bool,
+
     pub orbit_yaw: f64,
     pub orbit_pitch: f64,
     pub fov_degrees: f64,
@@ -46,6 +48,8 @@ impl EngineApp {
             viewport,
 
             frame_texture: None,
+
+            show_panels: true,
 
             orbit_yaw,
             orbit_pitch,
@@ -155,48 +159,65 @@ impl EngineApp {
 }
 
 impl eframe::App for EngineApp {
-    // TODO decouple UI from Rendering
+    // TODO decouple UI from frame rendering
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        // Left Side Panel: Top-down projection view
-        egui::Panel::right("view_panel")
-            .resizable(true)
-            .show_inside(ui, |ui| {
-                ui.heading("Camera Controls");
-                ui.add(egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0).text("Yaw"));
-                ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
-                ui.add(egui::Slider::new(&mut self.fov_degrees, 1.0..=90.0).text("FOV"));
-            });
-
         let orbit_step = 1.5;
 
         if ui.input(|i| i.key_down(Key::ArrowLeft)) {
-            self.orbit_yaw -= orbit_step;
+            self.orbit_yaw = self.orbit_yaw - orbit_step;
         }
         if ui.input(|i| i.key_down(Key::ArrowRight)) {
-            self.orbit_yaw += orbit_step;
+            self.orbit_yaw = self.orbit_yaw + orbit_step;
         }
+
+        if self.orbit_yaw >= 360.0 {
+            self.orbit_yaw -= 360.0;
+        }
+        if self.orbit_yaw <= 0.0 {
+            self.orbit_yaw += 360.0;
+        }
+
         if ui.input(|i| i.key_down(Key::ArrowUp)) {
             self.orbit_pitch += orbit_step;
         }
         if ui.input(|i| i.key_down(Key::ArrowDown)) {
             self.orbit_pitch -= orbit_step;
         }
+        if ui.input(|i| i.key_pressed(Key::F1)) {
+            self.show_panels = !self.show_panels;
+        }
 
-        egui::Panel::left("").show_inside(ui, |ui| {
-            ui.heading("Debug Controls");
-            ui.checkbox(&mut self.draw_axis, "draw_axis");
-            ui.checkbox(&mut self.draw_grid, "draw_grid");
-            ui.checkbox(&mut self.draw_lights, "draw_lights");
-            ui.checkbox(&mut self.renderer.draw_wireframe, "draw_wireframe");
-            ui.checkbox(&mut self.renderer.draw_z_buffer, "draw_z_buffer");
-            ui.checkbox(&mut self.renderer.draw_vertex, "draw_vertex");
-            ui.checkbox(
-                &mut self.renderer.draw_vertex_normals,
-                "draw_vertex_normals",
-            );
-            ui.checkbox(&mut self.renderer.draw_faces, "draw_faces");
-            ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
-        });
+        // Left Side Panel: Top-down projection view
+        if self.show_panels {
+            egui::Panel::right("view_panel")
+                .resizable(true)
+                .show_inside(ui, |ui| {
+                    ui.heading("Camera Controls");
+                    ui.add(
+                        egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0)
+                            .text("Yaw")
+                            .clamping(egui::SliderClamping::Never),
+                    );
+                    ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
+                    ui.add(egui::Slider::new(&mut self.fov_degrees, 1.0..=90.0).text("FOV"));
+                });
+
+            egui::Panel::left("").show_inside(ui, |ui| {
+                ui.heading("Debug Controls");
+                ui.checkbox(&mut self.draw_axis, "draw_axis");
+                ui.checkbox(&mut self.draw_grid, "draw_grid");
+                ui.checkbox(&mut self.draw_lights, "draw_lights");
+                ui.checkbox(&mut self.renderer.draw_wireframe, "draw_wireframe");
+                ui.checkbox(&mut self.renderer.draw_z_buffer, "draw_z_buffer");
+                ui.checkbox(&mut self.renderer.draw_vertex, "draw_vertex");
+                ui.checkbox(
+                    &mut self.renderer.draw_vertex_normals,
+                    "draw_vertex_normals",
+                );
+                ui.checkbox(&mut self.renderer.draw_faces, "draw_faces");
+                ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
+            });
+        }
 
         // Center Panel: Standard 3D perspective view
         {

@@ -1,6 +1,6 @@
 use super::{
-    ColorRGB, DrawCommand, FacePass, FlatShader, FontProvider, Fragment, Frustum, Material,
-    Rasterizer, RasterizerInput, RasterizerOutput, RenderPass, RenderTarget, ShadingModel, VertexNormalPass,
+    ColorRGB, DrawCommand, FacePass, FlatShader, Fragment, Frustum, Material, Rasterizer,
+    RasterizerInput, RasterizerOutput, RenderPass, RenderTarget, ShadingModel, VertexNormalPass,
     VertexPass, Viewport, WireframePass,
 };
 use crate::{
@@ -286,11 +286,9 @@ impl Renderer {
                 )
             };
 
-            target.framebuffer.set_pixel(
-                fragment.x as usize,
-                fragment.y as usize,
-                final_color,
-            );
+            target
+                .framebuffer
+                .set_pixel(fragment.x as usize, fragment.y as usize, final_color);
         }
     }
 
@@ -298,7 +296,13 @@ impl Renderer {
         target.framebuffer.fill(ColorRGB::from_u32(0x101010));
     }
 
-    pub fn render_scene(&mut self, scene: &Scene, target: &mut RenderTarget, viewport: &Viewport, camera: &Camera) {
+    pub fn render_scene(
+        &mut self,
+        scene: &Scene,
+        target: &mut RenderTarget,
+        viewport: &Viewport,
+        camera: &Camera,
+    ) {
         // Get camera matrices once
         self.look_at_matrix = camera.get_look_at_matrix();
         self.projection_matrix = camera.get_projection_matrix();
@@ -330,7 +334,13 @@ impl Renderer {
         self.draw_commands.clear();
     }
 
-    pub fn render_axis(&mut self, _scene: &Scene, target: &mut RenderTarget, viewport: &Viewport, camera: &Camera) {
+    pub fn render_axis(
+        &mut self,
+        _scene: &Scene,
+        target: &mut RenderTarget,
+        viewport: &Viewport,
+        camera: &Camera,
+    ) {
         let frustum_matrix = camera.get_frustum_matrix();
         let viewport_matrix = viewport.get_matrix();
 
@@ -349,11 +359,18 @@ impl Renderer {
             let screen_start = Self::project_point(start, &frustum_matrix, &viewport_matrix);
             let screen_end = Self::project_point(end, &frustum_matrix, &viewport_matrix);
 
-            self.rasterizer.draw_line(screen_start, screen_end, color, &mut target.framebuffer);
+            self.rasterizer
+                .draw_line(screen_start, screen_end, color, &mut target.framebuffer);
         }
     }
 
-    pub fn render_grid(&mut self, _scene: &Scene, target: &mut RenderTarget, viewport: &Viewport, camera: &Camera) {
+    pub fn render_grid(
+        &mut self,
+        _scene: &Scene,
+        target: &mut RenderTarget,
+        viewport: &Viewport,
+        camera: &Camera,
+    ) {
         let frustum_matrix = camera.get_frustum_matrix();
         let viewport_matrix = viewport.get_matrix();
 
@@ -401,11 +418,18 @@ impl Renderer {
             let screen_start = Self::project_point(start, &frustum_matrix, &viewport_matrix);
             let screen_end = Self::project_point(end, &frustum_matrix, &viewport_matrix);
 
-            self.rasterizer.draw_line(screen_start, screen_end, color, &mut target.framebuffer);
+            self.rasterizer
+                .draw_line(screen_start, screen_end, color, &mut target.framebuffer);
         }
     }
 
-    pub fn render_light_vectors(&mut self, scene: &Scene, target: &mut RenderTarget, viewport: &Viewport, camera: &Camera) {
+    pub fn render_light_vectors(
+        &mut self,
+        scene: &Scene,
+        target: &mut RenderTarget,
+        viewport: &Viewport,
+        camera: &Camera,
+    ) {
         let frustum_matrix = camera.get_frustum_matrix();
         let viewport_matrix = viewport.get_matrix();
 
@@ -415,12 +439,15 @@ impl Renderer {
             let start_point = lights.get_position();
             let end_point = origin;
 
-            let screen_start =
-                Self::project_point(start_point, &frustum_matrix, &viewport_matrix);
+            let screen_start = Self::project_point(start_point, &frustum_matrix, &viewport_matrix);
             let screen_end = Self::project_point(end_point, &frustum_matrix, &viewport_matrix);
 
-            self.rasterizer
-                .draw_line(screen_start, screen_end, ColorRGB::YELLOW, &mut target.framebuffer);
+            self.rasterizer.draw_line(
+                screen_start,
+                screen_end,
+                ColorRGB::YELLOW,
+                &mut target.framebuffer,
+            );
         }
     }
 }

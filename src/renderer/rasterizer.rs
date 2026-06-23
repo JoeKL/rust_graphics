@@ -20,7 +20,13 @@ impl Rasterizer {
     /// ### Notes
     ///
     /// * Works with all line angles (horizontal, vertical, shallow, steep)
-    pub fn draw_line(&self, p0: ScreenPoint, p1: ScreenPoint, color: ColorRGB, framebuffer: &mut FrameBuffer) {
+    pub fn draw_line(
+        &self,
+        p0: ScreenPoint,
+        p1: ScreenPoint,
+        color: ColorRGB,
+        framebuffer: &mut FrameBuffer,
+    ) {
         Self::for_each_line_point_impl(p0, p1, |x, y| {
             framebuffer.set_pixel(x as usize, y as usize, color);
         });
@@ -117,7 +123,9 @@ impl Rasterizer {
         // this returns true when one of the vertices is on screen
         // and false if all are off
         // cool effect if changed to &&. it then only draws if ALL of them are on screen
-        let is_in_bounds = |x: f32, y: f32| x >= 0.0 && x < target_width as f32 && y >= 0.0 && y < target_height as f32;
+        let is_in_bounds = |x: f32, y: f32| {
+            x >= 0.0 && x < target_width as f32 && y >= 0.0 && y < target_height as f32
+        };
         is_in_bounds(v0.position[0] as f32, v0.position[1] as f32)
             || is_in_bounds(v1.position[0] as f32, v1.position[1] as f32)
             || is_in_bounds(v2.position[0] as f32, v2.position[1] as f32)

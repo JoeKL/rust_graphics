@@ -133,4 +133,3 @@ impl RenderTarget {
         self.z_buffer.fill(f64::INFINITY);
     }
 }
-
