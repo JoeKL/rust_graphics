@@ -187,6 +187,13 @@ impl eframe::App for EngineApp {
             self.show_panels = !self.show_panels;
         }
 
+        if ui.input(|i| i.key_down(Key::O)) {
+            self.fov_degrees -= 0.5;
+        }
+        if ui.input(|i| i.key_down(Key::P)) {
+            self.fov_degrees += 0.5;
+        }
+
         // Left Side Panel: Top-down projection view
         if self.show_panels {
             egui::Panel::right("view_panel")
