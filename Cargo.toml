@@ -4,10 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bmp = "0.5.0"
 eframe = { version = "0.34.3", features = ["glow"] }
 egui = "0.34.3"
-minifb = "0.28.0"
 
 # [profile.release]
 # debug = true    # or 1 for smaller symbols

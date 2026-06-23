@@ -1,6 +1,5 @@
 use eframe::CreationContext;
 use egui::Key;
-use egui::X11WindowType::DropdownMenu;
 
 use crate::math::Point3D;
 use crate::renderer::{RenderView, Renderer};

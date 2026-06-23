@@ -3,7 +3,6 @@ mod buffer; // Frame/pixel buffer management
 pub mod color;
 mod core;
 mod draw_command;
-mod font_provider;
 mod fragment;
 mod frustum;
 mod passes;
