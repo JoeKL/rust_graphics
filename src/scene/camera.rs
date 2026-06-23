@@ -1,5 +1,6 @@
 use crate::math::{Mat4x4, Point3D, Vector3D};
 
+#[derive(Debug)]
 pub struct Camera {
     // positional parameters
     pub position: Point3D,

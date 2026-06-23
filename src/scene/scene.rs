@@ -11,19 +11,39 @@ impl Scene {
     pub fn new() -> Scene {
         let mut root_node = SceneNode::new("root");
 
-        // camera
-        let pos = Point3D::new(0.0, 0.0, 10.0);
-        let target = Point3D::new(0.0, 0.0, 0.0);
-        let up = Vector3D::new(0.0, 1.0, 0.0);
+        // main camera
+        {
+            let mut camera: Camera = Camera::new(
+                Point3D::new(0.0, 0.0, 10.0),
+                Point3D::new(0.0, 0.0, 0.0),
+                Vector3D::new(0.0, 1.0, 0.0),
+            );
 
-        let mut camera: Camera = Camera::new(pos, target, up);
+            camera.set_position(Point3D::new(0.0, 2.0, -10.0));
+            camera.look_at(Point3D::new(0.0, 0.0, 0.0));
+            camera.set_fov_in_degrees(20.0);
 
-        camera.set_position(Point3D::new(0.0, 2.0, -10.0));
-        camera.look_at(Point3D::new(0.0, 0.0, 0.0));
+            let mut main_cam_node = SceneNode::new("main_camera");
+            main_cam_node.set_camera(camera);
+            root_node.add_child(main_cam_node);
+        }
 
-        let mut camera_node = SceneNode::new("main_camera");
-        camera_node.set_camera(camera);
-        root_node.add_child(camera_node);
+        // secondary camera
+        {
+            let mut camera: Camera = Camera::new(
+                Point3D::new(10.0, 0.0, 0.0),
+                Point3D::new(0.0, 0.0, 0.0),
+                Vector3D::new(0.0, 1.0, 0.0),
+            );
+
+            camera.set_position(Point3D::new(10.0, 2.0, 0.0));
+            camera.look_at(Point3D::new(0.0, 0.0, 0.0));
+            camera.set_fov_in_degrees(20.0);
+
+            let mut secondary_cam_node = SceneNode::new("secondary_camera");
+            secondary_cam_node.set_camera(camera);
+            root_node.add_child(secondary_cam_node);
+        }
 
         // light sources
         let light = PointLight::new(Point3D::new(0.0, 3.0, -3.0), ColorRGB::WHITE, 1.0);
@@ -86,25 +106,6 @@ impl Scene {
             }
         }
         None
-    }
-
-    pub fn get_active_camera(&self) -> Camera {
-        let mut node_queue = vec![&self.root_node];
-        while let Some(node) = node_queue.pop() {
-            if let Some(camera) = &node.camera {
-                let world_transform = node.get_world_transform();
-                return camera.to_world(&world_transform);
-            }
-            for child in &node.children {
-                node_queue.push(child);
-            }
-        }
-        // Fallback default camera if none is found
-        Camera::new(
-            Point3D::new(0.0, 2.0, -10.0),
-            Point3D::new(0.0, 0.0, 0.0),
-            Vector3D::new(0.0, 1.0, 0.0),
-        )
     }
 
     pub fn collect_lights(&self) -> Vec<PointLight> {

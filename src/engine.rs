@@ -27,16 +27,14 @@ impl EngineApp {
         let renderer = Renderer::new();
         let scene = Scene::new();
 
-        let views = vec![RenderView::new(
-            "main",
-            "main_camera",
-            window_width,
-            window_height,
-        )];
+        let views = vec![
+            RenderView::new("main", "main_camera", window_width, window_height),
+            RenderView::new("secondary", "secondary_camera", window_width, window_height),
+        ];
 
         let orbit_yaw = 180.0;
         let orbit_pitch = 15.0;
-        let fov_degrees = 30.0;
+        let fov_degrees = 15.0;
 
         let draw_axis = true;
         let draw_grid = true;
@@ -180,11 +178,27 @@ impl eframe::App for EngineApp {
                 ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
             });
         }
+        let available_height = ui.available_height();
+        let half_height = available_height / 2.0;
+
+        egui::Panel::top("main_cam")
+            .height_range(half_height..=half_height)
+            .resizable(true)
+            .show_inside(ui, |ui| {
+                self.show_view(ui, 0);
+            });
+
+        egui::Panel::bottom("sec_cam")
+            .height_range(half_height..=half_height)
+            .resizable(true)
+            .show_inside(ui, |ui| {
+                self.show_view(ui, 1);
+            });
 
         // Center Panel: Standard 3D perspective view
-        egui::CentralPanel::no_frame().show_inside(ui, |ui| {
-            self.show_view(ui, 0);
-        });
+        // egui::CentralPanel::no_frame().show_inside(ui, |ui| {
+        //     self.show_view(ui, 1);
+        // });
 
         self.update_camera("main_camera");
         ui.request_repaint();
@@ -214,7 +228,10 @@ impl EngineApp {
         self.renderer
             .draw_background_on_framebuffer(&mut view.target);
 
-        let camera = self.scene.get_active_camera();
+        let camera = self
+            .scene
+            .get_camera_by_name(&view.camera_node_name)
+            .expect("no camera node with that name found");
 
         if self.draw_grid {
             self.renderer.render_grid(&self.scene, view, &camera);
