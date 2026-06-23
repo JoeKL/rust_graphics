@@ -54,10 +54,14 @@ impl Scene {
         // model
         let mut model_node = SceneNode::new("model_node");
 
-        match Mesh::load_obj("models/f-16.obj", 2, [1.0, 1.0, 1.0]) {
+        match Mesh::load_obj(
+            "models/f-16.obj",
+            1,
+            [32.0 / 255.0, 176.0 / 255.0, 144.0 / 255.0],
+        ) {
             Ok(mesh) => model_node.set_mesh(mesh),
             Err(e) => {
-                eprintln!("Failed to load 'models/f-16.obj': {}", e);
+                eprintln!("Failed to load model: {}", e);
             }
         }
 
