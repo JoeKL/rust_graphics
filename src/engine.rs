@@ -18,6 +18,7 @@ pub struct EngineApp {
 
     pub orbit_yaw: f64,
     pub orbit_pitch: f64,
+    pub fov_degrees: f64,
 
     pub draw_axis: bool,
     pub draw_grid: bool,
@@ -46,6 +47,7 @@ impl EngineApp {
 
         let orbit_yaw = 180.0;
         let orbit_pitch = 15.0;
+        let fov_degrees = 30.0;
 
         let draw_axis = true;
         let draw_grid = true;
@@ -61,6 +63,7 @@ impl EngineApp {
 
             orbit_yaw,
             orbit_pitch,
+            fov_degrees,
 
             draw_axis,
             draw_grid,
@@ -93,6 +96,7 @@ impl EngineApp {
             let z = h_distance * yaw_rad.cos();
 
             camera.set_position(Point3D { x, y, z, w: 1.0 });
+            camera.set_fov_in_degrees(self.fov_degrees);
 
             camera.look_at(target);
         }
@@ -171,10 +175,7 @@ impl eframe::App for EngineApp {
                 ui.heading("Camera Controls");
                 ui.add(egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0).text("Yaw"));
                 ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
-                ui.label(format!(
-                    "Yaw: {}, Pitch: {}",
-                    self.orbit_yaw, self.orbit_pitch
-                ));
+                ui.add(egui::Slider::new(&mut self.fov_degrees, 1.0..=90.0).text("FOV"));
             });
 
         // Center Panel: Standard 3D perspective view
@@ -215,35 +216,6 @@ impl eframe::App for EngineApp {
                 ui.image((texture.id(), available_size));
             });
         }
-
-        // ui.set_embed_viewports(true);
-        // ui.ctx().show_viewport_immediate(
-        //     egui::ViewportId::from_hash_of("info_view"),
-        //     egui::ViewportBuilder::default().with_title("Camera Viewport"),
-        //     |ui, _class| {
-        //         ui.label("Camera Controls");
-        //         ui.add(egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0).text("Yaw"));
-        //         ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
-        //         ui.label(format!(
-        //             "Yaw: {}, Pitch: {}",
-        //             self.orbit_yaw, self.orbit_pitch
-        //         ));
-        //
-        //         ui.label("Debug Controls");
-        //         ui.checkbox(&mut self.draw_axis, "draw_axis");
-        //         ui.checkbox(&mut self.draw_grid, "draw_grid");
-        //         ui.checkbox(&mut self.draw_lights, "draw_lights");
-        //         ui.checkbox(&mut self.renderer.draw_wireframe, "draw_wireframe");
-        //         ui.checkbox(&mut self.renderer.draw_z_buffer, "draw_z_buffer");
-        //         ui.checkbox(&mut self.renderer.draw_vertex, "draw_vertex");
-        //         ui.checkbox(
-        //             &mut self.renderer.draw_vertex_normals,
-        //             "draw_vertex_normals",
-        //         );
-        //         ui.checkbox(&mut self.renderer.draw_faces, "draw_faces");
-        //         ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
-        //     },
-        // );
 
         self.update_camera();
         ui.request_repaint();

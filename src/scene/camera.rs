@@ -136,7 +136,7 @@ impl Camera {
     }
 
     pub fn set_fov_in_degrees(&mut self, fov_in_degrees: f64) {
-        if (10.0..170.0).contains(&fov_in_degrees) {
+        if (0.0..180.0).contains(&fov_in_degrees) {
             self.fov_in_degrees = fov_in_degrees;
             self.update_matrices();
         }
