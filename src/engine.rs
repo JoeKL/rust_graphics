@@ -1,19 +1,17 @@
 use eframe::CreationContext;
+use egui::Key;
 
-use crate::input::InputHandler;
 use crate::math::Point3D;
 use crate::renderer::{RenderTarget, Renderer, Viewport};
 use crate::scene::Scene;
 
 pub struct EngineApp {
     renderer: Renderer,
-
     scene: Scene,
 
     target: RenderTarget,
     viewport: Viewport,
 
-    // egui: egui,
     frame_texture: Option<egui::TextureHandle>,
 
     pub orbit_yaw: f64,
@@ -28,19 +26,7 @@ pub struct EngineApp {
 impl EngineApp {
     pub fn new(_cc: &CreationContext, window_width: u32, window_height: u32) -> EngineApp {
         let renderer = Renderer::new();
-        let mut scene = Scene::new();
-
-        let far: f64 = 75.0;
-        let near: f64 = 1.0;
-
-        if let Some(camera) = scene.find_camera_mut() {
-            camera.set_projection_params(
-                30.0, // 60 degree FOV
-                window_width as f64 / window_height as f64,
-                near,
-                far,
-            );
-        }
+        let scene = Scene::new();
 
         let target = RenderTarget::new(window_width as usize, window_height as usize);
         let viewport = Viewport::new(window_width as usize, window_height as usize);
@@ -178,7 +164,21 @@ impl eframe::App for EngineApp {
                 ui.add(egui::Slider::new(&mut self.fov_degrees, 1.0..=90.0).text("FOV"));
             });
 
-        // Center Panel: Standard 3D perspective view
+        let orbit_step = 1.5;
+
+        if ui.input(|i| i.key_down(Key::ArrowLeft)) {
+            self.orbit_yaw -= orbit_step;
+        }
+        if ui.input(|i| i.key_down(Key::ArrowRight)) {
+            self.orbit_yaw += orbit_step;
+        }
+        if ui.input(|i| i.key_down(Key::ArrowUp)) {
+            self.orbit_pitch += orbit_step;
+        }
+        if ui.input(|i| i.key_down(Key::ArrowDown)) {
+            self.orbit_pitch -= orbit_step;
+        }
+
         egui::Panel::left("").show_inside(ui, |ui| {
             ui.heading("Debug Controls");
             ui.checkbox(&mut self.draw_axis, "draw_axis");
@@ -195,9 +195,9 @@ impl eframe::App for EngineApp {
             ui.checkbox(&mut self.renderer.backface_culling, "backface_culling");
         });
 
+        // Center Panel: Standard 3D perspective view
         {
             let size = ui.available_size();
-
             let raw_frame = self.render_frame(size.x as usize, size.y as usize);
 
             let image = egui::ColorImage::from_rgba_premultiplied(
@@ -211,7 +211,7 @@ impl eframe::App for EngineApp {
 
             texture.set(image, egui::TextureOptions::LINEAR);
 
-            egui::CentralPanel::default().show_inside(ui, |ui| {
+            egui::CentralPanel::no_frame().show_inside(ui, |ui| {
                 let available_size = ui.available_size();
                 ui.image((texture.id(), available_size));
             });
