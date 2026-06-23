@@ -1,5 +1,6 @@
 use eframe::CreationContext;
 use egui::Key;
+use egui::X11WindowType::DropdownMenu;
 
 use crate::math::Point3D;
 use crate::renderer::{RenderView, Renderer};
@@ -12,6 +13,7 @@ pub struct EngineApp {
     views: Vec<RenderView>,
 
     show_panels: bool,
+    show_second_viewport: bool,
 
     pub orbit_yaw: f64,
     pub orbit_pitch: f64,
@@ -46,6 +48,7 @@ impl EngineApp {
             views,
 
             show_panels: true,
+            show_second_viewport: true,
 
             orbit_yaw,
             orbit_pitch,
@@ -164,6 +167,7 @@ impl eframe::App for EngineApp {
 
             egui::Panel::left("").show_inside(ui, |ui| {
                 ui.heading("Debug Controls");
+                ui.checkbox(&mut self.show_second_viewport, "show_second_viewport");
                 ui.checkbox(&mut self.draw_axis, "draw_axis");
                 ui.checkbox(&mut self.draw_grid, "draw_grid");
                 ui.checkbox(&mut self.draw_lights, "draw_lights");
@@ -179,27 +183,18 @@ impl eframe::App for EngineApp {
             });
         }
 
-        let available_height = ui.available_height();
-        let half_height = available_height / 2.0;
-
-        ui.vertical(|ui| {
-            // Top Camera Area
-            ui.allocate_ui_with_layout(
-                egui::vec2(ui.available_width(), half_height),
-                egui::Layout::top_down(egui::Align::Center),
-                |ui| {
-                    self.show_view(ui, 0);
-                },
-            );
-
-            // Bottom Camera Area
-            ui.allocate_ui_with_layout(
-                egui::vec2(ui.available_width(), half_height),
-                egui::Layout::top_down(egui::Align::Center),
-                |ui| {
+        if self.show_second_viewport {
+            egui::Panel::bottom("sec_cam")
+                .min_size(ui.available_height() / 4.0)
+                .resizable(true)
+                .show_inside(ui, |ui| {
                     self.show_view(ui, 1);
-                },
-            );
+                });
+        }
+
+        // Center Panel: Standard 3D perspective view
+        egui::CentralPanel::no_frame().show_inside(ui, |ui| {
+            self.show_view(ui, 0);
         });
 
         self.update_camera("main_camera");
