@@ -163,6 +163,14 @@ impl eframe::App for EngineApp {
                     );
                     ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
                     ui.add(egui::Slider::new(&mut self.fov_degrees, 1.0..=90.0).text("FOV"));
+                    ui.label("");
+                    ui.separator();
+                    ui.label("");
+                    ui.heading("Camera Shortcuts");
+                    ui.label("[F1]: Toggle Side Panels");
+                    ui.label("[Left, Right]: Control Yaw");
+                    ui.label("[Up, Down]: Control Pitch");
+                    ui.label("[O, P]: Control FOV");
                 });
 
             egui::Panel::left("").show_inside(ui, |ui| {
@@ -185,7 +193,7 @@ impl eframe::App for EngineApp {
 
         if self.show_second_viewport {
             egui::Panel::bottom("sec_cam")
-                .min_size(ui.available_height() / 2.0)
+                .default_size(ui.available_height() / 2.0)
                 .resizable(true)
                 .show_inside(ui, |ui| {
                     self.show_view(ui, 1);
