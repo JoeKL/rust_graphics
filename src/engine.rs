@@ -90,6 +90,7 @@ impl EngineApp {
         }
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn start() -> eframe::Result {
         let options = eframe::NativeOptions {
             renderer: eframe::Renderer::Glow,
@@ -107,6 +108,7 @@ impl EngineApp {
             Box::new(|cc| Ok(Box::new(EngineApp::new(cc, 800, 600)))),
         )
     }
+
 
     pub fn _views(&self) -> &[RenderView] {
         &self.views

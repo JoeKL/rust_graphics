@@ -132,10 +132,13 @@ impl Mesh {
     }
 
     pub fn load_obj(obj_path: &str, material_id: u32, color: [f64; 3]) -> Result<Self, String> {
-        let mut mesh = Mesh::new();
-
         let contents = fs::read_to_string(obj_path)
             .map_err(|e| format!("Failed to read OBJ file '{}': {}", obj_path, e))?;
+        Self::from_obj_str(&contents, obj_path, material_id, color)
+    }
+
+    pub fn from_obj_str(contents: &str, obj_name: &str, material_id: u32, color: [f64; 3]) -> Result<Self, String> {
+        let mut mesh = Mesh::new();
 
         let mut vertices = Vec::new();
         let mut vertex_uv_cords = Vec::new();
@@ -268,7 +271,7 @@ impl Mesh {
             mesh.add_triangle(indices, material_id);
         }
 
-        println!("obj: {:?}", obj_path);
+        println!("obj: {:?}", obj_name);
         println!("vertices {:?}", vertices.len() / 3);
         println!("vertex normals {:?}", vertex_normals.len() / 3);
         println!("vertex uv cords {:?}", vertex_uv_cords.len() / 3);
@@ -278,4 +281,5 @@ impl Mesh {
         mesh.build_adj_list();
         Ok(mesh)
     }
+
 }

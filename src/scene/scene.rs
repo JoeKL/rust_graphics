@@ -54,11 +54,22 @@ impl Scene {
         // model
         let mut model_node = SceneNode::new("model_node");
 
-        match Mesh::load_obj(
+        #[cfg(not(target_arch = "wasm32"))]
+        let mesh_res = Mesh::load_obj(
             "models/f-16.obj",
             1,
             [32.0 / 255.0, 176.0 / 255.0, 144.0 / 255.0],
-        ) {
+        );
+
+        #[cfg(target_arch = "wasm32")]
+        let mesh_res = Mesh::from_obj_str(
+            include_str!("../../models/f-16.obj"),
+            "models/f-16.obj",
+            1,
+            [32.0 / 255.0, 176.0 / 255.0, 144.0 / 255.0],
+        );
+
+        match mesh_res {
             Ok(mesh) => model_node.set_mesh(mesh),
             Err(e) => {
                 eprintln!("Failed to load model: {}", e);
