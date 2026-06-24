@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - feature/egui
   workflow_dispatch:
 
 permissions:
