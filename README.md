@@ -12,7 +12,7 @@ Based on concepts from *Computer Graphics from Scratch* by Gabriel Gambetta and 
 ## Try it out!
 
 You can find the link to the PAW Demo here:
-[Demo - Link](joekl.github.io/rust_graphics/)
+[Demo - Link](https://joekl.github.io/rust_graphics/)
 
 
 ## Gallery & Render Modes
