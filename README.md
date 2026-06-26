@@ -9,7 +9,7 @@ A 3D software rendering engine built from scratch in Rust. Implements a custom g
 
 Based on concepts from *Computer Graphics from Scratch* by Gabriel Gambetta and university course materials.
 
-## 🖼️ Gallery & Render Modes
+## Gallery & Render Modes
 
 Click on any image to view the full-resolution version.
 
@@ -103,7 +103,7 @@ Comparison of different pipeline stages and rendering modes implemented in the e
   <img src="screenshots/gui.png" width="600" alt="Engine GUI" />
 </a>
 
-## ✨ Features
+## Features
 
 * **Software Rasterization**: Custom implementation of the graphics pipeline (`src/renderer/rasterizer.rs`) handling triangle projection and pixel drawing.
 * **Interactive Scene Graph**: Runtime manipulation of objects (Translate, Rotate, Scale) with support for hierarchical selection.
@@ -111,17 +111,7 @@ Comparison of different pipeline stages and rendering modes implemented in the e
 * **Custom Math Library**: Hand-rolled Vector, Matrix, and Geometry implementations (`src/types/math`) to handle 3D transformations.
 * **Robust Input System**: Custom state-tracking wrapper around `minifb`, enabling distinct checks for Pressed, Held, and Released states.
 
-## 📂 Project Structure
-
-* **`src/engine.rs`**: The main game loop and engine lifecycle management.
-* **`src/renderer/`**: The core rendering pipeline.
-    * `rasterizer.rs`: Converts projected triangles into pixels (Barycentric/Edge functions).
-    * `draw_command.rs`: Handles the queue of drawing operations.
-    * `frustum.rs`: Handles view culling.
-* **`src/types/math/`**: Linear algebra library (Matrices, Vectors, Points).
-* **`src/scene/`**: Manages objects in the world, bounding boxes, and scene nodes.
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 * **Rust**: Ensure you have the latest stable version of Rust and Cargo installed.
@@ -140,7 +130,7 @@ Comparison of different pipeline stages and rendering modes implemented in the e
     ```
     > **Note:** The `--release` flag is highly recommended. Since this is a software renderer doing heavy math on the CPU, debug builds may be significantly slower.
 
-## 🤝 Contributing
+## Contributing
 
 This is an educational project, but contributions are welcome!
 
@@ -150,7 +140,7 @@ This is an educational project, but contributions are welcome!
 4.  Push to the Branch (`git push origin feature/AmazingFeature`)
 5.  Open a Pull Request
 
-## 📄 License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
