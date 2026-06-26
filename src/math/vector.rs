@@ -3,18 +3,18 @@ use std::ops::{Add, Mul, Neg, Sub};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector2D {
-    pub x: f32,
-    pub y: f32,
+    pub x: f64,
+    pub y: f64,
     pub w: u32,
 }
 
 impl Vector2D {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f64, y: f64) -> Self {
         let w = 0;
         Self { x, y, w }
     }
 
-    pub fn dot(&self, v: Vector2D) -> f32 {
+    pub fn dot(&self, v: Vector2D) -> f64 {
         self.x * v.x + self.y * v.y
     }
 
@@ -22,7 +22,7 @@ impl Vector2D {
         *self + v
     }
 
-    pub fn mul(&self, s: f32) -> Vector2D {
+    pub fn mul(&self, s: f64) -> Vector2D {
         *self * s
     }
 
@@ -30,7 +30,7 @@ impl Vector2D {
         Vector2D::new(self.x * v.x, self.y * v.y)
     }
 
-    pub fn norm(&self) -> f32 {
+    pub fn norm(&self) -> f64 {
         (self.dot(*self)).sqrt()
     }
 
@@ -64,33 +64,33 @@ impl Sub<Vector2D> for Vector2D {
     }
 }
 
-impl Mul<f32> for Vector2D {
+impl Mul<f64> for Vector2D {
     type Output = Vector2D;
 
-    fn mul(self, scalar: f32) -> Self::Output {
+    fn mul(self, scalar: f64) -> Self::Output {
         Vector2D::new(self.x * scalar, self.y * scalar)
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector3D {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
     pub w: u32,
 }
 
 impl Vector3D {
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
         let w = 0;
         Self { x, y, z, w }
     }
 
-    pub fn from_array(array: [f32; 3]) -> Vector3D {
+    pub fn from_array(array: [f64; 3]) -> Vector3D {
         Vector3D::new(array[0], array[1], array[2])
     }
 
-    pub fn dot(&self, v: Vector3D) -> f32 {
+    pub fn dot(&self, v: Vector3D) -> f64 {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
 
@@ -98,7 +98,7 @@ impl Vector3D {
         *self + v
     }
 
-    pub fn mul(&self, s: f32) -> Vector3D {
+    pub fn mul(&self, s: f64) -> Vector3D {
         *self * s
     }
 
@@ -113,7 +113,7 @@ impl Vector3D {
         Vector3D::new(x, y, z)
     }
 
-    pub fn norm(&self) -> f32 {
+    pub fn norm(&self) -> f64 {
         (self.dot(*self)).sqrt()
     }
 
@@ -130,7 +130,7 @@ impl Vector3D {
         Vector3D::new(self.x - p.x, self.y - p.y, self.z - p.z)
     }
 
-    pub fn clamp(&self, min: f32, max: f32) -> Vector3D {
+    pub fn clamp(&self, min: f64, max: f64) -> Vector3D {
         Vector3D {
             x: self.x.clamp(min, max),
             y: self.y.clamp(min, max),
@@ -143,7 +143,7 @@ impl Vector3D {
         -*self
     }
 
-    pub fn length(&self) -> f32 {
+    pub fn length(&self) -> f64 {
         self.norm()
     }
 }
@@ -164,10 +164,10 @@ impl Sub<Vector3D> for Vector3D {
     }
 }
 
-impl Mul<f32> for Vector3D {
+impl Mul<f64> for Vector3D {
     type Output = Vector3D;
 
-    fn mul(self, scalar: f32) -> Self::Output {
+    fn mul(self, scalar: f64) -> Self::Output {
         Vector3D::new(self.x * scalar, self.y * scalar, self.z * scalar)
     }
 }

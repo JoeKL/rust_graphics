@@ -1,16 +1,16 @@
 #![allow(dead_code)]
 
-mod scene_impl;
-mod scene_node;
 pub mod camera;
-pub mod light;
 pub mod geometry;
+pub mod light;
 pub mod primitives;
+mod scene;
+mod scene_node;
 
-pub use scene_impl::Scene;
-pub use scene_node::SceneNode;
 pub use camera::Camera;
-pub use light::PointLight;
 pub use geometry::Mesh;
+pub use light::PointLight;
 #[allow(unused_imports)]
-pub use primitives::{Vertex, Triangle};
+pub use primitives::{Triangle, Vertex};
+pub use scene::Scene;
+pub use scene_node::SceneNode;

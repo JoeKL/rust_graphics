@@ -1,45 +1,50 @@
 mod engine;
-mod input;
 mod math;
 mod renderer;
 mod scene;
-mod utils;
 
-use engine::Engine;
-use input::InputHandler;
-use minifb::{Key, Window, WindowOptions};
-
-static WINDOW_WIDTH: usize = 1920;
-static WINDOW_HEIGHT: usize = 1080;
-
+// When compiling natively:
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    let mut window = Window::new(
-        "Rust Graphics",
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT,
-        WindowOptions {
-            borderless: false, // Remove window borders
-            resize: false,     // Allow window resizing
-            ..WindowOptions::default()
-        },
-    )
-    .unwrap();
+    let _ = engine::EngineApp::start();
+}
 
-    // window.set_target_fps(60);
+// When compiling to web using trunk:
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    // Redirect log messages to the browser console:
+    eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
-    let mut input_handler = InputHandler::new();
+    let web_options = eframe::WebOptions::default();
 
-    let mut render_engine = Engine::new(WINDOW_WIDTH as u32, WINDOW_HEIGHT as u32);
+    wasm_bindgen_futures::spawn_local(async {
+        use eframe::wasm_bindgen::JsCast;
 
-    while window.is_open() && !window.is_key_down(Key::Escape) {
-        input_handler.update(&window);
+        let document = web_sys::window()
+            .and_then(|w| w.document())
+            .expect("Failed to get window or document");
 
-        window
-            .update_with_buffer(
-                render_engine.run(&input_handler),
-                WINDOW_WIDTH,
-                WINDOW_HEIGHT,
+        let canvas = document
+            .get_element_by_id("the_canvas_id")
+            .expect("Failed to find the_canvas_id canvas")
+            .dyn_into::<web_sys::HtmlCanvasElement>()
+            .expect("the_canvas_id is not a canvas");
+
+        let start_result = eframe::WebRunner::new()
+            .start(
+                canvas,
+                web_options,
+                Box::new(|cc| Ok(Box::new(engine::EngineApp::new(cc, 800, 600)))),
             )
-            .unwrap();
-    }
+            .await;
+
+        // Remove the loading text and spinner:
+        if let Some(loading_text) = document.get_element_by_id("loading_text") {
+            loading_text.remove();
+        }
+
+        if let Err(e) = start_result {
+            log::error!("Failed to start eframe: {:?}", e);
+        }
+    });
 }

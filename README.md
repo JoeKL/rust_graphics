@@ -9,6 +9,12 @@ A 3D software rendering engine built from scratch in Rust. Implements a custom g
 
 Based on concepts from *Computer Graphics from Scratch* by Gabriel Gambetta and university course materials.
 
+## Try it out!
+
+You can find the link to the PAW Demo here:
+[Demo - Link](joekl.github.io/rust_graphics/)
+
+
 ## Gallery & Render Modes
 
 Click on any image to view the full-resolution version.
@@ -96,12 +102,6 @@ Comparison of different pipeline stages and rendering modes implemented in the e
     </td>
   </tr>
 </table>
-
-**User Interface**
-
-<a href="screenshots/gui.png">
-  <img src="screenshots/gui.png" width="600" alt="Engine GUI" />
-</a>
 
 ## Features
 

@@ -1,5 +1,5 @@
-use crate::renderer::{DrawCommand, Fragment, Rasterizer};
 use crate::math::ScreenPoint;
+use crate::renderer::{DrawCommand, Fragment, Rasterizer};
 use crate::scene::Vertex;
 
 pub struct RasterizerInput<'a> {
@@ -11,18 +11,30 @@ pub struct RasterizerInput<'a> {
 
 pub struct RasterizerOutput<'a> {
     pub fragment_buffer: &'a mut Vec<Fragment>,
-    pub z_buffer: &'a mut [f32],
+    pub z_buffer: &'a mut [f64],
     pub debug_lines: &'a mut Vec<[i32; 4]>,
+    pub target_width: usize,
+    pub target_height: usize,
 }
 
 pub trait RenderPass {
-    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput);
+    fn execute(
+        &self,
+        rasterizer: &Rasterizer,
+        input: &RasterizerInput,
+        output: &mut RasterizerOutput,
+    );
 }
 
 pub struct FacePass;
 
 impl RenderPass for FacePass {
-    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput) {
+    fn execute(
+        &self,
+        rasterizer: &Rasterizer,
+        input: &RasterizerInput,
+        output: &mut RasterizerOutput,
+    ) {
         // For each draw command/mesh
         for draw_command in input.draw_commands {
             let index_start = draw_command.first_triangle_index_offset;
@@ -42,7 +54,13 @@ impl RenderPass for FacePass {
                 let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(
+                    v0,
+                    v1,
+                    v2,
+                    output.target_width,
+                    output.target_height,
+                ) {
                     continue;
                 }
 
@@ -52,8 +70,8 @@ impl RenderPass for FacePass {
                 let bounds_max_y: i32;
 
                 // create boundingbox from v0, v1, v2
-                (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) =
-                    rasterizer.calculate_bounding_box(v0, v1, v2);
+                (bounds_min_x, bounds_min_y, bounds_max_x, bounds_max_y) = rasterizer
+                    .calculate_bounding_box(v0, v1, v2, output.target_width, output.target_height);
 
                 // 1. PRE-CALCULATION
                 // Create aliases for positions to make math cleaner (p = position)
@@ -71,7 +89,7 @@ impl RenderPass for FacePass {
                 let denominator = v0_to_v1_x * v0_to_v2_y - v0_to_v2_x * v0_to_v1_y;
 
                 // OPTIMIZATION: Skip degenerate triangles (zero area)
-                if denominator.abs() < f32::EPSILON {
+                if denominator.abs() < f64::EPSILON {
                     continue;
                 }
 
@@ -86,8 +104,8 @@ impl RenderPass for FacePass {
                 // traverse the bounding box in scanline
                 for y in (bounds_min_y)..(bounds_max_y) {
                     for x in (bounds_min_x)..(bounds_max_x) {
-                        let fx = x as f32;
-                        let fy = y as f32;
+                        let fx = x as f64;
+                        let fy = y as f64;
 
                         // Vector from Point to p0
                         let p_to_v0_x = fx - p0[0];
@@ -123,9 +141,7 @@ impl RenderPass for FacePass {
                             ];
 
                             // setup z index to access right place in buffer
-                            let z_buffer_idx = y as usize
-                                * rasterizer.framebuffer.get_width()
-                                + x as usize;
+                            let z_buffer_idx = y as usize * output.target_width + x as usize;
 
                             // Create and store fragment if Z-test passes
                             // Z-test before creating fragment
@@ -153,7 +169,12 @@ impl RenderPass for FacePass {
 pub struct VertexPass;
 
 impl RenderPass for VertexPass {
-    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput) {
+    fn execute(
+        &self,
+        rasterizer: &Rasterizer,
+        input: &RasterizerInput,
+        output: &mut RasterizerOutput,
+    ) {
         // For each draw command/mesh
         for draw_command in input.draw_commands {
             let index_start = draw_command.first_triangle_index_offset;
@@ -173,7 +194,13 @@ impl RenderPass for VertexPass {
                 let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(
+                    v0,
+                    v1,
+                    v2,
+                    output.target_width,
+                    output.target_height,
+                ) {
                     continue;
                 }
 
@@ -201,7 +228,12 @@ impl RenderPass for VertexPass {
 pub struct WireframePass;
 
 impl RenderPass for WireframePass {
-    fn execute(&self, rasterizer: &Rasterizer, input: &RasterizerInput, output: &mut RasterizerOutput) {
+    fn execute(
+        &self,
+        rasterizer: &Rasterizer,
+        input: &RasterizerInput,
+        output: &mut RasterizerOutput,
+    ) {
         // For each draw command/mesh
         for draw_command in input.draw_commands {
             let index_start = draw_command.first_triangle_index_offset;
@@ -221,7 +253,13 @@ impl RenderPass for WireframePass {
                 let v2 = &input.transformed_vertices[i2 as usize];
 
                 // Check if triangle is partly on screen
-                if !rasterizer.is_triangle_on_screen(v0, v1, v2) {
+                if !rasterizer.is_triangle_on_screen(
+                    v0,
+                    v1,
+                    v2,
+                    output.target_width,
+                    output.target_height,
+                ) {
                     continue;
                 }
 
@@ -251,7 +289,12 @@ impl RenderPass for WireframePass {
 pub struct VertexNormalPass;
 
 impl RenderPass for VertexNormalPass {
-    fn execute(&self, rasterizer: &Rasterizer, _input: &RasterizerInput, output: &mut RasterizerOutput) {
+    fn execute(
+        &self,
+        rasterizer: &Rasterizer,
+        _input: &RasterizerInput,
+        output: &mut RasterizerOutput,
+    ) {
         for [x1, y1, x2, y2] in output.debug_lines.drain(..) {
             let p0 = ScreenPoint::new(x1, y1);
             let p1 = ScreenPoint::new(x2, y2);
