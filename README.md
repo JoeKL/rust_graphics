@@ -97,12 +97,6 @@ Comparison of different pipeline stages and rendering modes implemented in the e
   </tr>
 </table>
 
-**User Interface**
-
-<a href="screenshots/gui.png">
-  <img src="screenshots/gui.png" width="600" alt="Engine GUI" />
-</a>
-
 ## Features
 
 * **Software Rasterization**: Custom implementation of the graphics pipeline (`src/renderer/rasterizer.rs`) handling triangle projection and pixel drawing.
