@@ -1,6 +1,6 @@
 {
-  "name": "egui Template PWA",
-  "short_name": "egui-template-pwa",
+  "name": "Rust Software Renderer PWA",
+  "short_name": "rust-graphics-pwa",
   "icons": [
     {
       "src": "./assets/favicon-192x192.png",

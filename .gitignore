@@ -1,2 +1,8 @@
 /target
+/target_ra
+/target_wasm
+
+# trunk output
+/dist
+
 Cargo.lock

@@ -7,13 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     
     <!-- change this to your project name -->
-    <title>eframe template</title>
+    <title>Rust Software Renderer</title>
 
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
     
 <script type="module">
-import init, * as bindings from '/rust_graphics-a9d344ab4baeaf9d.js';
-const wasm = await init({ module_or_path: '/rust_graphics-a9d344ab4baeaf9d_bg.wasm' });
+import init, * as bindings from '/rust_graphics.js';
+const wasm = await init({ module_or_path: '/rust_graphics_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -25,7 +25,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
     <base href="/" />
 
-    <link rel="icon" href="/favicon-7d071b8859a479dc.ico" integrity="sha384-H/sMllKx3oRVji7dIGR2TCCETwjCqXOIm90neNv6wtMTQzSBGDF3c1bDT4V6Mkdc"/>
+    <link rel="icon" href="/favicon.ico" integrity="sha384-H/sMllKx3oRVji7dIGR2TCCETwjCqXOIm90neNv6wtMTQzSBGDF3c1bDT4V6Mkdc"/>
 
 
     
@@ -126,7 +126,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         }
     </style>
-<link rel="modulepreload" href="/rust_graphics-a9d344ab4baeaf9d.js" crossorigin="anonymous" integrity="sha384-Rw/m1AD9nFaKTXz66c/fNH2JhpTDFzTnW5GngGktZYN9KE/eV4w5RIAOD+JofOvU"><link rel="preload" href="/rust_graphics-a9d344ab4baeaf9d_bg.wasm" crossorigin="anonymous" integrity="sha384-R1d7QfSpJJN7EsjgCXgvZqWutXVSnj4t+Bd9wnIRWmZ/KC+n3T71Lu3PHk+Mewrk" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/rust_graphics.js" crossorigin="anonymous" integrity="sha384-Rw/m1AD9nFaKTXz66c/fNH2JhpTDFzTnW5GngGktZYN9KE/eV4w5RIAOD+JofOvU"><link rel="preload" href="/rust_graphics_bg.wasm" crossorigin="anonymous" integrity="sha384-R1d7QfSpJJN7EsjgCXgvZqWutXVSnj4t+Bd9wnIRWmZ/KC+n3T71Lu3PHk+Mewrk" as="fetch" type="application/wasm"></head>
 
 <body>
     <!-- The WASM code will resize the canvas dynamically -->
