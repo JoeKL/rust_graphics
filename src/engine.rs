@@ -94,7 +94,6 @@ impl EngineApp {
     pub fn start() -> eframe::Result {
         let options = eframe::NativeOptions {
             renderer: eframe::Renderer::Glow,
-            vsync: false,
             viewport: egui::ViewportBuilder::default()
                 .with_maximized(true)
                 .with_resizable(true)
@@ -108,7 +107,6 @@ impl EngineApp {
             Box::new(|cc| Ok(Box::new(EngineApp::new(cc, 800, 600)))),
         )
     }
-
 
     pub fn _views(&self) -> &[RenderView] {
         &self.views
@@ -155,7 +153,7 @@ impl eframe::App for EngineApp {
         if self.show_panels {
             egui::Panel::right("view_panel")
                 .resizable(true)
-                .show_inside(ui, |ui| {
+                .show(ui, |ui| {
                     ui.heading("Camera Controls");
                     ui.add(
                         egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0)
@@ -174,7 +172,7 @@ impl eframe::App for EngineApp {
                     ui.label("[O, P]: Control FOV");
                 });
 
-            egui::Panel::left("").show_inside(ui, |ui| {
+            egui::Panel::left("").show(ui, |ui| {
                 ui.heading("Debug Controls");
                 ui.checkbox(&mut self.show_second_viewport, "show_second_viewport");
                 ui.checkbox(&mut self.draw_axis, "draw_axis");
@@ -196,13 +194,13 @@ impl eframe::App for EngineApp {
             egui::Panel::bottom("sec_cam")
                 .default_size(ui.available_height() / 2.0)
                 .resizable(true)
-                .show_inside(ui, |ui| {
+                .show(ui, |ui| {
                     self.show_view(ui, 1);
                 });
         }
 
         // Center Panel: Standard 3D perspective view
-        egui::CentralPanel::no_frame().show_inside(ui, |ui| {
+        egui::CentralPanel::no_frame().show(ui, |ui| {
             self.show_view(ui, 0);
         });
 

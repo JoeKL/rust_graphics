@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-eframe = { version = "0.34.3", features = ["glow"] }
-egui = "0.34.3"
+eframe = { version = "0.35", features = ["glow"] }
+egui = "0.35"
 log = "0.4"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
