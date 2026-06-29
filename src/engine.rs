@@ -1,9 +1,9 @@
 use eframe::CreationContext;
 use egui::Key;
 
-use crate::math::Point3D;
+use crate::math::{Point3D, Vector3D};
 use crate::renderer::{RenderView, Renderer};
-use crate::scene::Scene;
+use crate::scene::{Scene, SceneNode};
 
 pub struct EngineApp {
     renderer: Renderer,
@@ -142,6 +142,68 @@ impl eframe::App for EngineApp {
             self.show_panels = !self.show_panels;
         }
 
+        if ui.input(|i| i.key_down(Key::W)) {
+            let child: &mut [SceneNode] = self.scene.root_node.children.as_mut_slice();
+
+            child[3].translate(Vector3D {
+                x: 0.0,
+                y: 0.025,
+                z: 0.0,
+                w: 1,
+            });
+        }
+        if ui.input(|i| i.key_down(Key::S)) {
+            let child: &mut [SceneNode] = self.scene.root_node.children.as_mut_slice();
+
+            child[3].translate(Vector3D {
+                x: 0.0,
+                y: -0.025,
+                z: 0.0,
+                w: 1,
+            });
+        }
+
+        if ui.input(|i| i.key_down(Key::A)) {
+            let child: &mut [SceneNode] = self.scene.root_node.children.as_mut_slice();
+
+            child[3].translate(Vector3D {
+                x: 0.025,
+                y: 0.0,
+                z: 0.0,
+                w: 1,
+            });
+        }
+        if ui.input(|i| i.key_down(Key::D)) {
+            let child: &mut [SceneNode] = self.scene.root_node.children.as_mut_slice();
+
+            child[3].translate(Vector3D {
+                x: -0.025,
+                y: 0.0,
+                z: 0.0,
+                w: 1,
+            });
+        }
+        if ui.input(|i| i.key_down(Key::E)) {
+            let child: &mut [SceneNode] = self.scene.root_node.children.as_mut_slice();
+
+            child[3].translate(Vector3D {
+                x: 0.0,
+                y: 0.0,
+                z: 0.025,
+                w: 1,
+            });
+        }
+        if ui.input(|i| i.key_down(Key::Q)) {
+            let child: &mut [SceneNode] = self.scene.root_node.children.as_mut_slice();
+
+            child[3].translate(Vector3D {
+                x: 0.0,
+                y: 0.0,
+                z: -0.025,
+                w: 1,
+            });
+        }
+
         if ui.input(|i| i.key_down(Key::O)) {
             self.fov_degrees -= 0.5;
         }
@@ -151,9 +213,29 @@ impl eframe::App for EngineApp {
 
         // Left Side Panel: Top-down projection view
         if self.show_panels {
+            let children_refs: &[SceneNode] = self.scene.root_node.children.as_slice();
+
             egui::Panel::right("view_panel")
                 .resizable(true)
                 .show(ui, |ui| {
+                    ui.heading("Model Info");
+                    ui.label(format!("Model X: {:.2}", children_refs[3].get_position().x));
+                    ui.label(format!("Model Y: {:.2}", children_refs[3].get_position().y));
+                    ui.label(format!("Model Z: {:.2}", children_refs[3].get_position().z));
+
+                    ui.label("");
+                    ui.separator();
+                    ui.label("");
+
+                    ui.heading("Model Shortcuts");
+                    ui.label("[W, S]: Translate on X-Axis");
+                    ui.label("[A, D]: Translate on Y-Axis");
+                    ui.label("[E, Q]: Translate on Z-Axis");
+
+                    ui.label("");
+                    ui.separator();
+                    ui.label("");
+
                     ui.heading("Camera Controls");
                     ui.add(
                         egui::Slider::new(&mut self.orbit_yaw, 0.0..=360.0)
@@ -162,9 +244,11 @@ impl eframe::App for EngineApp {
                     );
                     ui.add(egui::Slider::new(&mut self.orbit_pitch, -89.0..=89.0).text("Pitch"));
                     ui.add(egui::Slider::new(&mut self.fov_degrees, 1.0..=90.0).text("FOV"));
+
                     ui.label("");
                     ui.separator();
                     ui.label("");
+
                     ui.heading("Camera Shortcuts");
                     ui.label("[F1]: Toggle Side Panels");
                     ui.label("[Left, Right]: Control Yaw");

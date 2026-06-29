@@ -54,6 +54,10 @@ impl SceneNode {
         self.update_local_transform();
     }
 
+    pub fn get_position(&self) -> Vector3D {
+        self.position
+    }
+
     //overwrites the current local rotation
     pub fn set_rotation(&mut self, rot: Mat4x4) {
         self.rotation = rot;

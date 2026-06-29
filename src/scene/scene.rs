@@ -53,21 +53,23 @@ impl Scene {
 
         // model
         let mut model_node = SceneNode::new("model_node");
+        let mesh_res: Result<Mesh, _>;
 
         #[cfg(not(target_arch = "wasm32"))]
-        let mesh_res = Mesh::load_obj(
-            "models/f-16.obj",
-            1,
-            [32.0 / 255.0, 176.0 / 255.0, 144.0 / 255.0],
-        );
+        {
+            let obj_path: String = "models/f-16.obj".to_string();
+            mesh_res = Mesh::load_obj(&obj_path, 1, [32.0 / 255.0, 176.0 / 255.0, 144.0 / 255.0]);
+        }
 
         #[cfg(target_arch = "wasm32")]
-        let mesh_res = Mesh::from_obj_str(
-            include_str!("../../models/f-16.obj"),
-            "models/f-16.obj",
-            1,
-            [32.0 / 255.0, 176.0 / 255.0, 144.0 / 255.0],
-        );
+        {
+            mesh_res = Mesh::from_obj_str(
+                include_str!("../../models/f-16.obj"),
+                "models/f-16.obj",
+                1,
+                [32.0 / 255.0, 176.0 / 255.0, 144.0 / 255.0],
+            );
+        }
 
         match mesh_res {
             Ok(mesh) => model_node.set_mesh(mesh),
@@ -75,6 +77,20 @@ impl Scene {
                 eprintln!("Failed to load model: {}", e);
             }
         }
+
+        // model_node.scale(Vector3D {
+        //     x: 0.1,
+        //     y: 0.1,
+        //     z: 0.1,
+        //     w: 1,
+        // });
+        //
+        // model_node.translate(Vector3D {
+        //     x: 0.0,
+        //     y: -1.75,
+        //     z: 0.0,
+        //     w: 1,
+        // });
 
         root_node.add_child(model_node);
 
