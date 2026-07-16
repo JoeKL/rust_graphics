@@ -228,8 +228,8 @@ impl eframe::App for EngineApp {
                     ui.label("");
 
                     ui.heading("Model Shortcuts");
-                    ui.label("[W, S]: Translate on X-Axis");
-                    ui.label("[A, D]: Translate on Y-Axis");
+                    ui.label("[A, D]: Translate on X-Axis");
+                    ui.label("[W, S]: Translate on Y-Axis");
                     ui.label("[E, Q]: Translate on Z-Axis");
 
                     ui.label("");
