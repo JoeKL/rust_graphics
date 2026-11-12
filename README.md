@@ -120,7 +120,7 @@ Comparison of different pipeline stages and rendering modes implemented in the e
 
 1.  Clone the repository:
     ```bash
-    git clone [https://github.com/JoeKL/rust_graphics.git](https://github.com/JoeKL/rust_graphics.git)
+    git clone https://github.com/JoeKL/rust_graphics.git
     cd rust_graphics
     ```
 
